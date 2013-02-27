@@ -14,5 +14,5 @@ class A0(upynja.cpp.CppProject):
         with self.cpp_compile(sources) as tasks:
             pass
 
-        with self.make_static_lib("A0") as task:
+        with self.make_static_lib("a0") as task:
             pass

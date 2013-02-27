@@ -34,7 +34,5 @@ if os.name == "nt":
             self._lnk_script = os.path.join(self._scriptDir, "msvc-lnk-invoke.py")
             pass
 
-        pass
-
         def emit_rules(self, file):
             pass

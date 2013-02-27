@@ -14,5 +14,5 @@ class A1(upynja.cpp.CppProject):
         with self.cpp_compile(sources) as tasks:
             pass
 
-        with self.make_shared_lib("A1") as task:
+        with self.make_shared_lib("a1") as task:
             pass

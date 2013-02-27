@@ -15,6 +15,7 @@ class Variant:
                 for option in fieldOptions:
                     errstr = errstr + ("    %s\n" % (option,))
                 raise Exception(errstr)
+            setattr(self, fieldName, fieldValue)
 
 
 class BuildTask(metaclass = ABCMeta):
@@ -22,17 +23,19 @@ class BuildTask(metaclass = ABCMeta):
         self.project = project
         self.extraDeps = []
         self.orderOnlyDeps = []
+        self._emitted = False
 
     def __enter__(self):
         if self._emitted:
             raise Exception("A task should not be re-used in a with statement.")
+        return self
 
-    def __exit__(self):
+    def __exit__(self, type, value, traceback):
         self._emit_once()
 
     def _emit_once(self):
         if not self._emitted:
-            self._emitted = true
+            self._emitted = True
             self.emit()
 
     @abstractmethod
@@ -42,7 +45,8 @@ class BuildTask(metaclass = ABCMeta):
 
 class BuildTasks:
     def __init__(self, tasks):
-        self._tasks = tasks
+        self.__dict__["_tasks"] = tasks
+        self.__dict__["_emitted"] = False
 
     def __len__(self):
         return self._tasks.__len__()
@@ -60,13 +64,14 @@ class BuildTasks:
     def __enter__(self):
         if self._emitted:
             raise Exception("Tasks should not be re-used in a with statement.")
+        return self
 
-    def __exit__(self):
+    def __exit__(self, type, value, traceback):
         self._emit_once()
 
     def _emit_once(self):
         if not self._emitted:
-            self._emitted = true
+            self.__dict__["_emitted"] = True
             for task in self._tasks:
                 task._emit_once()
 
@@ -75,12 +80,9 @@ class Project(metaclass = ABCMeta):
     def __init__(self, projectMan, variant):
         self.projectMan = projectMan
         self.variant = variant
+        self.projectDir = self.get_project_dir()
+        self.builtDir = self.get_built_dir()
         self.makeFiles = []
-
-    def emit_once(self, arg1):
-        if not self._emitted:
-            self.emitted = true
-            self.emit()
 
     @abstractmethod
     def get_project_dir(self):
@@ -92,7 +94,13 @@ class Project(metaclass = ABCMeta):
 
     @abstractmethod
     def emit(self):
+        """To be implemented by project author -- contains build commands."""
         pass
+
+    def copy(self, origPath, destPath):
+        print(destPath)
+        pass
+
 
 
 class ToolChain(metaclass = ABCMeta):
@@ -110,14 +118,15 @@ class ProjectMan:
         self._toolchains = {}
 
     def get_project(self, projName, variantName):
-        variants = self._projects[projName]
+        variants = self._projects.get(projName)
         if variants == None:
             variants = {}
             self._projects[projName] = variants
-        project = variants[variantName]
+        project = variants.get(variantName)
         if project == None:
             project = projectFactory[projName](self, variantName)
             variants[variantName] = project
+            project.emit()
         return project
 
     def add_toolchain(self, toolchain):
@@ -125,9 +134,13 @@ class ProjectMan:
             raise NameError("toolchain %s already defined" % toolchain.name)
         self._toolchains[toolchain.name] = toolchain
 
+    def get_toolchain(self, toolchainName):
+        return self._toolchains[toolchainName]
+
+
 
 projectFactory = {}
 
 def project(projectType):
-    projectFactory[projectType.__class__.__name__] = projectType
+    projectFactory[projectType.__name__] = projectType
     return projectType

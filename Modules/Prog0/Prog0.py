@@ -1,11 +1,12 @@
 import pynja
 import upynja
 
+
 @pynja.build.project
 class Prog0(upynja.cpp.CppProject):
     def emit(self):
-        libA0 = self.projectMan.getProject('A0', self.variant)
-        libA1 = self.projectMan.getProject('A1', self.variant)
+        libA0 = self.projectMan.get_project('A0', self.variant)
+        libA1 = self.projectMan.get_project('A1', self.variant)
 
         # compile multiple files at a time
         sources = [
@@ -37,24 +38,22 @@ class Prog0(upynja.cpp.CppProject):
 
         # compile one file at a time with per-file settings
         with self.cpp_compile_one("Source/e0_6.cpp") as task:
-            # this file reaches into A1 sources rather than respecting interface boundaries
-            task.includePaths.append(rootPaths.A1 + "/Source")
+            task.includePaths.append(upynja.rootPaths.A0 + "/IncludeSpecial")
         with self.cpp_compile_one("Source/e0_7.cpp") as task:
             # force no optimizations on this file
             task.optimize = 0
 
         # add libraries last
-        self.add_input_library(libA0.libraryFile)
-        self.add_input_library(libA1.libraryFile)
+        self.add_input_lib(libA0.libraryPath)
+        self.add_input_lib(libA1.libraryPath)
 
-        with self.link_executable("prog0") as task:
+        with self.make_executable("prog0") as task:
             pass
 
-        self.copy(self.outputFile, self.outputFile + ".copy")
+        self.copy(self.outputPath, self.outputPath + ".copy")
 
-    def set_compile_options(self, task):
-        super().set_compile_options(task)
-        task.includePaths.append(rootPaths.Boost)
-        task.includePaths.append(rootPaths.A0 + "/Include")
-        task.includePaths.append(rootPaths.A1 + "/Include")
+    def set_cpp_compile_options(self, task):
+        super().set_cpp_compile_options(task)
+        task.includePaths.append(upynja.rootPaths.A0 + "/Include")
+        task.includePaths.append(upynja.rootPaths.A1 + "/Include")
 

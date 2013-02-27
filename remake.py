@@ -16,13 +16,17 @@ def generate_ninja_build(ninjaFile):
     variants = []
 
     if os.name == 'nt':
-        variants.append(upynja.CppVariant("windows-msvc10-x86-dbg-dcrt"))
-        variants.append(upynja.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
+        variants.append(upynja.cpp.CppVariant("windows-msvc10-x86-dbg-dcrt"))
+        variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
 
         projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-x86", upynja.rootPaths.msvc10, "x86"))
         projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-amd64", upynja.rootPaths.msvc10, "amd64"))
+
     else:
         raise NotImplemented()
+
+    for variant in variants:
+        projectMan.get_project("Prog0", variant)
 
 
 def regenerate_build():
@@ -39,6 +43,5 @@ def regenerate_build():
 
 
 if (__name__ == "__main__"):
-    regenerate_build()
     print("generating with rootDir=%s" % upynja.rootDir)
-
+    regenerate_build()
