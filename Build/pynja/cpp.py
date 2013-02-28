@@ -103,7 +103,7 @@ class CppProject(pynja.build.Project):
         return tasks
 
     def set_cpp_compile_options(self, task):
-        """Can be overridden to apply common compiler options to all cpp_compiles."""
+        """Can be overridden to apply common compiler options to CppTask created by cpp_compile*."""
         pass
 
 
@@ -120,7 +120,7 @@ class CppProject(pynja.build.Project):
         return task
 
     def set_static_lib_options(self, task):
-        """Can be overridden to apply options to StaticLibTask."""
+        """Can be overridden to apply options to StaticLibTask created by make_static_lib."""
         pass
 
 
@@ -138,7 +138,7 @@ class CppProject(pynja.build.Project):
         return task
 
     def set_shared_lib_options(self, task):
-        """Can be overridden to apply options to LinkTask."""
+        """Can be overridden to apply options to LinkTask created by make_shared_lib."""
         pass
 
 
@@ -155,6 +155,6 @@ class CppProject(pynja.build.Project):
         return task
 
     def set_executable_options(self, task):
-        """Can be overridden to apply options to LinkTask."""
+        """Can be overridden to apply options to LinkTask created by make_executable."""
         pass
 

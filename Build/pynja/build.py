@@ -172,7 +172,7 @@ class ProjectMan:
         ninjaFile.write("\n");
         ninjaFile.write("\n");
 
-        for toolchainName, toolchain in self._toolchains.items():
+        for toolchainName, toolchain in sorted(self._toolchains.items()):
             toolchain.emit_rules(self.ninjaFile)
 
     def emit_custom_command(self, command, desc = None, inputs = [], outputs = []):

@@ -47,9 +47,14 @@ def regenerate_build():
         with tempfile.TemporaryFile('w+t') as tempNinjaFile:
             generate_ninja_build(tempNinjaFile)
             tempNinjaFile.seek(0)
-            with open(ninjaPath, "wt") as ninjaFile:
-                content = tempNinjaFile.read()
-                ninjaFile.write(content)
+            newContent = tempNinjaFile.read()
+            oldContent = ""
+            if os.path.exists(ninjaPath):
+                with open(ninjaPath, "rt") as ninjaFile:
+                    oldContent = ninjaFile.read()
+            if newContent != oldContent:
+                with open(ninjaPath, "wt") as ninjaFile:
+                    ninjaFile.write(newContent)
 
 
 if (__name__ == "__main__"):
