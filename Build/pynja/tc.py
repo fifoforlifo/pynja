@@ -159,7 +159,7 @@ if os.name == "nt":
             self.translate_crt(options, task)
             self.translate_include_paths(options, task)
             self.translate_defines(options, task)
-            options.append(task.extraOptions)
+            options.extend(task.extraOptions)
             write_rsp_file(project, task, options)
 
         def emit_static_lib(self, project, task):
@@ -222,12 +222,12 @@ if os.name == "nt":
             # write response file
             options = []
             options.append("/nologo")
-            if task.makeExecutable:
+            if not task.makeExecutable:
                 options.append("/DLL")
             options.append("\"/OUT:%s\"" % task.outputPath)
             if task.keepDebugInfo:
                 options.append("/DEBUG")
             for input in task.inputs:
                 options.append("\"%s\"" % input)
-            options.append(task.extraOptions)
+            options.extend(task.extraOptions)
             write_rsp_file(project, task, options)

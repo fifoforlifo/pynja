@@ -10,7 +10,7 @@ class CppTask(pynja.build.BuildTask):
         self.outputPath = outputPath
         self.workingDir = workingDir
         # common compiler options
-        self.extraOptions = ""
+        self.extraOptions = []
         self.debugLevel = 2
         self.optLevel = 3
         self.includePaths = []
@@ -48,13 +48,15 @@ class StaticLibTask(pynja.build.BuildTask):
 class LinkTask(pynja.build.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
-        self.extraOptions = ""
+        self.extraOptions = []
         self.outputPath = outputPath
         self.outputLibraryPath = None
         self.workingDir = workingDir
         self.makeExecutable = True # if False, make shared library instead
         self.inputs = []
         self.keepDebugInfo = True
+        # gcc-specific
+        self.addressModel = None
 
     def emit(self):
         project = self.project

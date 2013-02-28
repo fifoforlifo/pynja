@@ -7,7 +7,7 @@ class A1(upynja.cpp.CppProject):
         sources = [
             "Source/a1_0.cpp",
             "Source/a1_1.cpp",
-            "Source/a2_2.cpp",
+            "Source/a1_2.cpp",
             "Source/a1_3.cpp",
         ]
 

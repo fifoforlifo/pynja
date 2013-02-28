@@ -41,6 +41,7 @@ if (os.name == 'nt'):
         rootPaths.msvc10 = "C:\\Program Files\\Microsoft Visual Studio 10.0"
         rootPaths.msvc11 = "C:\\Program Files\\Microsoft Visual Studio 11.0"
 
+    rootPaths.winsdk = 'C:\\Program Files\\Microsoft SDKs\\Windows\\v7.0';
+
     rootPaths.mingw = "C:\\MinGW"
     rootPaths.mingw64 = "C:\\MinGW64"
-

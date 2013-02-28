@@ -8,9 +8,16 @@ class Prog0(upynja.cpp.CppProject):
         libA0 = self.projectMan.get_project('A0', self.variant)
         libA1 = self.projectMan.get_project('A1', self.variant)
 
+        # compile one file at a time with per-file settings
+        with self.cpp_compile_one("Source/e0_0.cpp") as task:
+            task.includePaths.append(upynja.rootPaths.A0 + "/IncludeSpecial")
+        with self.cpp_compile_one("Source/e0_7.cpp") as task:
+            # force no optimizations on this file
+            task.optimize = 0
+
         # compile multiple files at a time
         sources = [
-            "Source/e0_0.cpp",
+            "Source/e0_6.cpp",
             "Source/e0_1.cpp",
             "Source/e0_2.cpp",
         ]
@@ -36,13 +43,6 @@ class Prog0(upynja.cpp.CppProject):
         with self.cpp_compile(sloppyFiles_b) as tasks:
             # broadcast write
             tasks.warnLevel = 1
-
-        # compile one file at a time with per-file settings
-        with self.cpp_compile_one("Source/e0_6.cpp") as task:
-            task.includePaths.append(upynja.rootPaths.A0 + "/IncludeSpecial")
-        with self.cpp_compile_one("Source/e0_7.cpp") as task:
-            # force no optimizations on this file
-            task.optimize = 0
 
         # add libraries last
         self.add_input_lib(libA0.libraryPath)
