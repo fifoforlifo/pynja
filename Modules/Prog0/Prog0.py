@@ -53,6 +53,7 @@ class Prog0(upynja.cpp.CppProject):
 
         self.copy(self.outputPath, self.outputPath + ".copy")
 
+    # set c++ compile options that are common to all files in the project
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
         task.includePaths.append(upynja.rootPaths.A0 + "/Include")
