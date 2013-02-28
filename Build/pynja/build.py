@@ -239,6 +239,21 @@ class ProjectMan:
             ninjaFile.write("build %s : phony %s\n" % (phonyTargetEsc, destPathEsc))
         ninjaFile.write("\n")
 
+    def emit_phony_targets(self):
+        ninjaFile = self.ninjaFile
+        ninjaFile.write("#############################################\n")
+        ninjaFile.write("# phony targets\n")
+        ninjaFile.write("\n")
+        for name, targets in sorted(self._phonyTargets.items()):
+            nameEsc = ninja_esc_path(name)
+            ninjaFile.write("build %s : phony" % nameEsc)
+            for target in targets:
+                targetEsc = ninja_esc_path(target)
+                ninjaFile.write(" ");
+                ninjaFile.write(targetEsc)
+            ninjaFile.write("\n")
+        ninjaFile.write("\n")
+
 
 projectFactory = {}
 

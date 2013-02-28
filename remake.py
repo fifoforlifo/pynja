@@ -35,6 +35,8 @@ def generate_ninja_build(ninjaFile):
     for variant in variants:
         projectMan.get_project("Prog0", variant)
 
+    projectMan.emit_phony_targets()
+
 
 def regenerate_build():
     builtDir = upynja.rootPaths.built
