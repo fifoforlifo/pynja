@@ -1,9 +1,37 @@
 import os
+import pynja.io
 from abc import *
 
 
 def ninja_esc_path(path):
     return path.replace('$','$$').replace(' ','$ ').replace(':', '$:')
+
+def translate_path_list(ninjaFile, paths, separator = " ", prefix = None):
+    if prefix and (len(paths) > 0):
+        ninjaFile.write(prefix)
+    for path in paths:
+        pathEsc = ninja_esc_path(path)
+        ninjaFile.write(separator)
+        ninjaFile.write(pathEsc)
+
+def translate_extra_deps(ninjaFile, task, needPipe):
+    prefix = " |" if needPipe else ""
+    translate_path_list(ninjaFile, task.extraDeps, " $\n    ", prefix)
+
+def translate_order_only_deps(ninjaFile, task, needPipe):
+    prefix = " ||" if needPipe else ""
+    translate_path_list(ninjaFile, task.orderOnlyDeps, " $\n    ", prefix)
+
+def write_file_if_different(filePath, newContents):
+    needToWrite = True
+    if os.path.exists(filePath):
+        with open(filePath, "rt") as file:
+            oldContents = file.read()
+            needToWrite = (oldContents != newContents)
+    if needToWrite:
+        pynja.io.create_dir_for_file(filePath)
+        with open(filePath, "wt") as file:
+            file.write(newContents)
 
 
 class Variant:
@@ -14,6 +42,8 @@ class Variant:
             fieldValue   = parts[i]
             fieldName    = fieldDefs[i * 2 + 0]
             fieldOptions = fieldDefs[i * 2 + 1]
+            if fieldName == "str":
+                raise Exception("You may not call a variant field 'str'.  Anything else is fine.")
             if not (fieldValue in fieldOptions):
                 errstr = "%s is not valid for field %s\n" % (fieldValue, fieldName)
                 errstr = errstr + "Valid options are:\n"
@@ -28,6 +58,7 @@ class BuildTask(metaclass = ABCMeta):
         self.project = project
         self.extraDeps = []
         self.orderOnlyDeps = []
+        self.phonyTarget = None # name of phony target to declare with this
         self._emitted = False
 
     def __enter__(self):
@@ -130,6 +161,7 @@ class ProjectMan:
         self.ninjaFile = ninjaFile
         self._projects = {}
         self._toolchains = {}
+        self._phonyTargets = {}
 
     def get_project(self, projName, variantName):
         variants = self._projects.get(projName)
@@ -151,26 +183,33 @@ class ProjectMan:
     def get_toolchain(self, toolchainName):
         return self._toolchains[toolchainName]
 
+    def add_phony_target(self, name, path):
+        refs = self._phonyTargets.get(name)
+        if refs == None:
+            refs = []
+            self._phonyTargets[name] = refs
+        refs.append(path)
+
     def emit_rules(self):
         ninjaFile = self.ninjaFile
-        ninjaFile.write("#############################################\n");
-        ninjaFile.write("# CUSTOM_COMMAND\n");
-        ninjaFile.write("\n");
-        ninjaFile.write("rule CUSTOM_COMMAND\n");
-        ninjaFile.write("  command = $COMMAND\n");
-        ninjaFile.write("  description = $DESC\n");
-        ninjaFile.write("  restat = 1\n");
-        ninjaFile.write("\n");
+        ninjaFile.write("#############################################\n")
+        ninjaFile.write("# CUSTOM_COMMAND\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("rule CUSTOM_COMMAND\n")
+        ninjaFile.write("  command = $COMMAND\n")
+        ninjaFile.write("  description = $DESC\n")
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
 
         copyCommand = os.path.join(os.path.dirname(__file__), "fs", "copy-file.py")
 
-        ninjaFile.write("#############################################\n");
-        ninjaFile.write("# File copy\n");
-        ninjaFile.write("rule FILE_COPY\n");
-        ninjaFile.write("  command = python %s \"$in\" \"$out\" \n" % copyCommand);
-        ninjaFile.write("  description = Copy $in -> $out.\n");
-        ninjaFile.write("\n");
-        ninjaFile.write("\n");
+        ninjaFile.write("#############################################\n")
+        ninjaFile.write("# File copy\n")
+        ninjaFile.write("rule FILE_COPY\n")
+        ninjaFile.write("  command = python %s \"$in\" \"$out\" \n" % copyCommand)
+        ninjaFile.write("  description = Copy $in -> $out.\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("\n")
 
         for toolchainName, toolchain in sorted(self._toolchains.items()):
             toolchain.emit_rules(self.ninjaFile)

@@ -10,20 +10,23 @@ class CppTask(pynja.build.BuildTask):
         self.outputPath = outputPath
         self.workingDir = workingDir
         # common compiler options
-        self.debugLevel = 3
+        self.extraOptions = ""
+        self.debugLevel = 2
         self.optLevel = 3
         self.includePaths = []
         self.defines = []
         # gcc-specific
         self.addressModel = None
         # msvc-specific
-        self.crt = "dynamic"
+        self.dynamicCRT = True
         self.minimalRebuild = False
 
     def emit(self):
         project = self.project
         toolchain = project.toolchain
         toolchain.emit_cpp_compile(project, self)
+        if self.phonyTarget:
+            project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
 class StaticLibTask(pynja.build.BuildTask):
@@ -38,21 +41,28 @@ class StaticLibTask(pynja.build.BuildTask):
         toolchain = project.toolchain
         self.inputs.extend(project._inputs)
         toolchain.emit_static_lib(project, self)
+        if self.phonyTarget:
+            project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
 class LinkTask(pynja.build.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
+        self.extraOptions = ""
         self.outputPath = outputPath
+        self.outputLibraryPath = None
         self.workingDir = workingDir
         self.makeExecutable = True # if False, make shared library instead
         self.inputs = []
+        self.keepDebugInfo = True
 
     def emit(self):
         project = self.project
         toolchain = project.toolchain
         self.inputs.extend(project._inputs)
         toolchain.emit_link(project, self)
+        if self.phonyTarget:
+            project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
 class CppProject(pynja.build.Project):
@@ -133,6 +143,7 @@ class CppProject(pynja.build.Project):
         self.libraryPath = libraryPath
 
         task = LinkTask(self, self.outputPath, self.projectDir)
+        task.outputLibraryPath = libraryPath
         task.makeExecutable = False
         self.set_shared_lib_options(task)
         return task

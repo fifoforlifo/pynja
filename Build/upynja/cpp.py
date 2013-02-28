@@ -42,7 +42,9 @@ class CppProject(pynja.cpp.CppProject):
             outputPath = os.path.join(self.builtDir, name + ".lib")
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
-        return super().make_static_lib(outputPath)
+        task = super().make_static_lib(outputPath)
+        task.phonyTarget = name
+        return task
 
     def make_shared_lib(self, name):
         if self.variant.os == "windows":
@@ -54,11 +56,15 @@ class CppProject(pynja.cpp.CppProject):
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".so")
             libraryPath = outputPath
-        return super().make_shared_lib(outputPath, libraryPath)
+        task = super().make_shared_lib(outputPath, libraryPath)
+        task.phonyTarget = name
+        return task
 
     def make_executable(self, name):
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".exe")
         else:
             outputPath = os.path.join(self.builtDir, name)
-        return super().make_executable(outputPath)
+        task = super().make_executable(outputPath)
+        task.phonyTarget = name
+        return task
