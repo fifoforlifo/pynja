@@ -21,7 +21,9 @@ class CppTask(pynja.build.BuildTask):
         self.minimalRebuild = False
 
     def emit(self):
-        pass
+        project = self.project
+        toolchain = project.toolchain
+        toolchain.emit_cpp_compile(project, self)
 
 
 class StaticLibTask(pynja.build.BuildTask):
@@ -29,9 +31,13 @@ class StaticLibTask(pynja.build.BuildTask):
         super().__init__(project)
         self.outputPath = outputPath
         self.workingDir = workingDir
+        self.inputs = []
 
     def emit(self):
-        pass
+        project = self.project
+        toolchain = project.toolchain
+        self.inputs.extend(project._inputs)
+        toolchain.emit_static_lib(project, self)
 
 
 class LinkTask(pynja.build.BuildTask):
@@ -43,7 +49,10 @@ class LinkTask(pynja.build.BuildTask):
         self.inputs = []
 
     def emit(self):
-        pass
+        project = self.project
+        toolchain = project.toolchain
+        self.inputs.extend(project._inputs)
+        toolchain.emit_link(project, self)
 
 
 class CppProject(pynja.build.Project):
@@ -83,7 +92,6 @@ class CppProject(pynja.build.Project):
         task = CppTask(self, sourcePath, outputPath, self.projectDir)
         self.set_cpp_compile_options(task)
         self.add_input(outputPath)
-        print(outputPath)
         return task
 
     def cpp_compile(self, filePaths):
@@ -109,7 +117,6 @@ class CppProject(pynja.build.Project):
 
         task = StaticLibTask(self, self.outputPath, self.projectDir)
         self.set_static_lib_options(task)
-        print(self.outputPath)
         return task
 
     def set_static_lib_options(self, task):
@@ -128,7 +135,6 @@ class CppProject(pynja.build.Project):
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.makeExecutable = False
         self.set_shared_lib_options(task)
-        print(self.outputPath)
         return task
 
     def set_shared_lib_options(self, task):
@@ -146,7 +152,6 @@ class CppProject(pynja.build.Project):
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.makeExecutable = True
         self.set_executable_options(task)
-        print(self.outputPath)
         return task
 
     def set_executable_options(self, task):

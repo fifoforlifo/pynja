@@ -1,4 +1,9 @@
+import os
 from abc import *
+
+
+def ninja_esc_path(path):
+    return path.replace('$','$$').replace(' ','$ ').replace(':', '$:')
 
 
 class Variant:
@@ -94,13 +99,21 @@ class Project(metaclass = ABCMeta):
 
     @abstractmethod
     def emit(self):
-        """To be implemented by project author -- contains build commands."""
         pass
 
-    def copy(self, origPath, destPath):
-        print(destPath)
-        pass
+    def get_abs_path(self, path):
+        if os.path.isabs(path):
+            return path
+        else:
+            return os.path.join(self.projectDir, path)
 
+    def custom_command(self, command, desc = None, inputs = [], outputs = []):
+        self.projectMan.emit_custom_command(command, desc, inputs, outputs)
+
+    def copy(self, orig, dest, phonyTarget = None):
+        origPath = self.get_abs_path(orig)
+        destPath = self.get_abs_path(dest)
+        self.projectMan.emit_copy(origPath, destPath, phonyTarget)
 
 
 class ToolChain(metaclass = ABCMeta):
@@ -113,7 +126,8 @@ class ToolChain(metaclass = ABCMeta):
 
 
 class ProjectMan:
-    def __init__(self):
+    def __init__(self, ninjaFile):
+        self.ninjaFile = ninjaFile
         self._projects = {}
         self._toolchains = {}
 
@@ -137,6 +151,54 @@ class ProjectMan:
     def get_toolchain(self, toolchainName):
         return self._toolchains[toolchainName]
 
+    def emit_rules(self):
+        ninjaFile = self.ninjaFile
+        ninjaFile.write("#############################################\n");
+        ninjaFile.write("# CUSTOM_COMMAND\n");
+        ninjaFile.write("\n");
+        ninjaFile.write("rule CUSTOM_COMMAND\n");
+        ninjaFile.write("  command = $COMMAND\n");
+        ninjaFile.write("  description = $DESC\n");
+        ninjaFile.write("  restat = 1\n");
+        ninjaFile.write("\n");
+
+        copyCommand = os.path.join(os.path.dirname(__file__), "fs", "copy-file.py")
+
+        ninjaFile.write("#############################################\n");
+        ninjaFile.write("# File copy\n");
+        ninjaFile.write("rule FILE_COPY\n");
+        ninjaFile.write("  command = python %s \"$in\" \"$out\" \n" % copyCommand);
+        ninjaFile.write("  description = Copy $in -> $out.\n");
+        ninjaFile.write("\n");
+        ninjaFile.write("\n");
+
+        for toolchainName, toolchain in self._toolchains.items():
+            toolchain.emit_rules(self.ninjaFile)
+
+    def emit_custom_command(self, command, desc = None, inputs = [], outputs = []):
+        ninjaFile.write("build $\n")
+        for output in outputs:
+            outputEsc = ninja_esc_path(output)
+            ninjaFile.write("    %s$\n" % outputEsc)
+        ninjaFile.write("  : CUSTOM_COMMAND")
+        for input in inputs:
+            inputEsc = ninjaFile(input)
+            ninjaFile.write(" $\n    %s" % inputEsc)
+        ninjaFile.write("\n")
+
+        ninjaFile.write("  COMMAND = %s\n" % command)
+        ninjaFile.write("  DESC = %s\n" % desc)
+
+    def emit_copy(self, origPath, destPath, phonyTarget = None):
+        ninjaFile = self.ninjaFile
+        origPathEsc = ninja_esc_path(origPath)
+        destPathEsc = ninja_esc_path(destPath)
+
+        ninjaFile.write("build %s : FILE_COPY %s\n" % (destPathEsc, origPathEsc))
+        if phonyTarget:
+            phonyTargetEsc = ninja_esc_path(phonyTarget)
+            ninjaFile.write("build %s : phony %s\n" % (phonyTargetEsc, destPathEsc))
+        ninjaFile.write("\n")
 
 
 projectFactory = {}

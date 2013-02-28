@@ -34,6 +34,7 @@ class Prog0(upynja.cpp.CppProject):
             "Source/e0_5b.cpp",
         ]
         with self.cpp_compile(sloppyFiles_b) as tasks:
+            # broadcast write
             tasks.warnLevel = 1
 
         # compile one file at a time with per-file settings

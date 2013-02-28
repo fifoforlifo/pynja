@@ -10,7 +10,7 @@ import upynja
 
 
 def generate_ninja_build(ninjaFile):
-    projectMan = pynja.build.ProjectMan()
+    projectMan = pynja.build.ProjectMan(ninjaFile)
 
     # define variants and toolchains on a per-OS basis
     variants = []
@@ -24,6 +24,13 @@ def generate_ninja_build(ninjaFile):
 
     else:
         raise NotImplemented()
+
+    projectMan.emit_rules()
+
+    ninjaFile.write("\n");
+    ninjaFile.write("#############################################\n");
+    ninjaFile.write("# Begin files.\n");
+    ninjaFile.write("\n");
 
     for variant in variants:
         projectMan.get_project("Prog0", variant)
@@ -40,6 +47,9 @@ def regenerate_build():
         with tempfile.TemporaryFile('w+t') as tempNinjaFile:
             generate_ninja_build(tempNinjaFile)
             tempNinjaFile.seek(0)
+            with open(ninjaPath, "wt") as ninjaFile:
+                content = tempNinjaFile.read()
+                ninjaFile.write(content)
 
 
 if (__name__ == "__main__"):
