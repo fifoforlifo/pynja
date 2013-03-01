@@ -1,3 +1,4 @@
+import sys
 import os
 import pynja.io
 from abc import *
@@ -33,6 +34,19 @@ def write_file_if_different(filePath, newContents):
         with open(filePath, "wt") as file:
             file.write(newContents)
 
+def get_loaded_modules():
+    modules = []
+    for name, module in sorted(sys.modules.items()):
+        path = getattr(module, "__file__", None)
+        if not path:
+            continue
+        if path.endswith("<frozen>"):
+            continue
+        if not os.path.isabs(path):
+            path = os.path.join(rootDir, path)
+        modules.append(path)
+    return modules
+
 
 class Variant:
     def __init__(self, string, fieldDefs):
@@ -51,6 +65,10 @@ class Variant:
                     errstr = errstr + ("    %s\n" % (option,))
                 raise Exception(errstr)
             setattr(self, fieldName, fieldValue)
+
+    def __lt__(self, other):
+        return self.str < other.str
+
 
 
 class BuildTask(metaclass = ABCMeta):
@@ -157,8 +175,10 @@ class ToolChain(metaclass = ABCMeta):
 
 
 class ProjectMan:
-    def __init__(self, ninjaFile):
+    def __init__(self, ninjaFile, ninjaPath):
         self.ninjaFile = ninjaFile
+        self.ninjaPath = ninjaPath
+        self.ninjaPathEsc = ninja_esc_path(ninjaPath)
         self._projects = {}
         self._toolchains = {}
         self._phonyTargets = {}
@@ -233,7 +253,7 @@ class ProjectMan:
         origPathEsc = ninja_esc_path(origPath)
         destPathEsc = ninja_esc_path(destPath)
 
-        ninjaFile.write("build %s : FILE_COPY %s\n" % (destPathEsc, origPathEsc))
+        ninjaFile.write("build %s : FILE_COPY %s || %s\n" % (destPathEsc, origPathEsc, self.ninjaPathEsc))
         if phonyTarget:
             phonyTargetEsc = ninja_esc_path(phonyTarget)
             ninjaFile.write("build %s : phony %s\n" % (phonyTargetEsc, destPathEsc))
@@ -253,6 +273,44 @@ class ProjectMan:
                 ninjaFile.write(targetEsc)
             ninjaFile.write("\n")
         ninjaFile.write("\n")
+
+    def get_project_list(self):
+        projects = []
+        for projName, variants in sorted(self._projects.items()):
+            for variant, project in sorted(variants.items()):
+                projects.append(project)
+        return projects
+
+    def emit_regenerator_target(self, remakeScriptPath):
+        ninjaFile = self.ninjaFile
+        ninjaPath = self.ninjaPath
+        ninjaPathEsc = ninja_esc_path(ninjaPath)
+        remakeScriptPathEsc = ninja_esc_path(remakeScriptPath)
+        projects = self.get_project_list()
+        rootDir = os.path.dirname(remakeScriptPath)
+
+        ninjaFile.write("#############################################\n");
+        ninjaFile.write("# Remake build.ninja if any python sources changed.\n");
+        ninjaFile.write("rule RERUN_MAKE\n");
+        ninjaFile.write("  command = python \"%s\"\n" % remakeScriptPath);
+        ninjaFile.write("  description = Running remake script.\n");
+        ninjaFile.write("  generator = 1\n");
+        ninjaFile.write("  restat = 1\n");
+        ninjaFile.write("\n");
+
+        ninjaFile.write("build %s $\n" % ninjaPathEsc)
+        for project in projects:
+            for path in project.makeFiles:
+                pathEsc = ninja_esc_path(path)
+                ninjaFile.write("    %s $\n" % pathEsc)
+        ninjaFile.write("  : RERUN_MAKE |$\n")
+        loadedModules = get_loaded_modules()
+        for path in sorted(loadedModules):
+            pathEsc = ninja_esc_path(path)
+            ninjaFile.write("    %s $\n" % pathEsc)
+        ninjaFile.write("    %s\n" % remakeScriptPathEsc)
+        ninjaFile.write("\n");
+        ninjaFile.write("\n");
 
 
 projectFactory = {}

@@ -9,7 +9,7 @@ def write_rsp_file(project, task, options):
 
     project.makeFiles.append(rspPath)
 
-def binutils_escape_path(path):
+def binutils_esc_path(path):
     return path.replace("\\", "/")
 
 def get_lib_name(path):
@@ -71,7 +71,7 @@ class GccToolChain(pynja.build.ToolChain):
         for includePath in task.includePaths:
             if not includePath:
                 raise Exception("empty includePath set for: " + task.outputPath)
-            includePathEsc = binutils_escape_path(includePath)
+            includePathEsc = binutils_esc_path(includePath)
             options.append("-I\"%s\"" % includePathEsc)
 
     def translate_defines(self, options, task):
@@ -85,11 +85,11 @@ class GccToolChain(pynja.build.ToolChain):
             libName = get_lib_name(input)
             if libName:
                 libDir = os.path.dirname(input)
-                libDirEsc = binutils_escape_path(libDir)
+                libDirEsc = binutils_esc_path(libDir)
                 options.append("-L\"%s\"" % libDirEsc)
                 options.append("-l\"%s\"" % libName)
             else:
-                inputEsc = binutils_escape_path(input)
+                inputEsc = binutils_esc_path(input)
                 options.append("\"%s\"" % inputEsc)
 
 
@@ -106,7 +106,8 @@ class GccToolChain(pynja.build.ToolChain):
         # write build command
         ninjaFile.write("build %(outputPath)s  %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
         pynja.build.translate_extra_deps(ninjaFile, task, False)
-        pynja.build.translate_order_only_deps(ninjaFile, task, True)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -140,7 +141,8 @@ class GccToolChain(pynja.build.ToolChain):
         ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
         pynja.build.translate_path_list(ninjaFile, task.inputs)
         pynja.build.translate_extra_deps(ninjaFile, task, False)
-        pynja.build.translate_order_only_deps(ninjaFile, task, True)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -153,7 +155,7 @@ class GccToolChain(pynja.build.ToolChain):
         # write response file
         options = []
         options.append("rc")
-        outputFileEsc = binutils_escape_path(task.outputPath)
+        outputFileEsc = binutils_esc_path(task.outputPath)
         options.append("\"%s\"" % outputFileEsc)
         self.translate_linker_inputs(options, task)
         write_rsp_file(project, task, options)
@@ -176,7 +178,8 @@ class GccToolChain(pynja.build.ToolChain):
                 ninjaFile.write(" ")
                 ninjaFile.write(inputEsc)
         pynja.build.translate_extra_deps(ninjaFile, task, False)
-        pynja.build.translate_order_only_deps(ninjaFile, task, True)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -190,7 +193,7 @@ class GccToolChain(pynja.build.ToolChain):
         options = []
         if not task.makeExecutable:
             options.append("-shared")
-        outputFileEsc = binutils_escape_path(task.outputPath)
+        outputFileEsc = binutils_esc_path(task.outputPath)
         options.append("-o \"%s\"" % outputFileEsc)
         if not task.keepDebugInfo:
             options.append("--strip-debug")
@@ -307,7 +310,8 @@ if os.name == "nt":
             # write build command
             ninjaFile.write("build %(outputPath)s %(debugOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
             pynja.build.translate_extra_deps(ninjaFile, task, False)
-            pynja.build.translate_order_only_deps(ninjaFile, task, True)
+            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+            pynja.build.translate_order_only_deps(ninjaFile, task, False)
             ninjaFile.write("\n")
 
             ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -343,7 +347,8 @@ if os.name == "nt":
             ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
             pynja.build.translate_path_list(ninjaFile, task.inputs)
             pynja.build.translate_extra_deps(ninjaFile, task, False)
-            pynja.build.translate_order_only_deps(ninjaFile, task, True)
+            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+            pynja.build.translate_order_only_deps(ninjaFile, task, False)
             ninjaFile.write("\n")
 
             ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -379,7 +384,8 @@ if os.name == "nt":
                     ninjaFile.write(" ")
                     ninjaFile.write(inputEsc)
             pynja.build.translate_extra_deps(ninjaFile, task, False)
-            pynja.build.translate_order_only_deps(ninjaFile, task, True)
+            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+            pynja.build.translate_order_only_deps(ninjaFile, task, False)
             ninjaFile.write("\n")
 
             ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)

@@ -9,20 +9,23 @@ import pynja
 import upynja
 
 
-def generate_ninja_build(ninjaFile):
-    projectMan = pynja.build.ProjectMan(ninjaFile)
+def generate_ninja_build(ninjaFile, ninjaPath):
+    projectMan = pynja.build.ProjectMan(ninjaFile, ninjaPath)
 
     # define variants and toolchains on a per-OS basis
     variants = []
 
     if os.name == 'nt':
-        variants.append(upynja.cpp.CppVariant("windows-msvc10-x86-dbg-dcrt"))
-        variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
-        variants.append(upynja.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
+        if os.path.exists(upynja.rootPaths.msvc10):
+            projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-x86", upynja.rootPaths.msvc10, "x86"))
+            variants.append(upynja.cpp.CppVariant("windows-msvc10-x86-dbg-dcrt"))
 
-        projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-x86", upynja.rootPaths.msvc10, "x86"))
-        projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-amd64", upynja.rootPaths.msvc10, "amd64"))
-        projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-amd64", upynja.rootPaths.mingw64))
+            projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-amd64", upynja.rootPaths.msvc10, "amd64"))
+            variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
+
+        if os.path.exists(upynja.rootPaths.mingw64):
+            projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-amd64", upynja.rootPaths.mingw64))
+            variants.append(upynja.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
 
     else:
         raise NotImplemented()
@@ -39,6 +42,8 @@ def generate_ninja_build(ninjaFile):
 
     projectMan.emit_phony_targets()
 
+    projectMan.emit_regenerator_target(__file__)
+
 
 def regenerate_build():
     builtDir = upynja.rootPaths.built
@@ -49,7 +54,7 @@ def regenerate_build():
 
     with pynja.io.CrudeLockFile(lockPath):
         with tempfile.TemporaryFile('w+t') as tempNinjaFile:
-            generate_ninja_build(tempNinjaFile)
+            generate_ninja_build(tempNinjaFile, ninjaPath)
             tempNinjaFile.seek(0)
             newContent = tempNinjaFile.read()
             oldContent = ""
