@@ -24,6 +24,9 @@ def generate_ninja_build(ninjaFile, ninjaPath):
             variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
 
         if os.path.exists(upynja.rootPaths.mingw64):
+            projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-x86", upynja.rootPaths.mingw64))
+            variants.append(upynja.cpp.CppVariant("windows-mingw64-x86-dbg-dcrt"))
+
             projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-amd64", upynja.rootPaths.mingw64))
             variants.append(upynja.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
 
