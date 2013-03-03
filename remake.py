@@ -9,6 +9,13 @@ import pynja
 import upynja
 
 
+def get_current_script_path():
+    if os.path.isabs(__file__):
+        return __file__
+    else:
+        return os.path.join(upynja.rootDir, __file__)
+
+
 def generate_ninja_build(ninjaFile, ninjaPath):
     projectMan = pynja.build.ProjectMan(ninjaFile, ninjaPath)
 
@@ -45,7 +52,7 @@ def generate_ninja_build(ninjaFile, ninjaPath):
 
     projectMan.emit_phony_targets()
 
-    projectMan.emit_regenerator_target(__file__)
+    projectMan.emit_regenerator_target(get_current_script_path())
 
 
 def regenerate_build():
