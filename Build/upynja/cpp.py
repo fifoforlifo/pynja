@@ -19,9 +19,16 @@ class CppVariant(pynja.build.Variant):
             ]
             return fieldDefs
         elif os.name == 'posix':
-            raise NotImplemented()
+            fieldDefs = [
+                "os",           [ "linux" ],
+                "toolchain",    [ "gcc" ],
+                "arch",         [ "x86", "amd64" ],
+                "config",       [ "dbg", "rel" ],
+                "crt",          [ "scrt", "dcrt" ],
+            ]
+            return fieldDefs
         else:
-            raise NotImplemented()
+            raise Exception("Not implemented")
 
 
 class CppProject(pynja.cpp.CppProject):
@@ -39,7 +46,7 @@ class CppProject(pynja.cpp.CppProject):
         return os.path.join(upynja.rootPaths.built, getattr(upynja.rootPaths, self.__class__.__name__ + "_rel"), self.variant.str)
 
     def set_gcc_machine_arch(self, task):
-        if re.match("mingw|gcc", self.variant.toolchain):
+        if re.match("(mingw)|(gcc)", self.variant.toolchain):
             if self.variant.arch == "x86":
                 task.addressModel = "-m32"
             elif self.variant.arch == "amd64":

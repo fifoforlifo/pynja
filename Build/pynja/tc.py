@@ -66,6 +66,9 @@ class GccToolChain(pynja.build.ToolChain):
             raise Exception("debugLevel must be between 0-3.  debugLevel was set to %s" % str(task.debugLevel))
         options.append("-g%d" % task.debugLevel)
 
+    def translate_address_model(self, options, task):
+        if task.addressModel:
+            options.append(task.addressModel)
 
     def translate_include_paths(self, options, task):
         for includePath in task.includePaths:
@@ -125,6 +128,7 @@ class GccToolChain(pynja.build.ToolChain):
         # translate simple options first for ease of viewing
         self.translate_opt_level(options, task)
         self.translate_debug_level(options, task)
+        self.translate_address_model(options, task)
         self.translate_include_paths(options, task)
         self.translate_defines(options, task)
         options.extend(task.extraOptions)
@@ -195,6 +199,7 @@ class GccToolChain(pynja.build.ToolChain):
             options.append("-shared")
         outputFileEsc = binutils_esc_path(task.outputPath)
         options.append("-o \"%s\"" % outputFileEsc)
+        self.translate_address_model(options, task)
         if not task.keepDebugInfo:
             options.append("--strip-debug")
         self.translate_linker_inputs(options, task)

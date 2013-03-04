@@ -34,7 +34,7 @@ def write_file_if_different(filePath, newContents):
         with open(filePath, "wt") as file:
             file.write(newContents)
 
-def get_loaded_modules():
+def get_loaded_modules(rootDir):
     modules = []
     for name, module in sorted(sys.modules.items()):
         path = getattr(module, "__file__", None)
@@ -304,7 +304,7 @@ class ProjectMan:
                 pathEsc = ninja_esc_path(path)
                 ninjaFile.write("    %s $\n" % pathEsc)
         ninjaFile.write("  : RERUN_MAKE |$\n")
-        loadedModules = get_loaded_modules()
+        loadedModules = get_loaded_modules(rootDir)
         for path in sorted(loadedModules):
             pathEsc = ninja_esc_path(path)
             ninjaFile.write("    %s $\n" % pathEsc)

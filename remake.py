@@ -1,3 +1,4 @@
+#!/usr/bin/python3.3
 import sys
 import os
 import tempfile
@@ -36,9 +37,14 @@ def generate_ninja_build(ninjaFile, ninjaPath):
 
             projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-amd64", upynja.rootPaths.mingw64))
             variants.append(upynja.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
+    elif os.name == 'posix':
+        projectMan.add_toolchain(pynja.tc.GccToolChain("gcc-x86", "/usr"))
+        variants.append(upynja.cpp.CppVariant("linux-gcc-x86-dbg-dcrt"))
 
+        projectMan.add_toolchain(pynja.tc.GccToolChain("gcc-amd64", "/usr"))
+        variants.append(upynja.cpp.CppVariant("linux-gcc-amd64-dbg-dcrt"))
     else:
-        raise NotImplemented()
+        raise Exception("Not implemented")
 
     projectMan.emit_rules()
 
