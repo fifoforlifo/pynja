@@ -17,9 +17,7 @@ def get_current_script_path():
         return os.path.join(upynja.rootDir, __file__)
 
 
-def generate_ninja_build(ninjaFile, ninjaPath):
-    projectMan = pynja.build.ProjectMan(ninjaFile, ninjaPath)
-
+def generate_ninja_build(projectMan):
     # define variants and toolchains on a per-OS basis
     variants = []
 
@@ -30,6 +28,13 @@ def generate_ninja_build(ninjaFile, ninjaPath):
 
             projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-amd64", upynja.rootPaths.msvc10, "amd64"))
             variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
+
+        if os.path.exists(upynja.rootPaths.msvc11):
+            projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc11-x86", upynja.rootPaths.msvc11, "x86"))
+            variants.append(upynja.cpp.CppVariant("windows-msvc11-x86-dbg-dcrt"))
+
+            projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc11-amd64", upynja.rootPaths.msvc11, "amd64"))
+            variants.append(upynja.cpp.CppVariant("windows-msvc11-amd64-dbg-dcrt"))
 
         if os.path.exists(upynja.rootPaths.mingw64):
             projectMan.add_toolchain(pynja.tc.GccToolChain("mingw64-x86", upynja.rootPaths.mingw64))
@@ -48,10 +53,10 @@ def generate_ninja_build(ninjaFile, ninjaPath):
 
     projectMan.emit_rules()
 
-    ninjaFile.write("\n");
-    ninjaFile.write("#############################################\n");
-    ninjaFile.write("# Begin files.\n");
-    ninjaFile.write("\n");
+    projectMan.ninjaFile.write("\n");
+    projectMan.ninjaFile.write("#############################################\n");
+    projectMan.ninjaFile.write("# Begin files.\n");
+    projectMan.ninjaFile.write("\n");
 
     for variant in variants:
         projectMan.get_project("Prog0", variant)
@@ -70,7 +75,8 @@ def regenerate_build():
 
     with pynja.io.CrudeLockFile(lockPath):
         with tempfile.TemporaryFile('w+t') as tempNinjaFile:
-            generate_ninja_build(tempNinjaFile, ninjaPath)
+            projectMan = pynja.build.ProjectMan(tempNinjaFile, ninjaPath)
+            generate_ninja_build(projectMan)
             tempNinjaFile.seek(0)
             newContent = tempNinjaFile.read()
             oldContent = ""
