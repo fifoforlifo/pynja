@@ -1,7 +1,6 @@
 #!/usr/bin/python3.3
 import sys
 import os
-import tempfile
 
 rootDir = sys.path[0]
 sys.path.append(os.path.join(rootDir, "Build"))
@@ -66,28 +65,7 @@ def generate_ninja_build(projectMan):
     projectMan.emit_regenerator_target(get_current_script_path())
 
 
-def regenerate_build():
-    builtDir = upynja.rootPaths.built
-    ninjaPath = os.path.join(builtDir, "build.ninja")
-    lockPath = ninjaPath + ".lock"
-
-    pynja.io.create_dir(builtDir)
-
-    with pynja.io.CrudeLockFile(lockPath):
-        with tempfile.TemporaryFile('w+t') as tempNinjaFile:
-            projectMan = pynja.build.ProjectMan(tempNinjaFile, ninjaPath)
-            generate_ninja_build(projectMan)
-            tempNinjaFile.seek(0)
-            newContent = tempNinjaFile.read()
-            oldContent = ""
-            if os.path.exists(ninjaPath):
-                with open(ninjaPath, "rt") as ninjaFile:
-                    oldContent = ninjaFile.read()
-            if newContent != oldContent:
-                with open(ninjaPath, "wt") as ninjaFile:
-                    ninjaFile.write(newContent)
-
 
 if (__name__ == "__main__"):
     print("generating with rootDir=%s" % upynja.rootDir)
-    regenerate_build()
+    pynja.build.regenerate_build(generate_ninja_build, upynja.rootPaths.built)

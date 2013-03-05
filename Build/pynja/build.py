@@ -1,6 +1,7 @@
 import sys
 import os
 import pynja.io
+import tempfile
 from abc import *
 
 
@@ -318,3 +319,24 @@ projectFactory = {}
 def project(projectType):
     projectFactory[projectType.__name__] = projectType
     return projectType
+
+
+def regenerate_build(generate_ninja_build, builtDir):
+    ninjaPath = os.path.join(builtDir, "build.ninja")
+    lockPath = ninjaPath + ".lock"
+
+    pynja.io.create_dir(builtDir)
+
+    with pynja.io.CrudeLockFile(lockPath):
+        with tempfile.TemporaryFile('w+t') as tempNinjaFile:
+            projectMan = pynja.build.ProjectMan(tempNinjaFile, ninjaPath)
+            generate_ninja_build(projectMan)
+            tempNinjaFile.seek(0)
+            newContent = tempNinjaFile.read()
+            oldContent = ""
+            if os.path.exists(ninjaPath):
+                with open(ninjaPath, "rt") as ninjaFile:
+                    oldContent = ninjaFile.read()
+            if newContent != oldContent:
+                with open(ninjaPath, "wt") as ninjaFile:
+                    ninjaFile.write(newContent)
