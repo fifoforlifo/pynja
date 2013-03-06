@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 
 script, workingDir, logPath, installDir, arch, rspPath = sys.argv
@@ -18,10 +19,11 @@ def shell_escape_path(path):
 def create_lib():
     cmd = "lib \"@%s\" > \"%s\" 2>&1 " % (rspPath, logPath)
     exitcode = os.system(cmd)
+    with open(logPath, "rt") as logFile:
+        logContents = logFile.read()
+    if re.search("(warning)|(error)", logContents, re.MULTILINE):
+        print("%s" % logContents)
     if exitcode:
-        with open(logPath, "rt") as logFile:
-            contents = logFile.read()
-            print(contents)
         sys.exit(exitcode)
 
 

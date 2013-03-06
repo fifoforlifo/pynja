@@ -56,19 +56,34 @@ class GccToolChain(pynja.build.ToolChain):
         ninjaFile.write("\n")
 
 
-    def translate_opt_level(self, options, task):
-        if not (0 <= task.optLevel <= 3):
-            raise Exception("optLevel must be between 0-3.  optLevel was set to %s" % str(task.optLevel))
-        options.append("-O%d" % task.optLevel)
-
     def translate_debug_level(self, options, task):
         if not (0 <= task.debugLevel <= 3):
             raise Exception("debugLevel must be between 0-3.  debugLevel was set to %s" % str(task.debugLevel))
         options.append("-g%d" % task.debugLevel)
 
-    def translate_address_model(self, options, task):
-        if task.addressModel:
-            options.append(task.addressModel)
+    def translate_opt_level(self, options, task):
+        if not (0 <= task.optLevel <= 3):
+            raise Exception("optLevel must be between 0-3.  optLevel was set to %s" % str(task.optLevel))
+        options.append("-O%d" % task.optLevel)
+
+    def translate_warn_level(self, options, task):
+        if not (0 <= task.warnLevel <= 4):
+            raise Exception("invalid warn level: " + str(task.warnLevel))
+
+        if task.warnLevel == 0:
+            options.append("-w")
+        else:
+            if task.warnLevel >= 1:
+                options.append("-Wall")
+            if task.warnLevel >= 2:
+                options.append("-Wconversion")
+            if task.warnLevel >= 3:
+                options.append("-Wextra")
+            if task.warnLevel == 4:
+                options.append("-Wpedantic")
+
+        if task.warningsAsErrors:
+            options.append("-Werror")
 
     def translate_include_paths(self, options, task):
         for includePath in task.includePaths:
@@ -94,6 +109,20 @@ class GccToolChain(pynja.build.ToolChain):
             else:
                 inputEsc = binutils_esc_path(input)
                 options.append("\"%s\"" % inputEsc)
+
+    def translate_address_model(self, options, task):
+        if task.addressModel:
+            options.append(task.addressModel)
+
+    def translate_cpp_options(self, options, task):
+        # translate simple options first for ease of viewing
+        self.translate_opt_level(options, task)
+        self.translate_debug_level(options, task)
+        self.translate_warn_level(options, task)
+        self.translate_address_model(options, task)
+        self.translate_include_paths(options, task)
+        self.translate_defines(options, task)
+        options.extend(task.extraOptions)
 
 
     def emit_cpp_compile(self, project, task):
@@ -125,13 +154,7 @@ class GccToolChain(pynja.build.ToolChain):
         # write response file
         options = []
         options.append("-c")
-        # translate simple options first for ease of viewing
-        self.translate_opt_level(options, task)
-        self.translate_debug_level(options, task)
-        self.translate_address_model(options, task)
-        self.translate_include_paths(options, task)
-        self.translate_defines(options, task)
-        options.extend(task.extraOptions)
+        self.translate_cpp_options(options, task)
         write_rsp_file(project, task, options)
 
     def emit_static_lib(self, project, task):
@@ -272,6 +295,16 @@ if os.name == "nt":
             if task.minimalRebuild:
                 options.append("/Gm")
 
+        def translate_warn_level(self, options, task):
+            if not (0 <= task.warnLevel <= 4):
+                raise Exception("invalid warn level: " + str(task.warnLevel))
+
+            # enable one-line diagnostics
+            options.append("/WL")
+            options.append("/W" + str(task.warnLevel))
+            if task.warningsAsErrors:
+                options.append("/WX")
+
         def translate_include_paths(self, options, task):
             for includePath in task.includePaths:
                 if not includePath:
@@ -295,6 +328,16 @@ if os.name == "nt":
                     options.append("/MD")
                 else:
                     options.append("/MT")
+
+        def translate_cpp_options(self, options, task):
+            # translate simple options first for ease of viewing
+            self.translate_opt_level(options, task)
+            self.translate_debug_level(options, task)
+            self.translate_warn_level(options, task)
+            self.translate_crt(options, task)
+            self.translate_include_paths(options, task)
+            self.translate_defines(options, task)
+            options.extend(task.extraOptions)
 
 
         def emit_cpp_compile(self, project, task):
@@ -332,13 +375,7 @@ if os.name == "nt":
             options = []
             options.append("/nologo")
             options.append("/c")
-            # translate simple options first for ease of viewing
-            self.translate_opt_level(options, task)
-            self.translate_debug_level(options, task)
-            self.translate_crt(options, task)
-            self.translate_include_paths(options, task)
-            self.translate_defines(options, task)
-            options.extend(task.extraOptions)
+            self.translate_cpp_options(options, task)
             write_rsp_file(project, task, options)
 
         def emit_static_lib(self, project, task):

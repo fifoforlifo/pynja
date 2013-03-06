@@ -11,8 +11,10 @@ class CppTask(pynja.build.BuildTask):
         self.workingDir = workingDir
         # common compiler options
         self.extraOptions = []
-        self.debugLevel = 2
         self.optLevel = 3
+        self.debugLevel = 2
+        self.warnLevel = 3
+        self.warningsAsErrors = False
         self.includePaths = []
         self.defines = []
         # gcc-specific

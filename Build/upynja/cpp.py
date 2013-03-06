@@ -32,6 +32,11 @@ class CppVariant(pynja.build.Variant):
 
 
 class CppProject(pynja.cpp.CppProject):
+    def __init__(self, projectMan, variant):
+        super().__init__(projectMan, variant)
+        if self.variant.os == "windows":
+            self.winsdkVer = 80
+
     def get_toolchain(self):
         toolchainName = "%s-%s" % (self.variant.toolchain, self.variant.arch)
         toolchain = self.projectMan.get_toolchain(toolchainName)
@@ -56,8 +61,13 @@ class CppProject(pynja.cpp.CppProject):
         task.phonyTarget = os.path.basename(task.sourcePath)
         if self.variant.os == "windows":
             if self.variant.toolchain.startswith("msvc"):
-                task.includePaths.append(upynja.rootPaths.winsdk + "/Include")
                 task.dynamicCRT = (self.variant.crt == 'dcrt')
+                winsdkDir = self.calc_winsdk_dir()
+                if self.winsdkVer < 80:
+                    task.includePaths.append(os.path.join(winsdkDir, "Include"))
+                else:
+                    task.includePaths.append(os.path.join(winsdkDir, "Include", "shared"))
+                    task.includePaths.append(os.path.join(winsdkDir, "Include", "um"))
 
         self.set_gcc_machine_arch(task)
 
@@ -101,17 +111,30 @@ class CppProject(pynja.cpp.CppProject):
         return task
 
     def calc_winsdk_dir(self):
-        if self.variant.arch == "x86":
-            return upynja.rootPaths.winsdk + "/Lib"
-        elif self.variant.arch == "amd64":
-            return upynja.rootPaths.winsdk + "/Lib/x64"
+        name = 'winsdk' + str(self.winsdkVer)
+        return getattr(upynja.rootPaths, name)
+
+    def calc_winsdk_lib_dir(self):
+        winsdkDir = self.calc_winsdk_dir()
+        if self.winsdkVer < 80:
+            if self.variant.arch == "x86":
+                return os.path.join(winsdkDir, "Lib")
+            elif self.variant.arch == "amd64":
+                return os.path.join(winsdkDir, "Lib", "x64")
+            else:
+                raise Exception("unsupported arch: " + self.variant.arch)
         else:
-            raise Exception("unsupported arch: " + self.variant.arch)
+            if self.variant.arch == "x86":
+                return os.path.join(winsdkDir, "Lib", "win8", "um", "x86")
+            elif self.variant.arch == "amd64":
+                return os.path.join(winsdkDir, "Lib", "win8", "um", "x64")
+            else:
+                raise Exception("unsupported arch: " + self.variant.arch)
 
     def add_platform_libs(self, task):
         if self.variant.os == "windows":
             if self.variant.toolchain.startswith("msvc"):
-                winsdkLibDir = self.calc_winsdk_dir()
+                winsdkLibDir = self.calc_winsdk_lib_dir()
                 task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
                 task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))
                 task.inputs.append(os.path.join(winsdkLibDir, "gdi32.lib"))

@@ -46,10 +46,11 @@ def generate_deps():
 def cpp_compile():
     cmd = "cl \"%s\" \"@%s\" \"/Fo%s\" > \"%s\" 2>&1 " % (srcPath, rspPath, objPath, logPath)
     exitcode = os.system(cmd)
+    with open(logPath, "rt") as logFile:
+        logContents = logFile.read()
+    if re.search("(warning)|(error)", logContents, re.MULTILINE):
+        print("%s" % logContents)
     if exitcode:
-        with open(logPath, "rt") as logFile:
-            contents = logFile.read()
-            print(contents)
         sys.exit(exitcode)
 
 

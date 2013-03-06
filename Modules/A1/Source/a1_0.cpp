@@ -3,7 +3,9 @@ __declspec(dllexport)
 #else
 __attribute__((visibility("default")))
 #endif
-void a1_0()
+int a1_0()
 {
+    long long x = 2;
+    return x;
 }
 
