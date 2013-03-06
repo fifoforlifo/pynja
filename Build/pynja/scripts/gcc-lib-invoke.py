@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import gcc_common
 
 
 script, workingDir, logPath, installDir, prefix, suffix, rspPath = sys.argv
@@ -24,8 +25,7 @@ def create_lib():
 if __name__ == '__main__':
     os.chdir(workingDir)
 
-    oldPathEnv = os.environ.get('PATH') or ""
-    os.environ['PATH'] = "%s/bin%s%s" % (installDir, os.pathsep, oldPathEnv)
+    gcc_common.set_gcc_environment(installDir)
 
     create_lib()
     sys.exit(0)

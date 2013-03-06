@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import msvc_common
 
 
 script, workingDir, srcPath, objPath, depPath, logPath, installDir, arch, rspPath = sys.argv
@@ -62,20 +63,7 @@ if __name__ == '__main__':
 
     os.chdir(workingDir)
 
-    oldPathEnv = os.environ.get('PATH') or ""
-
-    os.environ["INCLUDE"] = "%s\\VC\\include" % installDir
-    if arch == "x86":
-        os.environ['LIB'] = "%s\\VC\\lib" % installDir
-        os.environ['PATH'] = "%s\\VC\\bin;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
-    elif arch == "amd64":
-        os.environ['LIB'] = "%s\\VC\\lib\\amd64" % installDir
-        if is_os_64bit() and os.path.exists("%s\\VC\\bin\\amd64" % installDir):
-            os.environ['PATH'] = "%s\\VC\\bin\\amd64;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
-        else:
-            os.environ['PATH'] = "%s\\VC\\bin\\x86_amd64;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
-    else:
-        raise Exception("Unexpected arch ... should not be reachable ...")
+    msvc_common.set_msvc_environment(installDir, arch)
 
     generate_deps()
     cpp_compile()

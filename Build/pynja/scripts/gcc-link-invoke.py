@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import gcc_common
 
 
 script, workingDir, logPath, installDir, prefix, suffix, rspPath = sys.argv
@@ -24,10 +25,7 @@ def link():
 if __name__ == '__main__':
     os.chdir(workingDir)
 
-    oldPathEnv = os.environ.get('PATH') or ""
-    os.environ['PATH'] = "%s/bin%s%s" % (installDir, os.pathsep, oldPathEnv)
-    os.environ['INCLUDE'] = "%s/include" % installDir
-    os.environ['LIB'] = "%s/lib" % installDir
+    gcc_common.set_gcc_environment(installDir)
 
     link()
     sys.exit(0)
