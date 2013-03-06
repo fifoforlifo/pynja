@@ -28,7 +28,7 @@ class GccToolChain(pynja.build.ToolChain):
         self.installDir = installDir
         self.prefix = prefix if prefix else "_NO_PREFIX_"
         self.suffix = suffix if suffix else "_NO_SUFFIX_"
-        self._scriptDir = os.path.join(os.path.dirname(__file__), "gcc")
+        self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "gcc-cxx-invoke.py")
         self._lib_script  = os.path.join(self._scriptDir, "gcc-lib-invoke.py")
         self._link_script = os.path.join(self._scriptDir, "gcc-link-invoke.py")
@@ -230,6 +230,191 @@ class GccToolChain(pynja.build.ToolChain):
         write_rsp_file(project, task, options)
 
 
+class NvccToolChain(pynja.build.ToolChain):
+    """A toolchain object capable of driving nvcc (CUDA compiler)."""
+
+    def __init__(self, name, installDir):
+        super().__init__(name)
+        self.installDir = installDir
+        self.hostCompiler = "gcc" # options are gcc, msvc
+        self.hostInstallDir = None
+        self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
+        self._cxx_script  = os.path.join(self._scriptDir, "nvcc-cxx-invoke.py")
+        self._lib_script  = os.path.join(self._scriptDir, "nvcc-lib-invoke.py")
+        self._link_script = os.path.join(self._scriptDir, "nvcc-link-invoke.py")
+        pass
+
+    def emit_rules(self, ninjaFile):
+        ninjaFile.write("#############################################\n")
+        ninjaFile.write("# %s\n" % self.name)
+        ninjaFile.write("\n")
+        ninjaFile.write("rule %s_cxx\n" % self.name)
+        ninjaFile.write("  depfile = $DEP_FILE\n")
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s %s \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  description = %s_cxx  $DESC\n" % self.name)
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("rule %s_lib\n" % self.name)
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._lib_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  description = %s_lib  $DESC\n" % self.name)
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("rule %s_link\n" % self.name)
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._link_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  description = %s_link $DESC\n" % self.name)
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
+
+
+    def translate_warn_level(self, options, task):
+        if not (0 <= task.warnLevel <= 4):
+            raise Exception("invalid warn level: " + str(task.warnLevel))
+
+        if task.warnLevel == 0:
+            options.append("-w")
+        else:
+            hostOptions = []
+            if self.hostCompiler == "gcc":
+                GccToolChain.translate_warn_level(hostOptions, task)
+            elif self.hostCompiler == "msvc":
+                MsvcToolChain.translate_warn_level(hostOptions, task)
+            else:
+                raise Exception("invalid hostCompiler %s" % str(self.hostCompiler))
+            for option in hostOptions:
+                options.append("-Xcompiler %s" % option)
+
+    def translate_linker_inputs(self, options, task):
+        for input in task.inputs:
+            libName = get_lib_name(input)
+            if libName:
+                libDir = os.path.dirname(input)
+                libDirEsc = binutils_esc_path(libDir)
+                options.append("-L\"%s\"" % libDirEsc)
+                options.append("-l\"%s\"" % libName)
+            else:
+                inputEsc = binutils_esc_path(input)
+                options.append("\"%s\"" % inputEsc)
+
+    def translate_address_model(self, options, task):
+        if task.addressModel:
+            options.append(task.addressModel)
+
+    def translate_cpp_options(self, options, task):
+        # translate simple options first for ease of viewing
+        GccToolChain.translate_opt_level(options, task)
+        GccToolChain.translate_debug_level(options, task)
+        self.translate_warn_level(options, task)
+        GccToolChain.translate_address_model(options, task)
+        GccToolChain.translate_include_paths(options, task)
+        GccToolChain.translate_defines(options, task)
+        options.extend(task.extraOptions)
+
+
+    def emit_cpp_compile(self, project, task):
+        ninjaFile = project.projectMan.ninjaFile
+        name = self.name
+        outputPath = pynja.build.ninja_esc_path(task.outputPath)
+        sourcePath = pynja.build.ninja_esc_path(task.sourcePath)
+        logPath = outputPath + ".log"
+        sourceName = os.path.basename(task.sourcePath)
+        outputName = os.path.basename(task.outputPath)
+        scriptPath = pynja.build.ninja_esc_path(self._cxx_script)
+
+        # write build command
+        ninjaFile.write("build %(outputPath)s  %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        pynja.build.translate_extra_deps(ninjaFile, task, False)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
+        ninjaFile.write("\n")
+
+        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
+        ninjaFile.write("  OBJ_FILE    = %s\n" % task.outputPath)
+        ninjaFile.write("  DEP_FILE    = %s.d\n" % task.outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
+        ninjaFile.write("\n")
+
+        # write response file
+        options = []
+        options.append("-c")
+        self.translate_cpp_options(options, task)
+        write_rsp_file(project, task, options)
+
+    def emit_static_lib(self, project, task):
+        ninjaFile = project.projectMan.ninjaFile
+        name = self.name
+        outputPath = pynja.build.ninja_esc_path(task.outputPath)
+        logPath = outputPath + ".log"
+        outputName = os.path.basename(task.outputPath)
+        scriptPath = pynja.build.ninja_esc_path(self._lib_script)
+
+        ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        pynja.build.translate_path_list(ninjaFile, task.inputs)
+        pynja.build.translate_extra_deps(ninjaFile, task, False)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
+        ninjaFile.write("\n")
+
+        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s\n" % outputName)
+        ninjaFile.write("\n")
+        ninjaFile.write("\n")
+
+        # write response file
+        options = []
+        options.append("rc")
+        outputFileEsc = binutils_esc_path(task.outputPath)
+        options.append("\"%s\"" % outputFileEsc)
+        self.translate_linker_inputs(options, task)
+        write_rsp_file(project, task, options)
+
+    def emit_link(self, project, task):
+        ninjaFile = project.projectMan.ninjaFile
+        name = self.name
+        outputPath = pynja.build.ninja_esc_path(task.outputPath)
+        libraryPath = ""
+        if task.outputLibraryPath and (task.outputLibraryPath != task.outputPath):
+            libraryPath = pynja.build.ninja_esc_path(task.outputLibraryPath)
+        logPath = outputPath + ".log"
+        outputName = os.path.basename(task.outputPath)
+        scriptPath = pynja.build.ninja_esc_path(self._lib_script)
+
+        ninjaFile.write("build %(outputPath)s %(libraryPath)s %(logPath)s : %(name)s_link | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        for input in task.inputs:
+            if os.path.isabs(input):
+                inputEsc = pynja.build.ninja_esc_path(input)
+                ninjaFile.write(" ")
+                ninjaFile.write(inputEsc)
+        pynja.build.translate_extra_deps(ninjaFile, task, False)
+        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
+        pynja.build.translate_order_only_deps(ninjaFile, task, False)
+        ninjaFile.write("\n")
+
+        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s\n" % outputName)
+        ninjaFile.write("\n")
+        ninjaFile.write("\n")
+
+        # write response file
+        options = []
+        if not task.makeExecutable:
+            options.append("-shared")
+        outputFileEsc = binutils_esc_path(task.outputPath)
+        options.append("-o \"%s\"" % outputFileEsc)
+        self.translate_address_model(options, task)
+        if not task.keepDebugInfo:
+            options.append("--strip-debug")
+        self.translate_linker_inputs(options, task)
+        options.extend(task.extraOptions)
+        write_rsp_file(project, task, options)
+
+
 if os.name == "nt":
     class MsvcToolChain(pynja.build.ToolChain):
         """A toolchain object capable of driving msvc 8.0 and greater."""
@@ -238,7 +423,7 @@ if os.name == "nt":
             super().__init__(name)
             self.installDir = installDir
             self.arch = arch
-            self._scriptDir = os.path.join(os.path.dirname(__file__), "msvc")
+            self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
             self._lib_script  = os.path.join(self._scriptDir, "msvc-lib-invoke.py")
             self._link_script = os.path.join(self._scriptDir, "msvc-link-invoke.py")

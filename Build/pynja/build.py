@@ -222,7 +222,7 @@ class ProjectMan:
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
 
-        copyCommand = os.path.join(os.path.dirname(__file__), "fs", "copy-file.py")
+        copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
 
         ninjaFile.write("#############################################\n")
         ninjaFile.write("# File copy\n")

@@ -22,6 +22,8 @@ class CppTask(pynja.build.BuildTask):
         # msvc-specific
         self.dynamicCRT = True
         self.minimalRebuild = False
+        # nvcc-specific
+        self.deviceDebugLevel = 1 # -lineinfo
 
     def emit(self):
         project = self.project
