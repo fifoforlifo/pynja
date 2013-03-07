@@ -29,6 +29,8 @@ def calc_msvc_options(hostCompiler):
         vsver = 2008
     elif hostCompiler == "msvc10":
         vsver = 2010
+    elif hostCompiler == "msvc11":
+        vsver = 2010    # lie since nvcc doesn't officially support it yet
     else:
         raise Exception("Unsupported msvc version: %s" % hostCompiler)
 

@@ -12,7 +12,7 @@ class CppVariant(pynja.build.Variant):
         if os.name == 'nt':
             fieldDefs = [
                 "os",           [ "windows" ],
-                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10" ],
+                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11"  ],
                 "arch",         [ "x86", "amd64" ],
                 "config",       [ "dbg", "rel" ],
                 "crt",          [ "scrt", "dcrt" ],
