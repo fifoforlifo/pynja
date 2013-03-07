@@ -12,7 +12,7 @@ class CppVariant(pynja.build.Variant):
         if os.name == 'nt':
             fieldDefs = [
                 "os",           [ "windows" ],
-                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64" ],
+                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10" ],
                 "arch",         [ "x86", "amd64" ],
                 "config",       [ "dbg", "rel" ],
                 "crt",          [ "scrt", "dcrt" ],
@@ -60,7 +60,7 @@ class CppProject(pynja.cpp.CppProject):
     def set_cpp_compile_options(self, task):
         task.phonyTarget = os.path.basename(task.sourcePath)
         if self.variant.os == "windows":
-            if self.variant.toolchain.startswith("msvc"):
+            if "msvc" in self.variant.toolchain:
                 task.dynamicCRT = (self.variant.crt == 'dcrt')
                 winsdkDir = self.calc_winsdk_dir()
                 if self.winsdkVer < 80:
@@ -79,7 +79,7 @@ class CppProject(pynja.cpp.CppProject):
             task.optLevel = 3
 
     def make_static_lib(self, name):
-        if self.variant.toolchain.startswith("msvc"):
+        if "msvc" in self.variant.toolchain:
             outputPath = os.path.join(self.builtDir, name + ".lib")
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
@@ -90,9 +90,9 @@ class CppProject(pynja.cpp.CppProject):
     def make_shared_lib(self, name):
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".dll")
-            if self.variant.toolchain.startswith("msvc"):
+            if "msvc" in self.variant.toolchain:
                 libraryPath = os.path.join(self.builtDir, name + ".lib")
-            elif self.variant.toolchain.startswith("mingw"):
+            elif "mingw" in self.variant.toolchain:
                 libraryPath = outputPath # mingw can link directly against DLLs -- no implib needed
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".so")
@@ -133,7 +133,7 @@ class CppProject(pynja.cpp.CppProject):
 
     def add_platform_libs(self, task):
         if self.variant.os == "windows":
-            if self.variant.toolchain.startswith("msvc"):
+            if "msvc" in self.variant.toolchain:
                 winsdkLibDir = self.calc_winsdk_lib_dir()
                 task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
                 task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))

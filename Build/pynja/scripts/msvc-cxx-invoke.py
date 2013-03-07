@@ -17,7 +17,7 @@ def shell_escape_path(path):
     return path.replace(" ", "\\ ")
 
 
-def generate_deps():
+def generate_deps(objPath, srcPath, rspPath, depPath):
     ppPath = objPath + ".pp"
     siPath = objPath + ".si"
     cmd = "cl /showIncludes /E \"%s\" \"@%s\" 1>\"%s\" 2>\"%s\" " % (srcPath, rspPath, ppPath, siPath)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     msvc_common.set_msvc_environment(installDir, arch)
 
-    generate_deps()
+    generate_deps(objPath, srcPath, rspPath, depPath)
     cpp_compile()
 
     sys.exit(0)

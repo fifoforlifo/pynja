@@ -46,3 +46,5 @@ if (os.name == 'nt'):
 
     rootPaths.mingw = "C:\\MinGW"
     rootPaths.mingw64 = "C:\\MinGW64"
+
+    rootPaths.cuda50 = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v5.0"

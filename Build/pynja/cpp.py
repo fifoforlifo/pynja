@@ -18,12 +18,13 @@ class CppTask(pynja.build.BuildTask):
         self.includePaths = []
         self.defines = []
         # gcc-specific
-        self.addressModel = None
+        self.addressModel = None # = {"-m32", "-m64"}
         # msvc-specific
         self.dynamicCRT = True
         self.minimalRebuild = False
         # nvcc-specific
-        self.deviceDebugLevel = 1 # -lineinfo
+        self.relocatableDeviceCode = True
+        self.deviceDebugLevel = 1 # {0 = none, 1 = lineinfo, 2 = full [disables optimization]}
 
     def emit(self):
         project = self.project
@@ -61,6 +62,7 @@ class LinkTask(pynja.build.BuildTask):
         self.keepDebugInfo = True
         # gcc-specific
         self.addressModel = None
+        # nvcc-specific
 
     def emit(self):
         project = self.project
@@ -101,9 +103,9 @@ class CppProject(pynja.build.Project):
     def cpp_compile_one(self, sourcePath):
         outputPath = None
         if os.path.isabs(sourcePath):
-            outputPath = os.path.join(self.builtDir, os.basename(sourcePath) + ".o")
+            outputPath = os.path.join(self.builtDir, os.basename(sourcePath) + self.toolchain.objectFileExt)
         else:
-            outputPath = os.path.join(self.builtDir, sourcePath + ".o")
+            outputPath = os.path.join(self.builtDir, sourcePath + self.toolchain.objectFileExt)
             sourcePath = os.path.join(self.projectDir, sourcePath)
         task = CppTask(self, sourcePath, outputPath, self.projectDir)
         self.set_cpp_compile_options(task)

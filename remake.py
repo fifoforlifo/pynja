@@ -28,6 +28,9 @@ def generate_ninja_build(projectMan):
             projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc10-amd64", upynja.rootPaths.msvc10, "amd64"))
             variants.append(upynja.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
 
+            projectMan.add_toolchain(pynja.tc.NvccToolChain("nvcc_msvc10-amd64", upynja.rootPaths.cuda50, "msvc10", upynja.rootPaths.msvc10, "-m64"))
+            variants.append(upynja.cpp.CppVariant("windows-nvcc_msvc10-amd64-dbg-dcrt"))
+
         if os.path.exists(upynja.rootPaths.msvc11):
             projectMan.add_toolchain(pynja.tc.MsvcToolChain("msvc11-x86", upynja.rootPaths.msvc11, "x86"))
             variants.append(upynja.cpp.CppVariant("windows-msvc11-x86-dbg-dcrt"))
