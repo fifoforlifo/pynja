@@ -58,6 +58,7 @@ class CppProject(pynja.cpp.CppProject):
                 task.addressModel = "-m64"
 
     def set_cpp_compile_options(self, task):
+        super().set_cpp_compile_options(task)
         task.phonyTarget = os.path.basename(task.sourcePath)
         if self.variant.os == "windows":
             if "msvc" in self.variant.toolchain:
@@ -76,6 +77,9 @@ class CppProject(pynja.cpp.CppProject):
             task.optLevel = 0
         elif self.variant.config == "rel":
             task.optLevel = 3
+
+        if isinstance(self.toolchain, pynja.tc.ClangToolChain):
+            task.extraOptions.append("-fcolor-diagnostics")
 
     def make_static_lib(self, name):
         name = os.path.normpath(name)
@@ -143,11 +147,13 @@ class CppProject(pynja.cpp.CppProject):
                 task.inputs.append(os.path.join(winsdkLibDir, "uuid.lib"))
 
     def set_shared_lib_options(self, task):
+        super().set_shared_lib_options(task)
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
         self.add_platform_libs(task)
 
     def set_executable_options(self, task):
+        super().set_executable_options(task)
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
         self.add_platform_libs(task)
