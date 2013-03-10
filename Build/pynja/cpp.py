@@ -1,6 +1,7 @@
 from abc import *
 import os
 import pynja.build
+import pynja.tc
 
 
 class CppTask(pynja.build.BuildTask):
@@ -121,6 +122,7 @@ class CppProject(pynja.build.Project):
     # In that case, the source header will be force-included instead.  (and no other
     # modifications will be necessary to client code)
     def make_pch(self, sourcePath, reallyCreatePCH = True):
+        sourcePath = os.path.normpath(sourcePath)
         if self.toolchain.supportsPCH and reallyCreatePCH:
             if os.path.isabs(sourcePath):
                 outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + self.toolchain.pchFileExt)
@@ -130,6 +132,8 @@ class CppProject(pynja.build.Project):
             task = CppTask(self, sourcePath, outputPath, self.projectDir)
             task.createPCH = True
             self.set_cpp_compile_options(task)
+            if isinstance(self.toolchain, pynja.tc.MsvcToolChain):
+                self.add_input(outputPath + self.toolchain.objectFileExt)
             return task
         else:
             if not os.path.isabs(sourcePath):
@@ -141,6 +145,7 @@ class CppProject(pynja.build.Project):
     # C++ compile
 
     def cpp_compile_one(self, sourcePath):
+        sourcePath = os.path.normpath(sourcePath)
         if os.path.isabs(sourcePath):
             outputPath = os.path.join(self.builtDir, os.basename(sourcePath) + self.toolchain.objectFileExt)
         else:

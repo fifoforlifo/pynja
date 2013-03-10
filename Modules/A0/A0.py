@@ -19,3 +19,9 @@ class A0(upynja.cpp.CppProject):
 
         with self.make_static_lib("a0") as task:
             pass
+
+    def set_cpp_compile_options(self, task):
+        super().set_cpp_compile_options(task)
+        if "msvc" in self.variant.toolchain:
+            task.defines.append("_CRT_SECURE_NO_WARNINGS")
+

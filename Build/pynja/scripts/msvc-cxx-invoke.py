@@ -4,7 +4,7 @@ import re
 import msvc_common
 
 
-script, workingDir, srcPath, outputPath, depPath, logPath, installDir, arch, rspPath = sys.argv
+script, workingDir, srcPath, outputPath, pdbPath, depPath, logPath, installDir, arch, rspPath = sys.argv
 
 
 def is_os_64bit():
@@ -53,11 +53,9 @@ def cpp_compile():
         objectPath = outputPath
         extraOptions = ""
 
-    cmd = "cl \"%s\" \"@%s\" \"/Fo%s\" %s > \"%s\" 2>&1 " % (srcPath, rspPath, objectPath, extraOptions, logPath)
+    cmd = "cl \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" %s > \"%s\" 2>&1 " % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
     exitcode = os.system(cmd)
 
-    if createPCH:
-        os.unlink(objectPath)
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()
     if re.search("(warning)|(error)", logContents, re.MULTILINE):

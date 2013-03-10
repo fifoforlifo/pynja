@@ -74,11 +74,12 @@ class CppProject(pynja.cpp.CppProject):
         task.debugLevel = 2;
         if self.variant.config == "dbg":
             task.optLevel = 0
-            task.minimalRebuild = True
+            task.minimalRebuild = False
         elif self.variant.config == "rel":
             task.optLevel = 3
 
     def make_static_lib(self, name):
+        name = os.path.normpath(name)
         if "msvc" in self.variant.toolchain:
             outputPath = os.path.join(self.builtDir, name + ".lib")
         else:
@@ -88,6 +89,7 @@ class CppProject(pynja.cpp.CppProject):
         return task
 
     def make_shared_lib(self, name):
+        name = os.path.normpath(name)
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".dll")
             if "msvc" in self.variant.toolchain:
@@ -102,6 +104,7 @@ class CppProject(pynja.cpp.CppProject):
         return task
 
     def make_executable(self, name):
+        name = os.path.normpath(name)
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".exe")
         else:
