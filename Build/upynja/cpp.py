@@ -138,6 +138,7 @@ class CppProject(pynja.cpp.CppProject):
                 task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
                 task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))
                 task.inputs.append(os.path.join(winsdkLibDir, "gdi32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "uuid.lib"))
 
     def set_shared_lib_options(self, task):
         self.set_gcc_machine_arch(task)

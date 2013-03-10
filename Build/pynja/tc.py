@@ -29,6 +29,7 @@ class GccToolChain(pynja.build.ToolChain):
         self.prefix = prefix if prefix else "_NO_PREFIX_"
         self.suffix = suffix if suffix else "_NO_SUFFIX_"
         self.objectFileExt = ".o"
+        self.supportsPCH = True
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "gcc-cxx-invoke.py")
         self._lib_script  = os.path.join(self._scriptDir, "gcc-lib-invoke.py")
@@ -245,6 +246,7 @@ class NvccToolChain(pynja.build.ToolChain):
             self.objectFileExt = ".obj"
         else:
             self.objectFileExt = ".o"
+        self.supportsPCH = False
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "nvcc-cxx-invoke.py")
         self._invoke_script  = os.path.join(self._scriptDir, "nvcc-invoke.py")
@@ -450,6 +452,7 @@ if os.name == "nt":
             self.installDir = installDir
             self.arch = arch
             self.objectFileExt = ".obj"
+            self.supportsPCH = False
             self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
             self._lib_script  = os.path.join(self._scriptDir, "msvc-lib-invoke.py")
@@ -541,12 +544,24 @@ if os.name == "nt":
                 else:
                     options.append("/MT")
 
+        # note: this should be called *before* adding additional force includes
+        def translate_pch(self, options, task):
+            if task.createPCH:
+                options.append("/Yc")
+            if task.usePCH:
+                if task.usePCH.endswith(".cpp"):
+                    options.append("/FI\"%s\"" % task.usePCH)
+                else:
+                    options.append("/Yu\"%s\"" % task.usePCH)
+                    options.append("/FI\"%s\"" % task.usePCH)
+
         def translate_cpp_options(self, options, task):
             # translate simple options first for ease of viewing
             self.translate_opt_level(options, task)
             self.translate_debug_level(options, task)
             self.translate_warn_level(options, task)
             self.translate_crt(options, task)
+            self.translate_pch(options, task)
             self.translate_include_paths(options, task)
             self.translate_defines(options, task)
             options.extend(task.extraOptions)
@@ -562,13 +577,17 @@ if os.name == "nt":
             outputName = os.path.basename(task.outputPath)
             scriptPath = pynja.build.ninja_esc_path(self._cxx_script)
             debugOutputs = ""
-            if task.debugLevel >= 1:
-                debugOutputs = debugOutputs + " " + outputPath + ".pdb"
-                if task.minimalRebuild:
-                    debugOutputs = debugOutputs + " " + outputPath + ".idb"
+            pchPath = ""
+            if task.usePCH:
+                pchPath = pynja.build.ninja_esc_path(task.usePCH)
+            else:
+                if task.debugLevel >= 1:
+                    debugOutputs = debugOutputs + " " + outputPath + ".pdb"
+                    if task.minimalRebuild:
+                        debugOutputs = debugOutputs + " " + outputPath + ".idb"
 
             # write build command
-            ninjaFile.write("build %(outputPath)s %(debugOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
+            ninjaFile.write("build %(outputPath)s %(debugOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s %(pchPath)s" % locals())
             pynja.build.translate_extra_deps(ninjaFile, task, False)
             ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
             pynja.build.translate_order_only_deps(ninjaFile, task, False)

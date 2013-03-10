@@ -17,6 +17,8 @@ class CppTask(pynja.build.BuildTask):
         self.warningsAsErrors = False
         self.includePaths = []
         self.defines = []
+        self.createPCH = False
+        self.usePCH = None # point this at a PCH file
         # gcc-specific
         self.addressModel = None # = {"-m32", "-m64"}
         # msvc-specific
@@ -32,6 +34,20 @@ class CppTask(pynja.build.BuildTask):
         toolchain.emit_cpp_compile(project, self)
         if self.phonyTarget:
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
+
+
+# Precompiled headers are always force-included via the commandline.
+# If a toolchain does not support precompiled headers, then this
+# dummy task is created, and the source header is force-included instead.
+# Toolchains must also detect when the 'usePCH' attribute points at a header
+# and handle it specially.
+class DummyPchTask(CppTask):
+    def __init__(self, project, sourcePath, workingDir):
+        super().__init__(project, sourcePath, sourcePath, workingDir)
+
+    # override emit() with a null implementation
+    def emit(self):
+        pass
 
 
 class StaticLibTask(pynja.build.BuildTask):
@@ -98,10 +114,32 @@ class CppProject(pynja.build.Project):
         return self.add_input(filePath)
 
 
+    # precompiled header
+
+    # For convenience, you can disable PCH creation by setting reallyCreatePCH = False.
+    # In that case, the source header will be force-included instead.  (and no other
+    # modifications will be necessary to client code)
+    def make_pch(self, sourcePath, reallyCreatePCH = True):
+        if self.toolchain.supportsPCH and reallyCreatePCH:
+            if os.path.isabs(sourcePath):
+                outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + ".pch")
+            else:
+                outputPath = os.path.join(self.builtDir, sourcePath + ".pch")
+                sourcePath = os.path.join(self.projectDir, sourcePath)
+            task = CppTask(self, sourcePath, outputPath, self.projectDir)
+            task.createPCH = True
+            self.set_cpp_compile_options(task)
+            return task
+        else:
+            if not os.path.isabs(sourcePath):
+                sourcePath = os.path.join(self.projectDir, sourcePath)
+            task = DummyPchTask(self, sourcePath, self.projectDir)
+            return task
+
+
     # C++ compile
 
     def cpp_compile_one(self, sourcePath):
-        outputPath = None
         if os.path.isabs(sourcePath):
             outputPath = os.path.join(self.builtDir, os.basename(sourcePath) + self.toolchain.objectFileExt)
         else:
