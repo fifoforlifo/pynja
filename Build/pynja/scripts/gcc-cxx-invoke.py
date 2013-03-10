@@ -12,7 +12,7 @@ suffix = "" if suffix == "_NO_SUFFIX_" else prefix
 
 
 def cpp_compile():
-    cmd = "%sgcc%s \"%s\" \"@%s\" -o\"%s\" -MD -MF \"%s\" > \"%s\" 2>&1" % (prefix, suffix, srcPath, rspPath, objPath, depPath, logPath)
+    cmd = "%sgcc%s \"@%s\" \"%s\" -o\"%s\" -MD -MF \"%s\" > \"%s\" 2>&1" % (prefix, suffix, rspPath, srcPath, objPath, depPath, logPath)
     exitcode = os.system(cmd)
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()

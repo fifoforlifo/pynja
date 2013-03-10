@@ -21,6 +21,7 @@ class CppTask(pynja.build.BuildTask):
         self.usePCH = None # point this at a PCH file
         # gcc-specific
         self.addressModel = None # = {"-m32", "-m64"}
+        self.std = None # see option -std within "C Dialect Options"
         # msvc-specific
         self.dynamicCRT = True
         self.minimalRebuild = False
@@ -122,9 +123,9 @@ class CppProject(pynja.build.Project):
     def make_pch(self, sourcePath, reallyCreatePCH = True):
         if self.toolchain.supportsPCH and reallyCreatePCH:
             if os.path.isabs(sourcePath):
-                outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + ".pch")
+                outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + self.toolchain.pchFileExt)
             else:
-                outputPath = os.path.join(self.builtDir, sourcePath + ".pch")
+                outputPath = os.path.join(self.builtDir, sourcePath + self.toolchain.pchFileExt)
                 sourcePath = os.path.join(self.projectDir, sourcePath)
             task = CppTask(self, sourcePath, outputPath, self.projectDir)
             task.createPCH = True

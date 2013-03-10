@@ -11,7 +11,7 @@ class A0(upynja.cpp.CppProject):
             "Source/a0_3.cpp",
         ]
 
-        with self.make_pch("Source/a0_pch.cpp") as pchTask:
+        with self.make_pch("Source/a0_pch.h") as pchTask:
             pass
 
         with self.cpp_compile(sources) as tasks:
