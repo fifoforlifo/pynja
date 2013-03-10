@@ -766,3 +766,9 @@ if os.name == "nt":
                 options.append("\"%s\"" % input)
             options.extend(task.extraOptions)
             write_rsp_file(project, task, options)
+else:
+    class MsvcToolChain(pynja.build.ToolChain):
+        """A stub implementation for non-Windows OSes."""
+
+        def __init__(self, name, installDir, arch):
+            raise Exception("MSVC not supported on non-Windows OSes.")
