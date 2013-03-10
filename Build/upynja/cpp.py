@@ -21,7 +21,7 @@ class CppVariant(pynja.build.Variant):
         elif os.name == 'posix':
             fieldDefs = [
                 "os",           [ "linux" ],
-                "toolchain",    [ "gcc" ],
+                "toolchain",    [ "gcc", "clang" ],
                 "arch",         [ "x86", "amd64" ],
                 "config",       [ "dbg", "rel" ],
                 "crt",          [ "scrt", "dcrt" ],

@@ -26,8 +26,9 @@ class GccToolChain(pynja.build.ToolChain):
     def __init__(self, name, installDir, prefix = None, suffix = None):
         super().__init__(name)
         self.installDir = installDir
-        self.prefix = prefix if prefix else "_NO_PREFIX_"
-        self.suffix = suffix if suffix else "_NO_SUFFIX_"
+        self.prefix = prefix
+        self.ccName = "gcc"
+        self.suffix = suffix
         self.objectFileExt = ".o"
         self.pchFileExt = ".gch"
         self.supportsPCH = True
@@ -38,22 +39,27 @@ class GccToolChain(pynja.build.ToolChain):
         pass
 
     def emit_rules(self, ninjaFile):
+        prefix = self.prefix if self.prefix else "_NO_PREFIX_"
+        suffix = self.suffix if self.suffix else "_NO_SUFFIX_"
+
+        executable = "%s%s%s" % (self.prefix or "", self.ccName, self.suffix or "")
+        
         ninjaFile.write("#############################################\n")
         ninjaFile.write("# %s\n" % self.name)
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_cxx\n" % self.name)
         ninjaFile.write("  depfile = $DEP_FILE\n")
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s %s \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir, executable))
         ninjaFile.write("  description = %s_cxx  $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_lib\n" % self.name)
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._lib_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._lib_script, self.installDir, prefix, suffix))
         ninjaFile.write("  description = %s_lib  $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_link\n" % self.name)
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._link_script, self.installDir, self.prefix, self.suffix))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._link_script, self.installDir, prefix, suffix))
         ninjaFile.write("  description = %s_link $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
@@ -274,6 +280,12 @@ class GccToolChain(pynja.build.ToolChain):
         self.translate_linker_inputs(options, task)
         options.extend(task.extraOptions)
         write_rsp_file(project, task, options)
+
+
+class ClangToolChain(GccToolChain):
+    def __init__(self, name, installDir, prefix = None, suffix = None):
+        super().__init__(name, installDir, prefix, suffix)
+        self.ccName = "clang"
 
 
 class NvccToolChain(pynja.build.ToolChain):

@@ -4,15 +4,11 @@ import re
 import gcc_common
 
 
-script, workingDir, srcPath, objPath, depPath, logPath, installDir, prefix, suffix, rspPath = sys.argv
-
-
-prefix = "" if prefix == "_NO_PREFIX_" else prefix
-suffix = "" if suffix == "_NO_SUFFIX_" else prefix
+script, workingDir, srcPath, objPath, depPath, logPath, installDir, executable, rspPath = sys.argv
 
 
 def cpp_compile():
-    cmd = "%sgcc%s \"@%s\" \"%s\" -o\"%s\" -MD -MF \"%s\" > \"%s\" 2>&1" % (prefix, suffix, rspPath, srcPath, objPath, depPath, logPath)
+    cmd = "%s \"@%s\" \"%s\" -o\"%s\" -MD -MF \"%s\" > \"%s\" 2>&1" % (executable, rspPath, srcPath, objPath, depPath, logPath)
     exitcode = os.system(cmd)
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()
