@@ -36,7 +36,6 @@ class GccToolChain(pynja.build.ToolChain):
         self._cxx_script  = os.path.join(self._scriptDir, "gcc-cxx-invoke.py")
         self._lib_script  = os.path.join(self._scriptDir, "gcc-lib-invoke.py")
         self._link_script = os.path.join(self._scriptDir, "gcc-link-invoke.py")
-        pass
 
     def emit_rules(self, ninjaFile):
         prefix = self.prefix if self.prefix else "_NO_PREFIX_"
@@ -147,8 +146,10 @@ class GccToolChain(pynja.build.ToolChain):
         if task.createPCH:
             options.append(self.get_language_option(task.std))
         if task.usePCH:
-            # this works whether we are passing a real precompiled header or a regular header
-            headerPathEsc = binutils_esc_path(task.usePCH)[:-4]
+            if task.usePCH.endswith(".gch") or task.usePCH.endswith(".pch"):
+                headerPathEsc = binutils_esc_path(task.usePCH)[:-4]
+            else:
+                headerPathEsc = binutils_esc_path(task.usePCH)
             options.append("-include \"%s\"" % headerPathEsc)
             options.append("-H")
             options.append("-Winvalid-pch")
@@ -286,6 +287,7 @@ class ClangToolChain(GccToolChain):
     def __init__(self, name, installDir, prefix = None, suffix = None):
         super().__init__(name, installDir, prefix, suffix)
         self.ccName = "clang"
+        self.pchFileExt = ".pch"
 
 
 class NvccToolChain(pynja.build.ToolChain):
@@ -308,7 +310,6 @@ class NvccToolChain(pynja.build.ToolChain):
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "nvcc-cxx-invoke.py")
         self._invoke_script  = os.path.join(self._scriptDir, "nvcc-invoke.py")
-        pass
 
     def emit_rules(self, ninjaFile):
         ninjaFile.write("#############################################\n")
@@ -370,6 +371,11 @@ class NvccToolChain(pynja.build.ToolChain):
         else:
             options.append("-rdc=false")
 
+    def translate_pch(self, options, task):
+        if task.usePCH:
+            headerPathEsc = binutils_esc_path(task.usePCH)
+            options.append("-include \"%s\"" % headerPathEsc)
+
     def translate_linker_inputs(self, options, task):
         for input in task.inputs:
             libName = get_lib_name(input)
@@ -389,6 +395,7 @@ class NvccToolChain(pynja.build.ToolChain):
         self.translate_device_debug_level(options, task)
         self.translate_warn_level(options, task)
         self.translate_address_model(options, task)
+        self.translate_pch(options, task)
         GccToolChain.translate_include_paths(self, options, task)
         GccToolChain.translate_defines(self, options, task)
         options.extend(task.extraOptions)
@@ -514,7 +521,7 @@ if os.name == "nt":
             # MSVC does support PCHs, but due to error 2858 it's disabled here for now.
             # The error is that the PCH must use the same PDB as the compilation units;
             # this prevents arbitrary re-use of PCH files.
-            self.supportsPCH = False
+            self.supportsPCH = True
             self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
             self._lib_script  = os.path.join(self._scriptDir, "msvc-lib-invoke.py")
@@ -559,15 +566,18 @@ if os.name == "nt":
             if task.debugLevel == 0:
                 return
 
-            if task.debugLevel == 1:
-                options.append("/Zd")
-            elif task.debugLevel == 2:
-                options.append("/Zi")
-            elif task.debugLevel == 3:
-                options.append("/ZI")
-
-            if task.minimalRebuild:
-                options.append("/Gm")
+            if self.supportsPCH and (task.createPCH or task.usePCH):
+                if task.debugLevel == 1:
+                    options.append("/Zd")
+                else:
+                    options.append("/Z7")
+            else:
+                if task.debugLevel == 1:
+                    options.append("/Zd")
+                elif task.debugLevel == 2:
+                    options.append("/Zi")
+                elif task.debugLevel == 3:
+                    options.append("/ZI")
 
         def translate_warn_level(self, options, task):
             if not (0 <= task.warnLevel <= 4):
@@ -608,6 +618,8 @@ if os.name == "nt":
             if task.createPCH:
                 options.append("/TP")
                 options.append("/Yc")
+                if task.debugLevel > 0:
+                    options.append("/Yd")
             if task.usePCH:
                 if not task.usePCH.endswith(".pch"):
                     options.append("/FI\"%s\"" % task.usePCH)
@@ -638,27 +650,26 @@ if os.name == "nt":
             sourceName = os.path.basename(task.sourcePath)
             outputName = os.path.basename(task.outputPath)
             scriptPath = pynja.build.ninja_esc_path(self._cxx_script)
-            pdbPath = ""
-            idbPath = ""
-            debugOutputs = ""
-            if task.debugLevel >= 1:
-                if self.supportsPCH and (task.createPCH or task.usePCH):
-                    pdbPath = pynja.build.ninja_esc_path(os.path.join(project.builtDir, "common.pdb"))
-                else:
-                    pdbPath = outputPath + ".pdb"
-                    if task.minimalRebuild:
-                        idbPath = outputPath + ".idb"
-                    debugOutputs = "%s %s" % (pdbPath, idbPath)
-            pchPath = ""
-            if task.usePCH:
-                pchPath = pynja.build.ninja_esc_path(task.usePCH)
 
             outputPaths = outputPath
             if task.createPCH:
                 outputPaths = "%s %s.obj" % (outputPath, outputPath)
 
+            pdbPath = ""
+            if task.debugLevel >= 1:
+                if self.supportsPCH and (task.createPCH or task.usePCH):
+                    # we're embedding symbols in object files, so no PDB is actually created
+                    pdbPath = "none"
+                else:
+                    pdbPath = outputPath + ".pdb"
+                    outputPaths = "%s %s" % (outputPaths, pdbPath)
+
+            pchPath = ""
+            if task.usePCH:
+                pchPath = pynja.build.ninja_esc_path(task.usePCH)
+
             # write build command
-            ninjaFile.write("build %(outputPaths)s %(debugOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s %(pchPath)s" % locals())
+            ninjaFile.write("build %(outputPaths)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s %(pchPath)s" % locals())
             pynja.build.translate_extra_deps(ninjaFile, task, False)
             ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
             pynja.build.translate_order_only_deps(ninjaFile, task, False)

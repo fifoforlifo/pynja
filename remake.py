@@ -53,7 +53,7 @@ def generate_ninja_build(projectMan):
 
         projectMan.add_toolchain(pynja.tc.GccToolChain("gcc-amd64", "/usr"))
         variants.append(upynja.cpp.CppVariant("linux-gcc-amd64-dbg-dcrt"))
-        
+
         projectMan.add_toolchain(pynja.tc.ClangToolChain("clang-amd64", "/home/lolo/Downloads/clang+llvm-3.2-x86_64-linux-ubuntu-12.04"))
         variants.append(upynja.cpp.CppVariant("linux-clang-amd64-dbg-dcrt"))
     else:

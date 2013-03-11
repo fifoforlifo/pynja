@@ -16,6 +16,8 @@ class A0(upynja.cpp.CppProject):
 
         with self.cpp_compile(sources) as tasks:
             tasks.usePCH = pchTask.outputPath
+            for task in tasks:
+                task.defines.append("FOO")
 
         with self.make_static_lib("a0") as task:
             pass

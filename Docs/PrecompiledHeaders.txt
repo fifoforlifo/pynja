@@ -1,0 +1,110 @@
+# Precompiled Headers across many compilers
+
+(Avinash Baliga - 2013-Mar-10)
+
+The general strategy espoused in this document is:
+
+-   Create a PCH from a header.
+-   Force-include the PCH into each appropriate compile unit.
+-   Support creating one PCH from another PCH.
+
+And at a build-system-wide level:
+
+-   Create a "global" PCH for system headers.
+-   Create a "global" PCH for system headers + standard C libraries. (C code)
+-   Create a "global" PCH for system headers + standard C/C++ libraries + STL. (C++ code)
+-   Create a "global" PCH based on the above, for any other major frameworks
+    you are using.  (for example, Qt, game engines)
+-   Use those PCHs everywhere.
+
+In general, using compiler pragmas or directly including the PCH's
+corresponding header from the source code is discouraged.  It's discouraged
+because PCHs should be treated as build accelerators, not as header-dependency
+injection -- on the basis that PCHs are usually and by necessity overbroad.
+
+For toolchains that don't support PCHs, two options are available:
+
+1.  Force-include the source header that would have been used to create a PCH.
+    This option is functionally equivalent to a PCH, and thus the "safe option".
+    Unfortunately, it's also likely much slower on compilation speed, as usually
+    PCH headers contain a grab-bag of extra headers that most sources don't need.
+2.  Don't force-include anything, and rely on sources to already have proper
+    header includes (i.e. proper dependencies).
+
+pynja aims to make either option easy to enable.
+
+By default I recommend option #2, but in panic mode I'd always want
+option #1 available within a few key strokes.
+
+
+## GCC + Precompiled Headers
+
+Creating a PCH requires an incantation like this:
+
+    gcc -x c++-header foo.h -o foo.h.gch
+    gcc -x c-header foo.h -o foo.h.gch
+
+To use a PCH requires inclusion of a header (foo.h) as normal; then if
+a PCH exists *in the same directory* with an additional .gch suffix (foo.h.gch),
+it will be used instead.
+
+Unfortunately, this scheme is not very compatible with an out-of-source build.
+
+To work around this, pynja copies the source header into the 'built' directory
+next to the PCH.  Then the copy is force-included, causing the PCH to be picked up.
+
+I would have wished that gcc took a commandline option to directly specify the PCH.
+
+Other than this inconvenience, using PCHs with gcc is very easy and flexible.
+
+
+## Clang + Precompiled Headers
+
+clang works exactly the same way as gcc.  Pretty sweet, honestly.
+
+clang also has explicit "-emit-pch" and "-include-pch", but pynja is not using it.
+(at least not yet)
+
+
+## MSVC + Precompiled Headers
+
+Precompiled headers with MSVC have a lot of caveats.  But the potential speedups
+make it worth pursuing the ideal solution.
+
+Here are some of the complications:
+
+-   If you opt to create a PDB (/Zi, /Ze) for the PCH, then all source files
+    must share the same PDB.  This is a huge limitation for several reasons.
+    -   You cannot maintain a 1:1 relationship between build task and output file.
+        ninja will complain if multiple tasks produce the same file.
+        So ... you now have an untracked file.
+    -   You cannot share PCHs arbitrarily, because the common PDB would be
+        rolled into libraries or linkage units for the actual sources.
+    -   Using a common PDB bottlenecks the build.
+    -   If you change commandline options (including simple stuff like defines
+        or header paths), you can end up in situations where the PDB is
+        "out of sync" with the PCH or sources.  In those situations, the compiler
+        simply spits out an error telling you to manually delete the PDB.
+-   If you opt to put debug symbols in object files (/Zd, /Z7), then you can
+    achieve a mostly flexible system.  However ...
+    -   You must also use the /Yd option when creating the PCH.  For some reason
+        this option is considered deprecated, causing an impossible-to-suppress
+        warning "Command line warning D9035 : option 'Yd' has been deprecated and will be removed in a future release".
+        (pynja explicitly post-filters this)
+    -   Minimal rebuild (/Gm) requires PDB and IDB creation.
+    -   /Z7 is incompatible with /clr -- you can't use this for C++/CLI.
+    -   There's no "edit and continue" option similar to /Z7.
+    -   On the bright side, the linker will create a proper PDB for executables
+        and DLLs, if you use the /DEBUG switch.
+-   PCH creation is accompanied by an object file, which must be passed to the
+    lib tool or linker.
+    -   For static libs this is a pain, as it amounts to a transitive lib dependency.
+
+Despite getting "common.pdb" support working at one point, I find the drawbacks
+to that approach too great.  Ultimately I'd prefer to have fully flexible PCH support
+
+Therefore I have opted to support PCHs on MSVC using only the /Zd or /Z7 switches.
+This decision also partially motivates the removal of support for /Gm (minimal rebuild).
+
+(this could change in future if a compelling enough reason motivates it)
+

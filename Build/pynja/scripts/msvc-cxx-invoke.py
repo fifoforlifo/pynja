@@ -58,7 +58,16 @@ def cpp_compile():
 
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()
-    if re.search("(warning)|(error)", logContents, re.MULTILINE):
+    needToPrintLog = False
+    for logLine in logContents.splitlines():
+        if "error" in logLine:
+            needToPrintLog = True
+            break
+        elif "warning" in logLine:
+            if -1 == logLine.find("option 'Yd' has been deprecated"):
+                needToPrintLog = True
+                break
+    if needToPrintLog:
         print("%s" % logContents)
     if exitcode:
         sys.exit(exitcode)

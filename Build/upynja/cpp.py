@@ -74,7 +74,6 @@ class CppProject(pynja.cpp.CppProject):
         task.debugLevel = 2;
         if self.variant.config == "dbg":
             task.optLevel = 0
-            task.minimalRebuild = False
         elif self.variant.config == "rel":
             task.optLevel = 3
 

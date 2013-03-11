@@ -25,7 +25,6 @@ class CppTask(pynja.build.BuildTask):
         self.std = None # see option -std within "C Dialect Options"
         # msvc-specific
         self.dynamicCRT = True
-        self.minimalRebuild = False
         # nvcc-specific
         self.relocatableDeviceCode = True
         self.deviceDebugLevel = 1 # {0 = none, 1 = lineinfo, 2 = full [disables optimization]}
