@@ -99,6 +99,12 @@ Here are some of the complications:
 -   PCH creation is accompanied by an object file, which must be passed to the
     lib tool or linker.
     -   For static libs this is a pain, as it amounts to a transitive lib dependency.
+-   With VS2010 and earlier, it was possible to force include the PCH file directly.
+    i.e.  cl /Yu ".../blah.pch" /FI ".../blah.pch" foo.cpp /c /Fofoo.obj
+
+    The above does not work with VS2012.  It gives some cryptic error about
+    unexpected end of file.  The current work-around is similar to the gcc solution.
+
 
 Despite getting "common.pdb" support working at one point, I find the drawbacks
 to that approach too great.  Ultimately I'd prefer to have fully flexible PCH support
