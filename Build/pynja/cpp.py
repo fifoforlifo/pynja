@@ -4,7 +4,7 @@ import pynja.build
 import pynja.tc
 
 
-class CppTask(pynja.build.BuildTask):
+class CppTask(pynja.BuildTask):
     def __init__(self, project, sourcePath, outputPath, workingDir):
         super().__init__(project)
         self.sourcePath = sourcePath
@@ -51,7 +51,7 @@ class DummyPchTask(CppTask):
         pass
 
 
-class StaticLibTask(pynja.build.BuildTask):
+class StaticLibTask(pynja.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
         self.outputPath = outputPath
@@ -67,7 +67,7 @@ class StaticLibTask(pynja.build.BuildTask):
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
-class LinkTask(pynja.build.BuildTask):
+class LinkTask(pynja.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
         self.extraOptions = []
@@ -90,7 +90,7 @@ class LinkTask(pynja.build.BuildTask):
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
-class CppProject(pynja.build.Project):
+class CppProject(pynja.Project):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
         self.outputPath = None
@@ -131,7 +131,7 @@ class CppProject(pynja.build.Project):
             task = CppTask(self, sourcePath, outputPath, self.projectDir)
             task.createPCH = True
             self.set_cpp_compile_options(task)
-            if isinstance(self.toolchain, pynja.tc.MsvcToolChain):
+            if isinstance(self.toolchain, pynja.MsvcToolChain):
                 self.add_input(outputPath + self.toolchain.objectFileExt)
             return task
         else:
@@ -160,7 +160,7 @@ class CppProject(pynja.build.Project):
         for filePath in filePaths:
             task = self.cpp_compile_one(filePath)
             taskList.append(task)
-        tasks = pynja.build.BuildTasks(taskList)
+        tasks = pynja.BuildTasks(taskList)
         return tasks
 
     def set_cpp_compile_options(self, task):

@@ -1,8 +1,8 @@
 import pynja
-import upynja
+import repo
 
-@pynja.build.project
-class A1(upynja.cpp.CppProject):
+@pynja.project
+class A1(repo.CppProject):
     def emit(self):
         sources = [
             "Source/a1_0.cpp",

@@ -1,7 +1,7 @@
 import sys
 import os
-import pynja.io
 import tempfile
+from . import io
 from abc import *
 
 
@@ -31,7 +31,7 @@ def write_file_if_different(filePath, newContents):
             oldContents = file.read()
             needToWrite = (oldContents != newContents)
     if needToWrite:
-        pynja.io.create_dir_for_file(filePath)
+        io.create_dir_for_file(filePath)
         with open(filePath, "wt") as file:
             file.write(newContents)
 
@@ -325,11 +325,11 @@ def regenerate_build(generate_ninja_build, builtDir):
     ninjaPath = os.path.join(builtDir, "build.ninja")
     lockPath = ninjaPath + ".lock"
 
-    pynja.io.create_dir(builtDir)
+    io.create_dir(builtDir)
 
-    with pynja.io.CrudeLockFile(lockPath):
+    with io.CrudeLockFile(lockPath):
         with tempfile.TemporaryFile('w+t') as tempNinjaFile:
-            projectMan = pynja.build.ProjectMan(tempNinjaFile, ninjaPath)
+            projectMan = ProjectMan(tempNinjaFile, ninjaPath)
             generate_ninja_build(projectMan)
             tempNinjaFile.seek(0)
             newContent = tempNinjaFile.read()

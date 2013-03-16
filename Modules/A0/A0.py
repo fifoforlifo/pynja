@@ -1,8 +1,8 @@
 import pynja
-import upynja
+import repo
 
-@pynja.build.project
-class A0(upynja.cpp.CppProject):
+@pynja.project
+class A0(repo.CppProject):
     def emit(self):
         sources = [
             "Source/a0_0.cpp",
@@ -26,4 +26,3 @@ class A0(upynja.cpp.CppProject):
         super().set_cpp_compile_options(task)
         if "msvc" in self.variant.toolchain:
             task.defines.append("_CRT_SECURE_NO_WARNINGS")
-

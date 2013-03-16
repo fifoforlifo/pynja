@@ -1,10 +1,10 @@
 import os
 import re
 import pynja
-import upynja
+from .root_paths import *
 
 
-class CppVariant(pynja.build.Variant):
+class CppVariant(pynja.Variant):
     def __init__(self, string):
         super().__init__(string, self.get_field_defs())
 
@@ -31,7 +31,7 @@ class CppVariant(pynja.build.Variant):
             raise Exception("Not implemented")
 
 
-class CppProject(pynja.cpp.CppProject):
+class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
         if self.variant.os == "windows":
@@ -45,10 +45,10 @@ class CppProject(pynja.cpp.CppProject):
         return toolchain
 
     def get_project_dir(self):
-        return getattr(upynja.rootPaths, self.__class__.__name__)
+        return getattr(rootPaths, self.__class__.__name__)
 
     def get_built_dir(self):
-        return os.path.join(upynja.rootPaths.built, getattr(upynja.rootPaths, self.__class__.__name__ + "_rel"), self.variant.str)
+        return os.path.join(rootPaths.built, getattr(rootPaths, self.__class__.__name__ + "_rel"), self.variant.str)
 
     def set_gcc_machine_arch(self, task):
         if re.match("(mingw)|(gcc)", self.variant.toolchain):
@@ -114,7 +114,7 @@ class CppProject(pynja.cpp.CppProject):
 
     def calc_winsdk_dir(self):
         name = 'winsdk' + str(self.winsdkVer)
-        return getattr(upynja.rootPaths, name)
+        return getattr(rootPaths, name)
 
     def calc_winsdk_lib_dir(self):
         winsdkDir = self.calc_winsdk_dir()

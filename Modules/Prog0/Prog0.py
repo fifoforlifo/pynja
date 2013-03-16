@@ -1,16 +1,16 @@
 import pynja
-import upynja
+import repo
 
 
-@pynja.build.project
-class Prog0(upynja.cpp.CppProject):
+@pynja.project
+class Prog0(repo.CppProject):
     def emit(self):
         libA0 = self.projectMan.get_project('A0', self.variant)
         libA1 = self.projectMan.get_project('A1', self.variant)
 
         # compile one file at a time with per-file settings
         with self.cpp_compile_one("Source/e0_0.cpp") as task:
-            task.includePaths.append(upynja.rootPaths.A0 + "/IncludeSpecial")
+            task.includePaths.append(repo.rootPaths.A0 + "/IncludeSpecial")
         with self.cpp_compile_one("Source/e0_7.cpp") as task:
             # force no optimizations on this file
             task.optimize = 0
@@ -56,6 +56,6 @@ class Prog0(upynja.cpp.CppProject):
     # set c++ compile options that are common to all files in the project
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
-        task.includePaths.append(upynja.rootPaths.A0 + "/Include")
-        task.includePaths.append(upynja.rootPaths.A1 + "/Include")
+        task.includePaths.append(repo.rootPaths.A0 + "/Include")
+        task.includePaths.append(repo.rootPaths.A1 + "/Include")
 
