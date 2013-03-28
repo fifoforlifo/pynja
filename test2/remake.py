@@ -3,7 +3,8 @@ import sys
 import os
 
 rootDir = sys.path[0]
-sys.path.append(os.path.join(rootDir, "Build"))
+sys.path.append(os.path.normpath(os.path.join(rootDir, "..", "packages")))
+sys.path.append(os.path.join(rootDir, "build"))
 
 import pynja
 import repo
@@ -67,7 +68,7 @@ def generate_ninja_build(projectMan):
     projectMan.ninjaFile.write("\n");
 
     for variant in variants:
-        projectMan.get_project("Prog0", variant)
+        projectMan.get_project("prog0", variant)
 
     projectMan.emit_phony_targets()
 

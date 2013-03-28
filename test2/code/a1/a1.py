@@ -2,13 +2,13 @@ import pynja
 import repo
 
 @pynja.project
-class A1(repo.CppProject):
+class a1(repo.CppProject):
     def emit(self):
         sources = [
-            "Source/a1_0.cpp",
-            "Source/a1_1.cpp",
-            "Source/a1_2.cpp",
-            "Source/a1_3.cpp",
+            "source/a1_0.cpp",
+            "source/a1_1.cpp",
+            "source/a1_2.cpp",
+            "source/a1_3.cpp",
         ]
 
         with self.cpp_compile(sources) as tasks:

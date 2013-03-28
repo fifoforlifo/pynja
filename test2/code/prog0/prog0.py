@@ -1,25 +1,26 @@
+import os
 import pynja
 import repo
 
 
 @pynja.project
-class Prog0(repo.CppProject):
+class prog0(repo.CppProject):
     def emit(self):
-        libA0 = self.projectMan.get_project('A0', self.variant)
-        libA1 = self.projectMan.get_project('A1', self.variant)
+        libA0 = self.projectMan.get_project('a0', self.variant)
+        libA1 = self.projectMan.get_project('a1', self.variant)
 
         # compile one file at a time with per-file settings
-        with self.cpp_compile_one("Source/e0_0.cpp") as task:
-            task.includePaths.append(repo.rootPaths.A0 + "/IncludeSpecial")
-        with self.cpp_compile_one("Source/e0_7.cpp") as task:
+        with self.cpp_compile_one("source/e0_0.cpp") as task:
+            task.includePaths.append(os.path.join(repo.rootPaths.a0, "includeSpecial"))
+        with self.cpp_compile_one("source/e0_7.cpp") as task:
             # force no optimizations on this file
             task.optimize = 0
 
         # compile multiple files at a time
         sources = [
-            "Source/e0_6.cpp",
-            "Source/e0_1.cpp",
-            "Source/e0_2.cpp",
+            "source/e0_6.cpp",
+            "source/e0_1.cpp",
+            "source/e0_2.cpp",
         ]
         with self.cpp_compile(sources) as tasks:
             pass
@@ -27,18 +28,18 @@ class Prog0(repo.CppProject):
         # compile multiple files at a time, with same custom per-file settings
         # on each file in the list
         sloppyFiles = [
-            "Source/e0_3.cpp",
-            "Source/e0_4.cpp",
-            "Source/e0_5.cpp",
+            "source/e0_3.cpp",
+            "source/e0_4.cpp",
+            "source/e0_5.cpp",
         ]
         with self.cpp_compile(sloppyFiles) as tasks:
             for task in tasks:
                 task.warnLevel = 1
 
         sloppyFiles_b = [
-            "Source/e0_3b.cpp",
-            "Source/e0_4b.cpp",
-            "Source/e0_5b.cpp",
+            "source/e0_3b.cpp",
+            "source/e0_4b.cpp",
+            "source/e0_5b.cpp",
         ]
         with self.cpp_compile(sloppyFiles_b) as tasks:
             # broadcast write
@@ -56,6 +57,6 @@ class Prog0(repo.CppProject):
     # set c++ compile options that are common to all files in the project
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
-        task.includePaths.append(repo.rootPaths.A0 + "/Include")
-        task.includePaths.append(repo.rootPaths.A1 + "/Include")
+        task.includePaths.append(os.path.join(repo.rootPaths.a0, "Include"))
+        task.includePaths.append(os.path.join(repo.rootPaths.a1, "Include"))
 

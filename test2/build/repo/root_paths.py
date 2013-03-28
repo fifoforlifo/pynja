@@ -18,11 +18,11 @@ def add_project_dir(name, relPath, absPath = None):
 
 class RootPaths(object):
     def init(self):
-        add_project_dir("A0", "Modules/A0")
-        add_project_dir("A1", "Modules/A1")
-        add_project_dir("Prog0", "Modules/Prog0")
+        add_project_dir("a0", "code/a0")
+        add_project_dir("a1", "code/a1")
+        add_project_dir("prog0", "code/prog0")
 
-        rootPaths.built = os.path.join(rootDir, "Built")
+        rootPaths.built = os.path.join(rootDir, "built")
 
         if (os.name == 'nt'):
             # you can customize these paths to point at a location in source control

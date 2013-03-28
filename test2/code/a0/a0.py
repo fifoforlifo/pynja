@@ -2,16 +2,16 @@ import pynja
 import repo
 
 @pynja.project
-class A0(repo.CppProject):
+class a0(repo.CppProject):
     def emit(self):
         sources = [
-            "Source/a0_0.cpp",
-            "Source/a0_1.cpp",
-            "Source/a0_2.cpp",
-            "Source/a0_3.cpp",
+            "source/a0_0.cpp",
+            "source/a0_1.cpp",
+            "source/a0_2.cpp",
+            "source/a0_3.cpp",
         ]
 
-        with self.make_pch("Source/a0_pch.h") as pchTask:
+        with self.make_pch("source/a0_pch.h") as pchTask:
             pass
 
         with self.cpp_compile(sources) as tasks:

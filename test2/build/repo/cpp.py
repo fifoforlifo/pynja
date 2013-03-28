@@ -78,7 +78,7 @@ class CppProject(pynja.CppProject):
         elif self.variant.config == "rel":
             task.optLevel = 3
 
-        if isinstance(self.toolchain, pynja.tc.ClangToolChain):
+        if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
 
     def make_static_lib(self, name):
