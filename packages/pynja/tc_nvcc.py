@@ -129,8 +129,7 @@ class NvccToolChain(build.ToolChain):
         # write build command
         ninjaFile.write("build %(outputPath)s  %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_extra_deps(ninjaFile, task, False)
-        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-        build.translate_order_only_deps(ninjaFile, task, False)
+        build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -158,8 +157,7 @@ class NvccToolChain(build.ToolChain):
         ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_path_list(ninjaFile, task.inputs)
         build.translate_extra_deps(ninjaFile, task, False)
-        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-        build.translate_order_only_deps(ninjaFile, task, False)
+        build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -195,8 +193,7 @@ class NvccToolChain(build.ToolChain):
                 ninjaFile.write(" ")
                 ninjaFile.write(inputEsc)
         build.translate_extra_deps(ninjaFile, task, False)
-        ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-        build.translate_order_only_deps(ninjaFile, task, False)
+        build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)

@@ -71,8 +71,12 @@ if os.name == "nt":
                     options.append("/Zd")
                 elif task.debugLevel == 2:
                     options.append("/Zi")
+                    task.extraOutputs.append(task.outputPath + ".pdb")
+                    task._creatingPDB = True
                 elif task.debugLevel == 3:
                     options.append("/ZI")
+                    task.extraOutputs.append(task.outputPath + ".pdb")
+                    task._creatingPDB = True
 
         def translate_warn_level(self, options, task):
             if not (0 <= task.warnLevel <= 4):
@@ -115,14 +119,18 @@ if os.name == "nt":
                 options.append("/Yc")
                 if task.debugLevel > 0:
                     options.append("/Yd")
+                task.extraOutputs.append(task.outputPath + ".obj")
             if task.usePCH:
                 if not task.usePCH.endswith(".pch"):
                     options.append("/FI\"%s\"" % task.usePCH)
+                    task.extraDeps.append(task.usePCH)
                 else:
                     headerPath = task.usePCH[:-4]
                     options.append("/Yu\"%s\"" % headerPath)
                     options.append("/FI\"%s\"" % headerPath)
                     options.append("/Fp\"%s\"" % task.usePCH)
+                    task.extraDeps.append(headerPath)
+                    task.extraDeps.append(task.usePCH)
 
         def translate_cpp_options(self, options, task):
             # translate simple options first for ease of viewing
@@ -137,37 +145,30 @@ if os.name == "nt":
 
 
         def emit_cpp_compile(self, project, task):
+            # write response file; this also updates extraInputs/extraOutputs
+            options = []
+            options.append("/nologo")
+            options.append("/c")
+            self.translate_cpp_options(options, task)
+            write_rsp_file(project, task, options)
+
+            # emit ninja file contents
             ninjaFile = project.projectMan.ninjaFile
             name = self.name
             outputPath = build.ninja_esc_path(task.outputPath)
+            pdbPath = "" if not task._creatingPDB else outputPath + ".pdb"
             sourcePath = build.ninja_esc_path(task.sourcePath)
             logPath = outputPath + ".log"
             sourceName = os.path.basename(task.sourcePath)
             outputName = os.path.basename(task.outputPath)
             scriptPath = build.ninja_esc_path(self._cxx_script)
 
-            outputPaths = outputPath
-            if task.createPCH:
-                outputPaths = "%s %s.obj" % (outputPath, outputPath)
-
-            pdbPath = ""
-            if task.debugLevel >= 1:
-                if self.supportsPCH and (task.createPCH or task.usePCH):
-                    # we're embedding symbols in object files, so no PDB is actually created
-                    pdbPath = "none"
-                else:
-                    pdbPath = outputPath + ".pdb"
-                    outputPaths = "%s %s" % (outputPaths, pdbPath)
-
-            pchPath = ""
-            if task.usePCH:
-                pchPath = build.ninja_esc_path(task.usePCH)
+            extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
 
             # write build command
-            ninjaFile.write("build %(outputPaths)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s %(pchPath)s" % locals())
+            ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s " % locals())
             build.translate_extra_deps(ninjaFile, task, False)
-            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-            build.translate_order_only_deps(ninjaFile, task, False)
+            build.translate_order_only_deps(ninjaFile, task, True)
             ninjaFile.write("\n")
 
             ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -180,38 +181,10 @@ if os.name == "nt":
             ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
             ninjaFile.write("\n")
 
-            # write response file
-            options = []
-            options.append("/nologo")
-            options.append("/c")
-            self.translate_cpp_options(options, task)
-            write_rsp_file(project, task, options)
-
             if task.createPCH:
                 project.projectMan.emit_copy(task.sourcePath, task.outputPath[:-4])
 
         def emit_static_lib(self, project, task):
-            ninjaFile = project.projectMan.ninjaFile
-            name = self.name
-            outputPath = build.ninja_esc_path(task.outputPath)
-            logPath = outputPath + ".log"
-            outputName = os.path.basename(task.outputPath)
-            scriptPath = build.ninja_esc_path(self._lib_script)
-
-            ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
-            build.translate_path_list(ninjaFile, task.inputs)
-            build.translate_extra_deps(ninjaFile, task, False)
-            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-            build.translate_order_only_deps(ninjaFile, task, False)
-            ninjaFile.write("\n")
-
-            ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-            ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-            ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
-            ninjaFile.write("  DESC        = %s\n" % outputName)
-            ninjaFile.write("\n")
-            ninjaFile.write("\n")
-
             # write response file
             options = []
             options.append("/nologo")
@@ -220,26 +193,20 @@ if os.name == "nt":
                 options.append("\"%s\"" % input)
             write_rsp_file(project, task, options)
 
-        def emit_link(self, project, task):
+            # emit ninja file contents
             ninjaFile = project.projectMan.ninjaFile
             name = self.name
             outputPath = build.ninja_esc_path(task.outputPath)
-            libraryPath = ""
-            if task.outputLibraryPath and (task.outputLibraryPath != task.outputPath):
-                libraryPath = build.ninja_esc_path(task.outputLibraryPath)
             logPath = outputPath + ".log"
             outputName = os.path.basename(task.outputPath)
             scriptPath = build.ninja_esc_path(self._lib_script)
 
-            ninjaFile.write("build %(outputPath)s %(libraryPath)s %(logPath)s : %(name)s_link | %(outputPath)s.rsp %(scriptPath)s" % locals())
-            for input in task.inputs:
-                if os.path.isabs(input):
-                    inputEsc = build.ninja_esc_path(input)
-                    ninjaFile.write(" ")
-                    ninjaFile.write(inputEsc)
+            extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+            ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s " % locals())
+            build.translate_path_list(ninjaFile, task.inputs)
             build.translate_extra_deps(ninjaFile, task, False)
-            ninjaFile.write(" || %s" % project.projectMan.ninjaPathEsc)
-            build.translate_order_only_deps(ninjaFile, task, False)
+            build.translate_order_only_deps(ninjaFile, task, True)
             ninjaFile.write("\n")
 
             ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -249,6 +216,7 @@ if os.name == "nt":
             ninjaFile.write("\n")
             ninjaFile.write("\n")
 
+        def emit_link(self, project, task):
             # write response file
             options = []
             options.append("/nologo")
@@ -261,6 +229,36 @@ if os.name == "nt":
                 options.append("\"%s\"" % input)
             options.extend(task.extraOptions)
             write_rsp_file(project, task, options)
+
+            # emit ninja file contents
+            ninjaFile = project.projectMan.ninjaFile
+            name = self.name
+            outputPath = build.ninja_esc_path(task.outputPath)
+            libraryPath = ""
+            if task.outputLibraryPath and (task.outputLibraryPath != task.outputPath):
+                libraryPath = build.ninja_esc_path(task.outputLibraryPath)
+            logPath = outputPath + ".log"
+            outputName = os.path.basename(task.outputPath)
+            scriptPath = build.ninja_esc_path(self._lib_script)
+
+            extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+            ninjaFile.write("build %(outputPath)s %(libraryPath)s %(extraOutputs)s %(logPath)s : %(name)s_link | %(outputPath)s.rsp %(scriptPath)s " % locals())
+            for input in task.inputs:
+                if os.path.isabs(input):
+                    inputEsc = build.ninja_esc_path(input)
+                    ninjaFile.write(" ")
+                    ninjaFile.write(inputEsc)
+            build.translate_extra_deps(ninjaFile, task, False)
+            build.translate_order_only_deps(ninjaFile, task, True)
+            ninjaFile.write("\n")
+
+            ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+            ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+            ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+            ninjaFile.write("  DESC        = %s\n" % outputName)
+            ninjaFile.write("\n")
+            ninjaFile.write("\n")
 else:
     class MsvcToolChain(pynja.build.ToolChain):
         """A stub implementation for non-Windows OSes."""

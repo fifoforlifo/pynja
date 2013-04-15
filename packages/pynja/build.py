@@ -1,9 +1,7 @@
 import sys
 import os
-import tempfile
 from . import io
 from abc import *
-from . import vsproj
 
 
 def ninja_esc_path(path):
@@ -66,6 +64,7 @@ class BuildTask(metaclass = ABCMeta):
     def __init__(self, project):
         self.project = project
         self.extraDeps = []
+        self.extraOutputs = []
         self.orderOnlyDeps = []
         self.phonyTarget = None # name of phony target to declare with this
         self._emitted = False
@@ -246,11 +245,9 @@ class ProjectMan:
         origPathEsc = ninja_esc_path(origPath)
         destPathEsc = ninja_esc_path(destPath)
 
-        ninjaFile.write("build %s : FILE_COPY %s || %s\n" % (destPathEsc, origPathEsc, self.ninjaPathEsc))
+        ninjaFile.write("build %s : FILE_COPY %s\n" % (destPathEsc, origPathEsc))
         if phonyTarget:
-            phonyTargetEsc = ninja_esc_path(phonyTarget)
-            ninjaFile.write("build %s : phony %s\n" % (phonyTargetEsc, destPathEsc))
-        ninjaFile.write("\n")
+            self.add_phony_target(phonyTarget, destPath)
 
     def emit_phony_targets(self):
         ninjaFile = self.ninjaFile
@@ -305,38 +302,9 @@ class ProjectMan:
         ninjaFile.write("\n");
         ninjaFile.write("\n");
 
-    def emit_extras(self):
-        if self.emitVS2008Projects:
-            vsProjList = []
-            variantNames = set()
-            for projName in sorted(self._projects.keys()):
-                variants = self._projects[projName]
-                for variant in variants:
-                    variantNames.add(variant.str)
-
-                vsProjInfo = vsproj.emit_vsproj_2008(self, projName, variants)
-                vsProjList.append(vsProjInfo)
-            vsproj.emit_vssln_2008(vsProjList, os.path.join(os.path.dirname(self.ninjaPath), "vs2008.sln"), variantNames)
-
 
 projectFactory = {}
 
 def project(projectType):
     projectFactory[projectType.__name__] = projectType
     return projectType
-
-
-def regenerate_build(generate_ninja_build, builtDir):
-    ninjaPath = os.path.join(builtDir, "build.ninja")
-    lockPath = ninjaPath + ".lock"
-
-    io.create_dir(builtDir)
-
-    with io.CrudeLockFile(lockPath):
-        with tempfile.TemporaryFile('w+t') as tempNinjaFile:
-            projectMan = ProjectMan(tempNinjaFile, ninjaPath)
-            generate_ninja_build(projectMan)
-            tempNinjaFile.seek(0)
-            newContent = tempNinjaFile.read()
-            io.write_file_if_different(ninjaPath, newContent)
-            projectMan.emit_extras()

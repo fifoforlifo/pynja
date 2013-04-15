@@ -7,41 +7,8 @@ import msvc_common
 script, workingDir, srcPath, outputPath, pdbPath, depPath, logPath, installDir, arch, rspPath = sys.argv
 
 
-def is_os_64bit():
-    arch1 = (os.environ.get('PROCESSOR_ARCHITECTURE') or "").lower()
-    arch2 = (os.environ.get('PROCESSOR_ARCHITEW6432') or "").lower()
-    return (arch1 == "amd64" or arch2 == "amd64")
-
-
 def shell_escape_path(path):
     return path.replace(" ", "\\ ")
-
-
-def generate_deps(outputPath, srcPath, rspPath, depPath):
-    ppPath = outputPath + ".pp"
-    siPath = outputPath + ".si"
-    cmd = "cl /showIncludes /E \"%s\" \"@%s\" 1>\"%s\" 2>\"%s\" " % (srcPath, rspPath, ppPath, siPath)
-    exitcode = os.system(cmd)
-    if exitcode:
-        with open(siPath, "rt") as logFile:
-            contents = logFile.read()
-            print(contents)
-        os.unlink(siPath)
-        os.unlink(ppPath)
-        sys.exit(exitcode)
-
-    with open(siPath, "rt") as siFile:
-        siLines = siFile.readlines()
-    with open(depPath, "wt") as depFile:
-        outputPathEsc = shell_escape_path(outputPath)
-        depFile.write("%s: \\\n" % outputPathEsc)
-        for siLine in siLines:
-            match = re.match("Note: including file: ([ ]*)(.*)", siLine)
-            if match:
-                depEsc = shell_escape_path(match.group(2))
-                depFile.write("%s \\\n" % depEsc)
-    os.unlink(siPath)
-    os.unlink(ppPath)
 
 
 def cpp_compile():
@@ -53,22 +20,34 @@ def cpp_compile():
         objectPath = outputPath
         extraOptions = ""
 
-    cmd = "cl \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" %s > \"%s\" 2>&1 " % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
+    cmd = "cl /showIncludes \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" %s > \"%s\" 2>&1" % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
     exitcode = os.system(cmd)
 
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()
     needToPrintLog = False
-    for logLine in logContents.splitlines():
-        if "error" in logLine:
-            needToPrintLog = True
-            break
-        elif "warning" in logLine:
-            if -1 == logLine.find("option 'Yd' has been deprecated"):
+    # write out deps file, and determine if an error or warning occurred
+    with open(depPath, "wt") as depFile:
+        outputPathEsc = shell_escape_path(outputPath)
+        depFile.write("%s: \\\n" % outputPathEsc)
+        for logLine in logContents.splitlines():
+            if " error " in logLine:
                 needToPrintLog = True
-                break
+            elif " warning " in logLine:
+                if not ("D9035" in logLine): # ignore: Command line warning D9035 : option 'Yd' has been deprecated
+                    needToPrintLog = True
+            else:
+                match = re.match("Note: including file: ([ ]*)(.*)", logLine)
+                if match:
+                    depEsc = shell_escape_path(match.group(2))
+                    depFile.write("%s \\\n" % depEsc)
     if needToPrintLog:
-        print("%s" % logContents)
+        for logLine in logContents.splitlines():
+            if "D9035" in logLine:
+                continue
+            if "Note: including file: " in logLine:
+                continue
+            print(logLine)
     if exitcode:
         sys.exit(exitcode)
 
@@ -83,7 +62,6 @@ if __name__ == '__main__':
 
     msvc_common.set_msvc_environment(installDir, arch)
 
-    generate_deps(outputPath, srcPath, rspPath, depPath)
     cpp_compile()
 
     sys.exit(0)

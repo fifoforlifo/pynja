@@ -1,10 +1,10 @@
 import os
 from abc import *
-import pynja.build
+from . import build
 import pynja.tc
 
 
-class CppTask(pynja.BuildTask):
+class CppTask(build.BuildTask):
     def __init__(self, project, sourcePath, outputPath, workingDir):
         super().__init__(project)
         self.sourcePath = sourcePath
@@ -28,6 +28,8 @@ class CppTask(pynja.BuildTask):
         # nvcc-specific
         self.relocatableDeviceCode = True
         self.deviceDebugLevel = 1 # {0 = none, 1 = lineinfo, 2 = full [disables optimization]}
+        # internal state tracking
+        self._creatingPDB = False
 
     def emit(self):
         project = self.project
@@ -51,7 +53,7 @@ class DummyPchTask(CppTask):
         pass
 
 
-class StaticLibTask(pynja.BuildTask):
+class StaticLibTask(build.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
         self.outputPath = outputPath
@@ -67,7 +69,7 @@ class StaticLibTask(pynja.BuildTask):
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
-class LinkTask(pynja.BuildTask):
+class LinkTask(build.BuildTask):
     def __init__(self, project, outputPath, workingDir):
         super().__init__(project)
         self.extraOptions = []
@@ -90,7 +92,7 @@ class LinkTask(pynja.BuildTask):
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
-class CppProject(pynja.Project):
+class CppProject(build.Project):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
         self.outputPath = None

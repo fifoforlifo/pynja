@@ -26,3 +26,4 @@ class a0(repo.CppProject):
         super().set_cpp_compile_options(task)
         if "msvc" in self.variant.toolchain:
             task.defines.append("_CRT_SECURE_NO_WARNINGS")
+            task.defines.append("_SCL_SECURE_NO_WARNINGS")
