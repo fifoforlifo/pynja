@@ -30,6 +30,8 @@ class GccToolChain(build.ToolChain):
         self._cxx_script  = os.path.join(self._scriptDir, "gcc-cxx-invoke.py")
         self._lib_script  = os.path.join(self._scriptDir, "gcc-lib-invoke.py")
         self._link_script = os.path.join(self._scriptDir, "gcc-link-invoke.py")
+        # Conservative set LTO support to False.
+        self.ltoSupport = False
 
     def emit_rules(self, ninjaFile):
         prefix = self.prefix if self.prefix else "_NO_PREFIX_"
@@ -67,6 +69,9 @@ class GccToolChain(build.ToolChain):
         if not (0 <= task.optLevel <= 3):
             raise Exception("optLevel must be between 0-3.  optLevel was set to %s" % str(task.optLevel))
         options.append("-O%d" % task.optLevel)
+        if task.optLevel >= 2:
+            if task.lto:
+                options.append("-flto")
 
     def translate_warn_level(self, options, task):
         if not (0 <= task.warnLevel <= 4):
@@ -250,6 +255,9 @@ class GccToolChain(build.ToolChain):
         self.translate_address_model(options, task)
         if not task.keepDebugInfo:
             options.append("--strip-debug")
+        if task.lto:
+            options.append("-O3")
+            options.append("-flto")
         self.translate_linker_inputs(options, task)
         options.extend(task.extraOptions)
         write_rsp_file(project, task, options)

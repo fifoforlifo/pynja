@@ -18,9 +18,11 @@ class NvccToolChain(build.ToolChain):
         if "msvc" in self.hostCompiler:
             self.objectFileExt = ".obj"
             self.pchFileExt = ".pch"
+            self.ltoSupport = True
         else:
             self.objectFileExt = ".o"
             self.pchFileExt = ".gch"
+            self.ltoSupport = False
         self.supportsPCH = False
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "nvcc-cxx-invoke.py")

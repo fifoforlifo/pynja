@@ -77,6 +77,8 @@ class CppProject(pynja.CppProject):
             task.optLevel = 0
         elif self.variant.config == "rel":
             task.optLevel = 3
+            if not task.createPCH:
+                task.lto = self.toolchain.ltoSupport
 
         if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
@@ -104,6 +106,10 @@ class CppProject(pynja.CppProject):
             libraryPath = outputPath
         task = super().make_shared_lib(outputPath, libraryPath)
         task.phonyTarget = name
+
+        if self.variant.config == 'rel':
+            task.lto = self.toolchain.ltoSupport
+
         return task
 
     def make_executable(self, name):
@@ -114,6 +120,10 @@ class CppProject(pynja.CppProject):
             outputPath = os.path.join(self.builtDir, name)
         task = super().make_executable(outputPath)
         task.phonyTarget = name
+
+        if self.variant.config == 'rel':
+            task.lto = self.toolchain.ltoSupport
+
         return task
 
     def calc_winsdk_dir(self):

@@ -23,6 +23,7 @@ class CppTask(build.BuildTask):
         # gcc-specific
         self.addressModel = None # = {"-m32", "-m64"}
         self.std = None # see option -std within "C Dialect Options"
+        self.lto = None
         # msvc-specific
         self.dynamicCRT = True
         # nvcc-specific
@@ -81,6 +82,7 @@ class LinkTask(build.BuildTask):
         self.keepDebugInfo = True
         # gcc-specific
         self.addressModel = None
+        self.lto = None
         # nvcc-specific
 
     def emit(self):

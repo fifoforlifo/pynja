@@ -38,6 +38,7 @@ def generate_ninja_build(projectMan):
 
             projectMan.add_toolchain(pynja.MsvcToolChain("msvc11-amd64", repo.rootPaths.msvc11, "amd64"))
             variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-dbg-dcrt"))
+            variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-rel-dcrt"))
 
             projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc11-amd64", repo.rootPaths.cuda50, "msvc10", repo.rootPaths.msvc10, "-m64"))
             variants.append(repo.cpp.CppVariant("windows-nvcc_msvc11-amd64-dbg-dcrt"))
@@ -48,6 +49,7 @@ def generate_ninja_build(projectMan):
 
             projectMan.add_toolchain(pynja.GccToolChain("mingw64-amd64", repo.rootPaths.mingw64))
             variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
+            variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-rel-dcrt"))
     elif os.name == 'posix':
         projectMan.add_toolchain(pynja.GccToolChain("gcc-x86", "/usr"))
         variants.append(repo.cpp.CppVariant("linux-gcc-x86-dbg-dcrt"))

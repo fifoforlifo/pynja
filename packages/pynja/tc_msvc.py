@@ -21,6 +21,8 @@ if os.name == "nt":
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
             self._lib_script  = os.path.join(self._scriptDir, "msvc-lib-invoke.py")
             self._link_script = os.path.join(self._scriptDir, "msvc-link-invoke.py")
+            # MSVC always supports LTO.  (they call it LTCG)
+            self.ltoSupport = True
 
         def emit_rules(self, ninjaFile):
             ninjaFile.write("#############################################\n")
