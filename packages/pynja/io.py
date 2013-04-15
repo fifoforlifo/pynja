@@ -11,6 +11,18 @@ def create_dir_for_file(f):
     create_dir(d)
 
 
+def write_file_if_different(filePath, newContents):
+    needToWrite = True
+    if os.path.exists(filePath):
+        with open(filePath, "rt") as file:
+            oldContents = file.read()
+            needToWrite = (oldContents != newContents)
+    if needToWrite:
+        create_dir_for_file(filePath)
+        with open(filePath, "wt") as file:
+            file.write(newContents)
+
+
 class CrudeLockFile:
     def __init__(self, lockPath):
         self._lockPath = lockPath

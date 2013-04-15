@@ -1,5 +1,5 @@
-from abc import *
 import os
+from abc import *
 import pynja.build
 import pynja.tc
 
@@ -97,12 +97,9 @@ class CppProject(pynja.Project):
         self.toolchain = self.get_toolchain()
         self._inputs = []
 
-    @abstractmethod
-    def get_toolchain(self):
-        pass
 
     @abstractmethod
-    def emit(self):
+    def get_toolchain(self):
         pass
 
 

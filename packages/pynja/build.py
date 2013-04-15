@@ -3,6 +3,7 @@ import os
 import tempfile
 from . import io
 from abc import *
+from . import vsproj
 
 
 def ninja_esc_path(path):
@@ -23,17 +24,6 @@ def translate_extra_deps(ninjaFile, task, needPipe):
 def translate_order_only_deps(ninjaFile, task, needPipe):
     prefix = " ||" if needPipe else ""
     translate_path_list(ninjaFile, task.orderOnlyDeps, " $\n    ", prefix)
-
-def write_file_if_different(filePath, newContents):
-    needToWrite = True
-    if os.path.exists(filePath):
-        with open(filePath, "rt") as file:
-            oldContents = file.read()
-            needToWrite = (oldContents != newContents)
-    if needToWrite:
-        io.create_dir_for_file(filePath)
-        with open(filePath, "wt") as file:
-            file.write(newContents)
 
 def get_loaded_modules(rootDir):
     modules = []
@@ -183,6 +173,8 @@ class ProjectMan:
         self._projects = {}
         self._toolchains = {}
         self._phonyTargets = {}
+        self.emitVS2008Projects = (os.name == 'nt')
+        self.emitVS2010Projects = (os.name == 'nt')
 
     def get_project(self, projName, variantName):
         variants = self._projects.get(projName)
@@ -313,6 +305,19 @@ class ProjectMan:
         ninjaFile.write("\n");
         ninjaFile.write("\n");
 
+    def emit_extras(self):
+        if self.emitVS2008Projects:
+            vsProjList = []
+            variantNames = set()
+            for projName in sorted(self._projects.keys()):
+                variants = self._projects[projName]
+                for variant in variants:
+                    variantNames.add(variant.str)
+
+                vsProjInfo = vsproj.emit_vsproj_2008(self, projName, variants)
+                vsProjList.append(vsProjInfo)
+            vsproj.emit_vssln_2008(vsProjList, os.path.join(os.path.dirname(self.ninjaPath), "vs2008.sln"), variantNames)
+
 
 projectFactory = {}
 
@@ -333,10 +338,5 @@ def regenerate_build(generate_ninja_build, builtDir):
             generate_ninja_build(projectMan)
             tempNinjaFile.seek(0)
             newContent = tempNinjaFile.read()
-            oldContent = ""
-            if os.path.exists(ninjaPath):
-                with open(ninjaPath, "rt") as ninjaFile:
-                    oldContent = ninjaFile.read()
-            if newContent != oldContent:
-                with open(ninjaPath, "wt") as ninjaFile:
-                    ninjaFile.write(newContent)
+            io.write_file_if_different(ninjaPath, newContent)
+            projectMan.emit_extras()
