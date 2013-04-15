@@ -90,6 +90,7 @@ class NvccToolChain(build.ToolChain):
         if task.usePCH:
             headerPathEsc = binutils_esc_path(task.usePCH)
             options.append("-include \"%s\"" % headerPathEsc)
+            task.extraDeps.append(task.usePCH)
 
     def translate_linker_inputs(self, options, task):
         for input in task.inputs:
@@ -117,6 +118,12 @@ class NvccToolChain(build.ToolChain):
 
 
     def emit_cpp_compile(self, project, task):
+        # write response file
+        options = []
+        self.translate_cpp_options(options, task)
+        write_rsp_file(project, task, options)
+
+        # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.ninja_esc_path(task.outputPath)
@@ -126,8 +133,10 @@ class NvccToolChain(build.ToolChain):
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._cxx_script)
 
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
         # write build command
-        ninjaFile.write("build %(outputPath)s  %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_extra_deps(ninjaFile, task, False)
         build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")
@@ -141,12 +150,16 @@ class NvccToolChain(build.ToolChain):
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
+    def emit_static_lib(self, project, task):
         # write response file
         options = []
-        self.translate_cpp_options(options, task)
+        options.append("-lib")
+        outputFileEsc = binutils_esc_path(task.outputPath)
+        options.append("-o \"%s\"" % outputFileEsc)
+        self.translate_linker_inputs(options, task)
         write_rsp_file(project, task, options)
 
-    def emit_static_lib(self, project, task):
+        # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.ninja_esc_path(task.outputPath)
@@ -154,7 +167,9 @@ class NvccToolChain(build.ToolChain):
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._invoke_script)
 
-        ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_path_list(ninjaFile, task.inputs)
         build.translate_extra_deps(ninjaFile, task, False)
         build.translate_order_only_deps(ninjaFile, task, True)
@@ -167,14 +182,6 @@ class NvccToolChain(build.ToolChain):
         ninjaFile.write("\n")
         ninjaFile.write("\n")
 
-        # write response file
-        options = []
-        options.append("-lib")
-        outputFileEsc = binutils_esc_path(task.outputPath)
-        options.append("-o \"%s\"" % outputFileEsc)
-        self.translate_linker_inputs(options, task)
-        write_rsp_file(project, task, options)
-
     def emit_link(self, project, task):
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
@@ -186,7 +193,9 @@ class NvccToolChain(build.ToolChain):
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._invoke_script)
 
-        ninjaFile.write("build %(outputPath)s %(libraryPath)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(libraryPath)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         for input in task.inputs:
             if os.path.isabs(input):
                 inputEsc = build.ninja_esc_path(input)

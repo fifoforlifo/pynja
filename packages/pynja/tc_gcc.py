@@ -142,8 +142,11 @@ class GccToolChain(build.ToolChain):
         if task.usePCH:
             if task.usePCH.endswith(".gch") or task.usePCH.endswith(".pch"):
                 headerPathEsc = binutils_esc_path(task.usePCH)[:-4]
+                task.extraDeps.append(task.usePCH[:-4])
+                task.extraDeps.append(task.usePCH)
             else:
                 headerPathEsc = binutils_esc_path(task.usePCH)
+                task.extraDeps.append(task.usePCH)
             options.append("-include \"%s\"" % headerPathEsc)
             options.append("-H")
             options.append("-Winvalid-pch")
@@ -167,6 +170,18 @@ class GccToolChain(build.ToolChain):
 
 
     def emit_cpp_compile(self, project, task):
+        # write response file
+        options = []
+        options.append("-c")
+        self.translate_cpp_options(options, task)
+        write_rsp_file(project, task, options)
+
+        if task.createPCH:
+            # Create a copy of the source header, which will reside next to the
+            # PCH file, and will be force-included.
+            project.projectMan.emit_copy(task.sourcePath, task.outputPath[:-4])
+
+        # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.ninja_esc_path(task.outputPath)
@@ -175,12 +190,11 @@ class GccToolChain(build.ToolChain):
         sourceName = os.path.basename(task.sourcePath)
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._cxx_script)
-        pchPath = ""
-        if task.usePCH:
-            pchPath = build.ninja_esc_path(task.usePCH)
+
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
 
         # write build command
-        ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(pchPath)s %(scriptPath)s" % locals())
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_extra_deps(ninjaFile, task, False)
         build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")
@@ -194,16 +208,16 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
+    def emit_static_lib(self, project, task):
         # write response file
         options = []
-        options.append("-c")
-        self.translate_cpp_options(options, task)
+        options.append("rc")
+        outputFileEsc = binutils_esc_path(task.outputPath)
+        options.append("\"%s\"" % outputFileEsc)
+        self.translate_linker_inputs(options, task)
         write_rsp_file(project, task, options)
 
-        if task.createPCH:
-            project.projectMan.emit_copy(task.sourcePath, task.outputPath[:-4])
-
-    def emit_static_lib(self, project, task):
+        # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.ninja_esc_path(task.outputPath)
@@ -211,7 +225,9 @@ class GccToolChain(build.ToolChain):
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._lib_script)
 
-        ninjaFile.write("build %(outputPath)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_path_list(ninjaFile, task.inputs)
         build.translate_extra_deps(ninjaFile, task, False)
         build.translate_order_only_deps(ninjaFile, task, True)
@@ -224,15 +240,21 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("\n")
         ninjaFile.write("\n")
 
+    def emit_link(self, project, task):
         # write response file
         options = []
-        options.append("rc")
+        if not task.makeExecutable:
+            options.append("-shared")
         outputFileEsc = binutils_esc_path(task.outputPath)
-        options.append("\"%s\"" % outputFileEsc)
+        options.append("-o \"%s\"" % outputFileEsc)
+        self.translate_address_model(options, task)
+        if not task.keepDebugInfo:
+            options.append("--strip-debug")
         self.translate_linker_inputs(options, task)
+        options.extend(task.extraOptions)
         write_rsp_file(project, task, options)
 
-    def emit_link(self, project, task):
+        # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.ninja_esc_path(task.outputPath)
@@ -243,7 +265,9 @@ class GccToolChain(build.ToolChain):
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._lib_script)
 
-        ninjaFile.write("build %(outputPath)s %(libraryPath)s %(logPath)s : %(name)s_link | %(outputPath)s.rsp %(scriptPath)s" % locals())
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(libraryPath)s %(logPath)s : %(name)s_link | %(outputPath)s.rsp %(scriptPath)s" % locals())
         for input in task.inputs:
             if os.path.isabs(input):
                 inputEsc = build.ninja_esc_path(input)
@@ -259,16 +283,3 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("  DESC        = %s\n" % outputName)
         ninjaFile.write("\n")
         ninjaFile.write("\n")
-
-        # write response file
-        options = []
-        if not task.makeExecutable:
-            options.append("-shared")
-        outputFileEsc = binutils_esc_path(task.outputPath)
-        options.append("-o \"%s\"" % outputFileEsc)
-        self.translate_address_model(options, task)
-        if not task.keepDebugInfo:
-            options.append("--strip-debug")
-        self.translate_linker_inputs(options, task)
-        options.extend(task.extraOptions)
-        write_rsp_file(project, task, options)
