@@ -7,7 +7,7 @@ class a0(repo.CppProject):
         sources = [
             "source/a0_0.cpp",
             "source/a0_1.cpp",
-            "source/a0_2.cpp",
+            #"source/a0_2.cpp",
             "source/a0_3.cpp",
         ]
 

@@ -7,11 +7,15 @@ from . import cpp
 class VS2008:
 
     def _def_config(variantName, ninjaDir, targetName, proj):
-        task = cpp.CppTask(proj, "dummy", "dummy.o", proj.projectDir)
-        proj.set_cpp_compile_options(task)
-        defines = ";".join(task.defines)
-        includePaths = ";".join(task.includePaths)
-        forceIncludes = task.usePCH if task.usePCH else ""
+        defines = ""
+        includePaths = ""
+        forceIncludes = ""
+        if proj:
+            task = cpp.CppTask(proj, "dummy", "dummy.o", proj.projectDir)
+            proj.set_cpp_compile_options(task)
+            defines = ";".join(task.defines)
+            includePaths = ";".join(task.includePaths)
+            forceIncludes = task.usePCH if task.usePCH else ""
         config = \
 r'''        <Configuration
             Name="{0}|Win32"
@@ -59,13 +63,8 @@ r'''        <Configuration
         ninjaDir = os.path.dirname(projectMan.ninjaPath)
         strings = []
 
-        # create a sorted list of variantNames, so that the output is deterministic
-        variantNames = []
-        sortedVariants = []
-        for variant in variants.keys():
-            sortedVariants.append(variant)
-            variantNames.append(variant.str)
-        variantNames.sort()
+        # create a sorted list of variants by name, so that the output is deterministic
+        sortedVariants = sorted(variants.keys(), key = lambda variant: variant.str)
 
         strings.append(r'''<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
@@ -86,10 +85,10 @@ r'''        <Configuration
     <Configurations>
 ''')
 
-        for i, variantName in enumerate(variantNames):
-            proj = variants[sortedVariants[i]]
-            strings.append(VS2008._def_config(variantName, ninjaDir, proj.outputPath, proj))
-        strings.append(VS2008._def_config("all", ninjaDir, projName, firstProj))
+        for variant in sortedVariants:
+            proj = variants[variant]
+            strings.append(VS2008._def_config(variant.str, ninjaDir, proj.outputPath, proj))
+        strings.append(VS2008._def_config("all", ninjaDir, projName, None))
 
         strings.append(
 r'''    </Configurations>
