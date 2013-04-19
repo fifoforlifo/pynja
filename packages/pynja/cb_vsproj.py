@@ -236,6 +236,7 @@ ninja {2}
         for variant in sortedVariants:
             VS2010._def_project_configuration(strings, variant.str)
         VS2010._def_project_configuration(strings, "all")
+
         strings.append(
 r'''  </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -245,11 +246,13 @@ r'''  </ItemGroup>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 ''' % (vsProjGuid))
 
         for variant in sortedVariants:
             proj = variants[variant]
             strings.append(VS2010._def_config_props(variant.str, ninjaDir, proj.outputPath, proj))
+        strings.append(VS2010._def_config_props("all", ninjaDir, projName, None))
 
         strings.append('  <ItemGroup>\n')
         VS2010._def_files(proj.projectDir, ".\\", strings)
