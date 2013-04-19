@@ -8,6 +8,44 @@ def _is_source_file(filename):
     return filename.endswith(".c") or filename.endswith(".cpp") or filename.endswith(".cxx")
 
 
+def _emit_sln(slnVersion, vsProjList, vsSlnPath, variantNames):
+    variantNames = sorted(variantNames)
+    vsProjList = sorted(vsProjList, key = lambda vsProjInfo: vsProjInfo[0])
+    strings = []
+    strings.append("Microsoft Visual Studio Solution File, Format Version %s\n" % (slnVersion))
+    for vsProjInfo in vsProjList:
+        (projName, vsProjGuid, vsProjPath) = vsProjInfo
+        strings.append(r'''Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%s", "%s", "{%s}"%s'''
+                       % (projName, vsProjPath, vsProjGuid, "\n"))
+        strings.append("EndProject\n")
+    strings.append(r'''Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+''')
+    strings.append("		%s|Win32 = %s|Win32\n" % ("all", "all"))
+    for variantName in variantNames:
+        strings.append("		%s|Win32 = %s|Win32\n" % (variantName, variantName))
+    strings.append("	EndGlobalSection\n")
+
+    strings.append("	GlobalSection(ProjectConfigurationPlatforms) = postSolution\n")
+    for vsProjInfo in vsProjList:
+        (projName, vsProjGuid, vsProjPath) = vsProjInfo
+        strings.append("		{%s}.%s|Win32.ActiveCfg = %s|Win32\n" % (vsProjGuid, "all", "all"))
+        strings.append("		{%s}.%s|Win32.Build.0 = %s|Win32\n" % (vsProjGuid, "all", "all"))
+        for variantName in variantNames:
+            strings.append("		{%s}.%s|Win32.ActiveCfg = %s|Win32\n" % (vsProjGuid, variantName, variantName))
+            strings.append("		{%s}.%s|Win32.Build.0 = %s|Win32\n" % (vsProjGuid, variantName, variantName))
+    strings.append("	EndGlobalSection\n")
+
+    strings.append(r'''	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
+''')
+
+    vsSlnContents = "".join(strings)
+    io.write_file_if_different(vsSlnPath, vsSlnContents)
+
+
 class VS2008:
 
     def _def_config(variantName, ninjaDir, targetName, proj):
@@ -105,33 +143,7 @@ r'''    </Configurations>
 
         vsProjContents = "".join(strings)
         io.write_file_if_different(vsProjPath, vsProjContents)
-        return (projName, vsProjGuid, vsProjPath)
-
-
-    def _emit_sln(vsProjList, vsSlnPath, variantNames):
-        strings = []
-        strings.append("\nMicrosoft Visual Studio Solution File, Format Version 10.00\n")
-        for vsProjInfo in vsProjList:
-            (projName, vsProjGuid, vsProjPath) = vsProjInfo
-            strings.append(r'''Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%s", "%s", "{%s}"%s'''
-                           % (projName, vsProjPath, vsProjGuid, "\n"))
-            strings.append("EndProject\n")
-        strings.append(r'''Global
-    GlobalSection(SolutionConfigurationPlatforms) = preSolution
-''')
-        for variantName in sorted(variantNames):
-            strings.append("        %s = %s\n" % (variantName, variantName))
-        strings.append("        %s = %s\n" % ("all", "all"))
-
-        strings.append(r'''    EndGlobalSection
-    GlobalSection(SolutionProperties) = preSolution
-        HideSolutionNode = FALSE
-    EndGlobalSection
-EndGlobal
-''')
-
-        vsSlnContents = "".join(strings)
-        io.write_file_if_different(vsSlnPath, vsSlnContents)
+        return (projName, str(vsProjGuid).upper(), vsProjPath)
 
     def emit_vs_projects(projectMan):
         """Extension method of ProjectMan, to write out VS projects"""
@@ -144,7 +156,7 @@ EndGlobal
 
             vsProjInfo = VS2008._emit_vcproj(projectMan, projName, variants)
             vsProjList.append(vsProjInfo)
-        VS2008._emit_sln(vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2008.sln"), variantNames)
+        _emit_sln("10.00", vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2008.sln"), variantNames)
 
 
 class VS2010:
@@ -247,33 +259,8 @@ r'''  </ItemGroup>
 
         vsProjContents = "".join(strings)
         io.write_file_if_different(vsProjPath, vsProjContents)
-        return (projName, vsProjGuid, vsProjPath)
+        return (projName, str(vsProjGuid).upper(), vsProjPath)
 
-
-    def _emit_sln(vsProjList, vsSlnPath, variantNames):
-        strings = []
-        strings.append("\nMicrosoft Visual Studio Solution File, Format Version 11.00\n")
-        for vsProjInfo in vsProjList:
-            (projName, vsProjGuid, vsProjPath) = vsProjInfo
-            strings.append(r'''Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%s", "%s", "{%s}"%s'''
-                           % (projName, vsProjPath, vsProjGuid, "\n"))
-            strings.append("EndProject\n")
-        strings.append(r'''Global
-    GlobalSection(SolutionConfigurationPlatforms) = preSolution
-''')
-        for variantName in sorted(variantNames):
-            strings.append("        %s = %s\n" % (variantName, variantName))
-        strings.append("        %s = %s\n" % ("all", "all"))
-
-        strings.append(r'''    EndGlobalSection
-    GlobalSection(SolutionProperties) = preSolution
-        HideSolutionNode = FALSE
-    EndGlobalSection
-EndGlobal
-''')
-
-        vsSlnContents = "".join(strings)
-        io.write_file_if_different(vsSlnPath, vsSlnContents)
 
     def emit_vs_projects(projectMan):
         """Extension method of ProjectMan, to write out VS projects"""
@@ -286,4 +273,4 @@ EndGlobal
 
             vsProjInfo = VS2010._emit_vcxproj(projectMan, projName, variants)
             vsProjList.append(vsProjInfo)
-        VS2010._emit_sln(vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2010.sln"), variantNames)
+        _emit_sln("11.00", vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2010.sln"), variantNames)
