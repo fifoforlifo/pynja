@@ -2,7 +2,7 @@ import os
 import tempfile
 from . import io
 from . import build
-from . import vsproj
+from . import cb_vsproj
 
 def regenerate_build(generate_ninja_build, builtDir):
     ninjaPath = os.path.join(builtDir, "build.ninja")
@@ -19,6 +19,6 @@ def regenerate_build(generate_ninja_build, builtDir):
             io.write_file_if_different(ninjaPath, newContent)
 
             if projectMan.emitVS2008Projects:
-                vsproj.VS2008.emit_vs_projects(projectMan)
+                cb_vsproj.VS2008.emit_vs_projects(projectMan)
             if projectMan.emitVS2010Projects:
-                vsproj.VS2010.emit_vs_projects(projectMan)
+                cb_vsproj.VS2010.emit_vs_projects(projectMan)
