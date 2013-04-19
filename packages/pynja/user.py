@@ -17,4 +17,8 @@ def regenerate_build(generate_ninja_build, builtDir):
             tempNinjaFile.seek(0)
             newContent = tempNinjaFile.read()
             io.write_file_if_different(ninjaPath, newContent)
-            vsproj.VS2008.emit_vs_projects(projectMan)
+
+            if projectMan.emitVS2008Projects:
+                vsproj.VS2008.emit_vs_projects(projectMan)
+            if projectMan.emitVS2010Projects:
+                vsproj.VS2010.emit_vs_projects(projectMan)
