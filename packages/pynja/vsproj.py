@@ -56,7 +56,7 @@ r'''        <Configuration
                 strings.append('        <File RelativePath="%s" />\n' % (path))
 
 
-    def emit_vcproj(projectMan, projName, variants):
+    def _emit_vcproj(projectMan, projName, variants):
         firstProj = next(iter(variants.values()))
         vsProjPath = os.path.normpath(os.path.join(firstProj.builtDir, "..", projName + ".vcproj"))
         vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, projName)
@@ -104,7 +104,7 @@ r'''    </Configurations>
         return (projName, vsProjGuid, vsProjPath)
 
 
-    def emit_sln(vsProjList, vsSlnPath, variantNames):
+    def _emit_sln(vsProjList, vsSlnPath, variantNames):
         strings = []
         strings.append("\nMicrosoft Visual Studio Solution File, Format Version 10.00\n")
         for vsProjInfo in vsProjList:
@@ -129,23 +129,21 @@ EndGlobal
         vsSlnContents = "".join(strings)
         io.write_file_if_different(vsSlnPath, vsSlnContents)
 
+    def emit_vs_projects(projectMan):
+        """Extension method of ProjectMan, to write out VS projects"""
+        if projectMan.emitVS2008Projects:
+            vsProjList = []
+            variantNames = set()
+            for projName in sorted(projectMan._projects.keys()):
+                variants = projectMan._projects[projName]
+                for variant in variants:
+                    variantNames.add(variant.str)
+
+                vsProjInfo = VS2008._emit_vcproj(projectMan, projName, variants)
+                vsProjList.append(vsProjInfo)
+            VS2008._emit_sln(vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2008.sln"), variantNames)
+
 
 def _emit_vsproj_2010(proj):
     raise Exception("VS2010 projects not implemented yet")
-
-
-
-def emit_vs_projects(projectMan):
-    """Extension method of ProjectMan, to write out VS projects"""
-    if projectMan.emitVS2008Projects:
-        vsProjList = []
-        variantNames = set()
-        for projName in sorted(projectMan._projects.keys()):
-            variants = projectMan._projects[projName]
-            for variant in variants:
-                variantNames.add(variant.str)
-
-            vsProjInfo = VS2008.emit_vcproj(projectMan, projName, variants)
-            vsProjList.append(vsProjInfo)
-        VS2008.emit_sln(vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2008.sln"), variantNames)
 
