@@ -185,6 +185,15 @@ class CppProject(pynja.CppProject):
         tasks = pynja.BuildTasks(taskList)
         return tasks
 
+    def protoc_cpp_compile(self, filePaths):
+        proto_sources = []
+        with self.protoc(filePaths, 'cpp') as tasks:
+            for task in tasks:
+                proto_sources.append(task.outputPath)
+                with self.cpp_compile_one(task.outputPath) as cppTask:
+                    pass
+        return proto_sources
+
     def set_protoc_options(self, task):
         pass
 

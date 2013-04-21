@@ -10,13 +10,7 @@ class a0(repo.CppProject):
             "source/person.proto"
         ]
         self.proto_sources = []
-        proto_sources = []
-        with self.protoc(proto_defs, 'cpp') as tasks:
-            for task in tasks:
-                proto_sources.append(task.outputPath)
-                with self.cpp_compile_one(task.outputPath) as cppTask:
-                    pass
-        self.proto_sources = proto_sources
+        self.proto_sources = self.protoc_cpp_compile(proto_defs)
 
         sources = [
             "source/a0_0.cpp",
