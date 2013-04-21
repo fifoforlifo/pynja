@@ -114,6 +114,14 @@ if os.name == "nt":
                 else:
                     options.append("/MT")
 
+        def translate_exception_handling(self, options, task):
+            if task.asyncExceptionHandling:
+                options.append("/EHa")
+            else:
+                options.append("/EHs")
+            if task.externCNoThrow:
+                options.append("/EHc")
+
         # note: this should be called *before* adding additional force includes
         def translate_pch(self, options, task):
             if task.createPCH:
@@ -140,6 +148,7 @@ if os.name == "nt":
             self.translate_debug_level(options, task)
             self.translate_warn_level(options, task)
             self.translate_crt(options, task)
+            self.translate_exception_handling(options, task)
             self.translate_include_paths(options, task)
             self.translate_defines(options, task)
             self.translate_pch(options, task)

@@ -1,0 +1,8 @@
+
+message Address {
+    optional string street = 1;
+    optional string state = 2;
+    optional string country = 3;
+    optional string postalCode = 4;
+}
+

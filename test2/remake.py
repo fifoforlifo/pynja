@@ -62,6 +62,7 @@ def generate_ninja_build(projectMan):
     else:
         raise Exception("Not implemented")
 
+    projectMan.add_toolchain(repo.protocToolChain)
     projectMan.emit_rules()
 
     projectMan.ninjaFile.write("\n");
@@ -73,7 +74,6 @@ def generate_ninja_build(projectMan):
         projectMan.get_project("prog0", variant)
 
     projectMan.emit_phony_targets()
-
     projectMan.emit_regenerator_target(get_current_script_path())
 
 

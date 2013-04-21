@@ -26,6 +26,8 @@ class CppTask(build.BuildTask):
         self.lto = None
         # msvc-specific
         self.dynamicCRT = True
+        self.asyncExceptionHandling = False
+        self.externCNoThrow = True
         # nvcc-specific
         self.relocatableDeviceCode = True
         self.deviceDebugLevel = 1 # {0 = none, 1 = lineinfo, 2 = full [disables optimization]}
@@ -147,7 +149,7 @@ class CppProject(build.Project):
     def cpp_compile_one(self, sourcePath):
         sourcePath = os.path.normpath(sourcePath)
         if os.path.isabs(sourcePath):
-            outputPath = os.path.join(self.builtDir, os.basename(sourcePath) + self.toolchain.objectFileExt)
+            outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + self.toolchain.objectFileExt)
         else:
             outputPath = os.path.join(self.builtDir, sourcePath + self.toolchain.objectFileExt)
             sourcePath = os.path.join(self.projectDir, sourcePath)

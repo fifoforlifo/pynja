@@ -4,6 +4,10 @@ import pynja
 from .root_paths import *
 
 
+# just hack a global instance here -- it assumes protoc is in the PATH
+protocToolChain = pynja.ProtocToolChain("protoc")
+
+
 class CppVariant(pynja.Variant):
     def __init__(self, string):
         super().__init__(string, self.get_field_defs())
@@ -167,3 +171,20 @@ class CppProject(pynja.CppProject):
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
         self.add_platform_libs(task)
+
+    def protoc_one(self, sourcePath, language):
+        task = pynja.ProtocTask(self, sourcePath, self.builtDir, self.projectDir, language, protocToolChain)
+        self.set_protoc_options(task)
+        return task
+
+    def protoc(self, filePaths, language):
+        taskList = []
+        for filePath in filePaths:
+            task = self.protoc_one(filePath, language)
+            taskList.append(task)
+        tasks = pynja.BuildTasks(taskList)
+        return tasks
+
+    def set_protoc_options(self, task):
+        pass
+

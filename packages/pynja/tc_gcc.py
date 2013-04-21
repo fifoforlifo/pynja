@@ -30,7 +30,7 @@ class GccToolChain(build.ToolChain):
         self._cxx_script  = os.path.join(self._scriptDir, "gcc-cxx-invoke.py")
         self._lib_script  = os.path.join(self._scriptDir, "gcc-lib-invoke.py")
         self._link_script = os.path.join(self._scriptDir, "gcc-link-invoke.py")
-        # Conservative set LTO support to False.
+        # Conservatively set LTO support to False.
         self.ltoSupport = False
 
     def emit_rules(self, ninjaFile):

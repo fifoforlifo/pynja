@@ -1,0 +1,11 @@
+package a0;
+
+import "address.proto";
+
+message Person {
+    required string name = 1;
+    required int32 id = 2;
+    optional string email = 3;
+    optional Address address = 4;
+}
+

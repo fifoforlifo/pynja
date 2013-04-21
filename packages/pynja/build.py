@@ -193,7 +193,7 @@ class ProjectMan:
         self._toolchains[toolchain.name] = toolchain
 
     def get_toolchain(self, toolchainName):
-        return self._toolchains[toolchainName]
+        return self._toolchains.get(toolchainName)
 
     def add_phony_target(self, name, path):
         refs = self._phonyTargets.get(name)

@@ -23,6 +23,7 @@ class RootPaths(object):
         add_project_dir("prog0", "code/prog0")
 
         rootPaths.built = os.path.join(rootDir, "built")
+        rootPaths.protobuf = os.path.join(rootDir, "imports/protobuf-2.4.1")
 
         if (os.name == 'nt'):
             # you can customize these paths to point at a location in source control
