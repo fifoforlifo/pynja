@@ -57,6 +57,6 @@ class prog0(repo.CppProject):
     # set c++ compile options that are common to all files in the project
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
-        task.includePaths.append(os.path.join(repo.rootPaths.a0, "Include"))
-        task.includePaths.append(os.path.join(repo.rootPaths.a1, "Include"))
+        task.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
+        task.includePaths.append(os.path.join(repo.rootPaths.a1, "include"))
 

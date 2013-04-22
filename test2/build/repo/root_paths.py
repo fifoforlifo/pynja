@@ -3,9 +3,9 @@
 import sys
 import os
 import pynja
-import repo.root_dir.finder
+from .root_dir import finder
 
-rootDir = repo.root_dir.finder.get_root_dir()
+rootDir = finder.get_root_dir()
 
 def add_project_dir(name, relPath, absPath = None):
     """Add a rootPath and import it."""

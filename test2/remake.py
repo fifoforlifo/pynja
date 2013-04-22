@@ -1,4 +1,4 @@
-#!/usr/bin/python3.3
+#!./build/tools/python
 import sys
 import os
 

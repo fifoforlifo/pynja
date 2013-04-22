@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "A0_special.h"
-#include "A1.h"
+#include "a0_special.h"
+#include "a1.h"
 
 int main()
 {

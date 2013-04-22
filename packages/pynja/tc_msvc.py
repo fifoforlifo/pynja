@@ -271,7 +271,7 @@ if os.name == "nt":
             ninjaFile.write("\n")
             ninjaFile.write("\n")
 else:
-    class MsvcToolChain(pynja.build.ToolChain):
+    class MsvcToolChain(build.ToolChain):
         """A stub implementation for non-Windows OSes."""
 
         def __init__(self, name, installDir, arch):
