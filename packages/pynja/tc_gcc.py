@@ -258,6 +258,8 @@ class GccToolChain(build.ToolChain):
         if task.lto:
             options.append("-O3")
             options.append("-flto")
+        if task.noUndefined:
+            options.append("-Wl,--no-undefined")
         self.translate_linker_inputs(options, task)
         options.extend(task.extraOptions)
         write_rsp_file(project, task, options)

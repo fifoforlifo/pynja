@@ -85,6 +85,7 @@ class LinkTask(build.BuildTask):
         # gcc-specific
         self.addressModel = None
         self.lto = None
+        self.noUndefined = True
         # nvcc-specific
 
     def emit(self):
