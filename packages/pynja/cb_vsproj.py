@@ -52,7 +52,7 @@ class VS2008:
         defines = ""
         includePaths = ""
         forceIncludes = ""
-        if proj:
+        if proj and getattr(proj, "set_cpp_compile_options", None):
             task = cpp.CppTask(proj, "dummy", "dummy.o", proj.projectDir)
             proj.set_cpp_compile_options(task)
             defines = ";".join(task.defines)
@@ -171,7 +171,7 @@ class VS2010:
         defines = ""
         includePaths = ""
         forceIncludes = ""
-        if proj:
+        if proj and getattr(proj, "set_cpp_compile_options", None):
             task = cpp.CppTask(proj, "dummy", "dummy.o", proj.projectDir)
             proj.set_cpp_compile_options(task)
             defines = ";".join(task.defines)
