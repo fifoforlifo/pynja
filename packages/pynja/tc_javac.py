@@ -82,7 +82,7 @@ class JavacToolChain(build.ToolChain):
         extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
 
         # write build command
-        ninjaFile.write("build %(outputPath)s.list %(extraOutputs)s %(outputPath)s.log : %(name)s_jar | %(scriptPath)s " % locals())
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(outputPath)s.log : %(name)s_jar | %(scriptPath)s " % locals())
         build.translate_extra_deps(ninjaFile, task, False)
         build.translate_order_only_deps(ninjaFile, task, True)
         ninjaFile.write("\n")

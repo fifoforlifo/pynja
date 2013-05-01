@@ -54,7 +54,7 @@ def java_compile():
     cmd = "javac \"@%s\" \"@%s\" \"@%s\" -d \"%s\" > \"%s\" 2>&1" % (optionsPath, cpOptionsPath, sourcesPath, outputDir, logPath)
     exitcode = os.system(cmd)
 
-    #os.unlink(cpOptionsPath)
+    os.unlink(cpOptionsPath)
 
     with open(logPath, "rt") as logFile:
         logContents = logFile.read()
