@@ -176,7 +176,6 @@ class ProjectMan:
         self.emitVS2010Projects = (os.name == 'nt')
 
         self._copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
-        self._faninCommand = os.path.join(os.path.dirname(__file__), "scripts", "implicit-out-fanin.py")
 
     def get_project(self, projName, variantName):
         variants = self._projects.get(projName)
@@ -224,15 +223,6 @@ class ProjectMan:
         ninjaFile.write("\n")
         ninjaFile.write("\n")
 
-        ninjaFile.write("#############################################\n")
-        ninjaFile.write("# Generate fanin\n")
-        ninjaFile.write("rule IMPLICIT_OUT_FANIN\n")
-        ninjaFile.write("  command = python %s \"$in\" \"$out\" \"$out.d\" \n" % self._faninCommand)
-        ninjaFile.write("  depfile = $out.d\n")
-        ninjaFile.write("  description = implicit_out_fanin $in -> $out.\n")
-        ninjaFile.write("\n")
-        ninjaFile.write("\n")
-
         for toolchainName, toolchain in sorted(self._toolchains.items()):
             toolchain.emit_rules(self.ninjaFile)
 
@@ -259,16 +249,6 @@ class ProjectMan:
         ninjaFile.write("build %s : FILE_COPY %s | %s\n" % (destPathEsc, origPathEsc, scriptPathEsc))
         if phonyTarget:
             self.add_phony_target(phonyTarget, destPath)
-
-    def emit_implicit_out_fanin(self, listFilePath, faninFilePath, phonyTarget = None):
-        ninjaFile = self.ninjaFile
-        origPathEsc = ninja_esc_path(listFilePath)
-        destPathEsc = ninja_esc_path(faninFilePath)
-        scriptPathEsc = ninja_esc_path(self._faninCommand)
-
-        ninjaFile.write("build %s : IMPLICIT_OUT_FANIN %s | %s\n" % (destPathEsc, origPathEsc, scriptPathEsc))
-        if phonyTarget:
-            self.add_phony_target(phonyTarget, destPathEsc)
 
     def emit_phony_targets(self):
         ninjaFile = self.ninjaFile

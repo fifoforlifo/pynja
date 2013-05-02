@@ -43,12 +43,22 @@ class JavaProject(build.Project):
         self.outputPath = None
         self.outputDir = os.path.join(self.builtDir, "classes")
         self.toolchain = self.get_toolchain()
+        self.classPaths = []
+        self.extraDepsForJar = []
+
+    def get_java_project(self, projectName, variant):
+        project = self.projectMan.get_project(projectName, self.variant)
+        self.extraDepsForJar.append(project.faninPath)
+        if project.outputPath:
+            self.classPaths.append(project.outputPath)
+        return project
 
     def java_compile(self, sourceFilePaths, classPaths = None):
         task = JavaTask(self, self.projectDir, self.faninPath, self.outputDir)
         task.sourceFilePaths.extend(sourceFilePaths)
         if classPaths:
             task.classPaths.extend(classPaths)
+        task.classPaths.extend(self.classPaths)
         self.set_java_compile_options(task)
         return task
 
@@ -60,5 +70,8 @@ class JavaProject(build.Project):
             raise Exception("outputPath already set for this project")
         self.outputPath = os.path.join(self.builtDir, jarFileName)
         task = JarTask(self, os.path.join(self.builtDir, "classes"), self.outputPath)
+        task.extraDeps.append(self.faninPath)
+        for extraDep in self.extraDepsForJar:
+            task.extraDeps.append(extraDep)
         return task
 

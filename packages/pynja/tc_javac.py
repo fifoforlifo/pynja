@@ -18,8 +18,13 @@ class JavacToolChain(build.ToolChain):
         ninjaFile.write("# %s\n" % self.name)
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_javac\n" % self.name)
+        ninjaFile.write("  command = python \"%s\"  compile  \"$WORKING_DIR\"  \"%s\"  \"$OUT_DIR\"  \"$OPTIONS\"  \"$CLASSPATHS\"  \"$SOURCES\"  \"$LOG_FILE\"  \"$LIST_FILE\"  \"$FANIN_FILE\"  \n" % (self._javac_script, self.jdkDir))
+        ninjaFile.write("  description = %s  $DESC\n" % self.name)
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("rule %s_javac_fanin\n" % self.name)
         ninjaFile.write("  depfile = $DEP_FILE\n")
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"%s\"  \"$OUT_DIR\"  \"$OPTIONS\"  \"$CLASSPATHS\"  \"$SOURCES\"  \"$LOG_FILE\"  \"$LIST_FILE\" \n" % (self._javac_script, self.jdkDir))
+        ninjaFile.write("  command = python \"%s\"  fanin  \"$WORKING_DIR\"  \"%s\"  \"$OUT_DIR\"  \"$OPTIONS\"  \"$CLASSPATHS\"  \"$SOURCES\"  \"$LOG_FILE\"  \"$LIST_FILE\"  \"$FANIN_FILE\"  \n" % (self._javac_script, self.jdkDir))
         ninjaFile.write("  description = %s  $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
@@ -27,6 +32,7 @@ class JavacToolChain(build.ToolChain):
         ninjaFile.write("rule %s_jar\n" % self.name)
         ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"%s\"  \"$OUTPUT_FILE\"  \"$LOG_FILE\"  \n" % (self._jar_script, self.jdkDir))
         ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("  description = %s  $DESC\n" % self.name)
         ninjaFile.write("\n")
 
     def emit_java_compile(self, project, task):
@@ -66,10 +72,23 @@ class JavacToolChain(build.ToolChain):
         ninjaFile.write("  SOURCES     = %s.src\n" % task.outputPath)
         ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
         ninjaFile.write("  LIST_FILE   = %s.list\n" % task.outputPath)
+        ninjaFile.write("  FANIN_FILE  = %s\n" % task.outputPath)
         ninjaFile.write("  DESC        = %s\n" % (outputName))
         ninjaFile.write("\n")
 
-        project.projectMan.emit_implicit_out_fanin(task.outputPath + ".list", task.outputPath)
+        # write fanin command
+        ninjaFile.write("build %(outputPath)s : %(name)s_javac_fanin | %(outputPath)s.list %(scriptPath)s \n" % locals())
+        ninjaFile.write("  DEP_FILE    = %s.d\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+        ninjaFile.write("  OUT_DIR     = %s\n" % task.outputDir)
+        ninjaFile.write("  OPTIONS     = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  CLASSPATHS  = %s.cp\n" % task.outputPath)
+        ninjaFile.write("  SOURCES     = %s.src\n" % task.outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  LIST_FILE   = %s.list\n" % task.outputPath)
+        ninjaFile.write("  FANIN_FILE  = %s\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s\n" % (outputName))
+        ninjaFile.write("\n")
 
     def emit_jar_create(self, project, task):
         # emit ninja file contents
@@ -90,4 +109,5 @@ class JavacToolChain(build.ToolChain):
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
         ninjaFile.write("  OUTPUT_FILE = %s\n" % task.outputPath)
         ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s\n" % (task.outputPath))
         ninjaFile.write("\n")

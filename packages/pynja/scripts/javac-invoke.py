@@ -4,7 +4,7 @@ import sys
 import re
 
 
-script, workingDir, jdkDir, outputDir, optionsPath, classPathsPath, sourcesPath, logPath, listFilePath = sys.argv
+script, subCommand, workingDir, jdkDir, outputDir, optionsPath, classPathsPath, sourcesPath, logPath, listFilePath, faninPath = sys.argv
 
 
 def generate_list_file():
@@ -63,6 +63,39 @@ def java_compile():
     if exitcode:
         sys.exit(exitcode)
 
+    generate_list_file()
+
+
+def escape_path(path):
+    return path.replace(" ", "\\ ").replace("$", "\\$")
+
+def all_paths_exist(pathList):
+    for path in pathList:
+        if not os.path.exists(path):
+            return False
+    return True
+
+def generate_fanin_file():
+    if os.path.exists(faninPath):
+        os.unlink(faninPath)
+    # do not unlink the faninDeps file, so that upon error it remains dirty
+
+    with open(listFilePath, "rt") as listFile:
+        pathList = [path.rstrip() for path in listFile.readlines()]
+
+    # if any implicit-output was deleted, redo the build command
+    if not all_paths_exist(pathList):
+        java_compile()
+
+    faninDepsPath = faninPath + ".d"
+    with open(faninDepsPath, "wt") as faninDepsFile:
+        faninDepsFile.write("%s: \\\n" % escape_path(faninPath))
+        for path in pathList:
+            faninDepsFile.write("%s \\\n" % escape_path(path))
+
+    with open(faninPath, "wt") as faninFile:
+        faninFile.write("1")
+
 
 if __name__ == '__main__':
     os.chdir(workingDir)
@@ -72,6 +105,12 @@ if __name__ == '__main__':
     os.environ['PATH'] = "%s%sbin%s%s" % (jdkDir, os.sep, os.pathsep, oldPathEnv)
     os.environ['JAVA_HOME'] = "%s\jre" % (jdkDir)
 
-    java_compile()
-    generate_list_file()
+    if subCommand == "compile":
+        java_compile()
+    elif subCommand == "fanin":
+        generate_fanin_file()
+    else:
+        print("error: unknown subCommand")
+        sys.exit(1)
+
     sys.exit(0)
