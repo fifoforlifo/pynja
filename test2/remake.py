@@ -1,4 +1,4 @@
-#!./build/tools/python
+#!/usr/bin/python3.3
 import sys
 import os
 
@@ -72,6 +72,12 @@ def generate_ninja_build(projectMan):
 
             projectMan.add_toolchain(pynja.ClangToolChain("clang-amd64", "/home/lolo/Downloads/clang+llvm-3.2-x86_64-linux-ubuntu-12.04"))
             cpp_variants.append(repo.cpp.CppVariant("linux-clang-amd64-dbg-dcrt"))
+
+        if build_java:
+            if os.path.exists("/usr/bin/javac"):
+                projectMan.add_toolchain(pynja.JavacToolChain("javac", "/usr/bin"))
+                java_variants.append(repo.java.JavaVariant("javac"))
+
     else:
         raise Exception("Not implemented")
 
