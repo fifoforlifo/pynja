@@ -10,8 +10,6 @@ script, subCommand, workingDir, jdkDir, outputDir, optionsPath, classPathsPath, 
 def generate_list_file():
     with open(sourcesPath, "rt") as sourcesFile:
         sourcesList = sourcesFile.readlines()
-    with open(classPathsPath, "rt") as classPathsFile:
-        classPathsList = classPathsFile.readlines()
 
     with open(listFilePath, "wt") as listFile:
         for sourcePath in sourcesList:
@@ -26,11 +24,6 @@ def generate_list_file():
                 implicitOutputs = glob.glob("%s$*.class" % basePath)
                 for implicitOutput in implicitOutputs:
                     listFile.write("%s\n" % implicitOutput)
-
-        for classPath in classPathsList:
-            jarFilePaths = glob.glob("%s/*.jar" % classPath)
-            for jarFilePath in jarFilePaths:
-                listFile.write("%s\n" % jarFilePath)
 
 
 def create_class_path_options_file(fileName):
