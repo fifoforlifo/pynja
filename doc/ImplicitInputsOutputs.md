@@ -1,4 +1,4 @@
-# Implicit Inputs and Outputs in a DAG-Based Build
+# Implicit Inputs and Outputs in a File-Level DAG-Based Build System
 
 (c) Avinash Baliga - 2013/May/01
 
@@ -15,27 +15,30 @@ In any build system, we can categorize the input and output files of each comman
 3.  Implicit inputs: Only knownable once the command is executable.  For example, C header files.
 4.  Implicit outputs: Only knowable once the command is executable.  For example, the list of files produced after unzipping a file.
 
-A DAG-based build system can handle explicit inputs and outputs naturally.
+A file-level DAG-based build system (FLDBBS) like ninja or make can handle explicit inputs and outputs naturally.
 
-Implicit inputs usually require some special support or trickery.  This usually suffices for ensuring that
+### Well-known existing solutions for Implicit I/O
+
+Implicit inputs usually require some special support or trickery.  The standard solution is for a command to
+output a deps file, which will be read in a *subsequent* incremental build.  This usually suffices for ensuring that
 a single command's outputs stay up-to-date on incremental builds.  However, manual dependency
-annotations are usually required whenever an implicit input is generated as part of the build.
+annotations for consumers are usually required whenever an implicit input is generated as part of the build.
 
-Implicit outputs are a different beast.  A normal build DAG requires all outputs to be declared
-in advance, prevent implicit outputs from being directly representable.  A 'representative explicit output'
+Implicit outputs are a different beast.  A normal build DAG in a FLDBBS requires all outputs to be declared
+in advance, preventing implicit outputs from being directly representable.  A 'representative explicit output'
 or 'guard file' is often used as a place-holder for implicit outputs, and manual dependency
 annotations are required for all consumers.  The guard file correctly sequences dependencies, but
 it has one drawback: if any implicit output file is erased, but the guard file remains, then an incremental
 build is unable to detect it -- leaving the build in an invalid state.
 
 
-## Fixing Implicit Outputs in Incremental Builds
+## Fixing Implicit Outputs in incremental builds
 
 ### Implicit Input/Output Duality
 
 Assuming the list of implicit outputs is knowable upon executing a command, it's possible
-to create a DAG construct that perfectly updates on incremental builds.  The key is to create
-two commands: a 'clean' command and an 'incremental' command.
+to create a DAG construct for a FLDBBS that perfectly updates on incremental builds.
+The key is to create two commands: a 'clean-build' command and an 'incremental' command.
 
 Example pseudo-code:
 
@@ -45,7 +48,7 @@ Example pseudo-code:
         convert_unzip_output_to_file_list("tempfile", "foo.zip.list")
         unlink("tempfile")
 
-    # clean unzip
+    # clean-build unzip
     build:
         inputs  = foo.zip
         outputs = foo.zip.list
@@ -110,7 +113,35 @@ Another requirement for this technique to work, is that a build command must be 
 even if only implicit inputs are missing.  This is a policy that a build engine need not
 support, but fortunately ninja does support it.
 
+### Other applications
+
 In pynja, java compilation is kept up-to-date using this construct.
+
+For each input file Foo.java, the java compiler produces one known output Foo.class,
+but additionally produces any number of additional 'inner class' files.  Each inner
+class file corresponds to an inner class declaration in the source code (surprise!),
+and has a filename of the form Foo$Inner.class.
+
+Searching the output directory for Foo$*.class yields the implicit output list.
+
+### Parity with non-file-based build systems
+
+It is worth mentioning that in the past,
+Ant, MSBuild, and other similar non-FLDBBSs have arguably had
+more success in handling build tasks that generate implicit outputs.  This is
+generally accomplished by having the build re-evaluate those tasks on every
+incremental build.  It is then the task's responsibility to perform dirty checks,
+and maintain file-level input/output relationships.  Clearly this comes at a
+*noticeable* cost in incremental build speed.
+
+Using the proposed technique for FLDBBSs above, ninja now achieves functional parity
+with the above -- while continuing to work within the existing framework and
+retain all benefits of speed.
+
+In other respects, the maintenance cost of representing inter-task dependencies
+is the same.  In Ant & similar, a manual dependency annotation is required between
+dependent tasks; the same is required in the high-level description that is
+lowered to a ninja representation.
 
 
 ### Possibility for 'native' ninja support.
