@@ -6,7 +6,7 @@ pynja is a cross-platform meta-build system written in Python that produces
 [Ninja Build files](http://martine.github.com/ninja/).
 
 You can find
-[the manual here](https://github.com/fifoforlifo/pynja/tree/master/doc/manual/manual.html).
+[the manual here](http://fifoforlifo.github.io/pynja/).
 
 ## Overview
 
