@@ -5,6 +5,9 @@
 pynja is a cross-platform meta-build system written in Python that produces
 [Ninja Build files](http://martine.github.com/ninja/).
 
+You can find
+[the manual here](https://github.com/fifoforlifo/pynja/tree/master/doc/manual/manual.html).
+
 ## Overview
 
 ### Variant-Based Builds
@@ -55,10 +58,6 @@ Java and Protobuf generation.
 
 pynja can generate Visual Studio projects for code browsing.
 
-
-## The Manual
-
-It's a work-in-progress, located [here](https://github.com/fifoforlifo/pynja/tree/master/doc/manual).
 
 ## Simple example
 
