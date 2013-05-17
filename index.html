@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="generator" content="AsciiDoc 8.6.8">
+<title>pynja v1.0 manual</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+/*
+  pygmentize filter
+*/
+.highlight .hll { background-color: #ffffcc }
+.highlight  { background: #f4f4f4; }
+.highlight .c { color: #008800; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .k { color: #AA22FF; font-weight: bold } /* Keyword */
+.highlight .o { color: #666666 } /* Operator */
+.highlight .cm { color: #008800; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #008800 } /* Comment.Preproc */
+.highlight .c1 { color: #008800; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #008800; font-weight: bold } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gr { color: #FF0000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #808080 } /* Generic.Output */
+.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #0040D0 } /* Generic.Traceback */
+.highlight .kc { color: #AA22FF; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #AA22FF; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #AA22FF; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #AA22FF } /* Keyword.Pseudo */
+.highlight .kr { color: #AA22FF; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #00BB00; font-weight: bold } /* Keyword.Type */
+.highlight .m { color: #666666 } /* Literal.Number */
+.highlight .s { color: #BB4444 } /* Literal.String */
+.highlight .na { color: #BB4444 } /* Name.Attribute */
+.highlight .nb { color: #AA22FF } /* Name.Builtin */
+.highlight .nc { color: #0000FF } /* Name.Class */
+.highlight .no { color: #880000 } /* Name.Constant */
+.highlight .nd { color: #AA22FF } /* Name.Decorator */
+.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #00A000 } /* Name.Function */
+.highlight .nl { color: #A0A000 } /* Name.Label */
+.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #B8860B } /* Name.Variable */
+.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .mf { color: #666666 } /* Literal.Number.Float */
+.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight .sb { color: #BB4444 } /* Literal.String.Backtick */
+.highlight .sc { color: #BB4444 } /* Literal.String.Char */
+.highlight .sd { color: #BB4444; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #BB4444 } /* Literal.String.Double */
+.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #BB4444 } /* Literal.String.Heredoc */
+.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.highlight .sx { color: #008000 } /* Literal.String.Other */
+.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+.highlight .s1 { color: #BB4444 } /* Literal.String.Single */
+.highlight .ss { color: #B8860B } /* Literal.String.Symbol */
+.highlight .bp { color: #AA22FF } /* Name.Builtin.Pseudo */
+.highlight .vc { color: #B8860B } /* Name.Variable.Class */
+.highlight .vg { color: #B8860B } /* Name.Variable.Global */
+.highlight .vi { color: #B8860B } /* Name.Variable.Instance */
+.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
+
+
+
+@media screen {
+  body {
+    max-width: 50em; /* approximately 80 characters wide */
+    margin-left: 16em;
+  }
+
+  #toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 13em;
+    padding: 0.5em;
+    padding-bottom: 1.5em;
+    margin: 0;
+    overflow: auto;
+    border-right: 3px solid #f8f8f8;
+    background-color: white;
+  }
+
+  #toc .toclevel1 {
+    margin-top: 0.5em;
+  }
+
+  #toc .toclevel2 {
+    margin-top: 0.25em;
+    display: list-item;
+    color: #aaaaaa;
+  }
+
+  #toctitle {
+    margin-top: 0.5em;
+  }
+}
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install(2);
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>pynja v1.0 manual</h1>
+<span id="author">Avinash Baliga</span><br>
+<span id="email" class="monospaced">&lt;<a href="mailto:com DOT gmail AT fifoforlifo">com DOT gmail AT fifoforlifo</a>&gt;</span><br>
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_introduction">1. Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>pynja is a cross-platform meta-build system written in <strong>Python 3</strong> that produces
+<a href="http://martine.github.com/ninja/">Ninja Build files</a>.</p></div>
+<div class="paragraph"><p>When using pynja, it will help to be familiar with the
+<a href="http://python.org">Python</a> language.
+But&#8201;&#8212;&#8201;if you don&#8217;t know Python, don&#8217;t worry.  In this manual, we&#8217;ll be
+sharing plenty of recipes that you can copy/paste without worrying about
+too many Pythonic details.</p></div>
+<div class="sect2">
+<h3 id="_conventions">1.1. Conventions</h3>
+<div class="paragraph"><p>In this document, you might encounter these terms or variables:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+VCS = <a href="http://en.wikipedia.org/wiki/Revision_control">Version Control System</a>
+    = Source Control.  Programs like
+    CVS, SVN, Git, Mercurial, Perforce are types of VCSs.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">$YOUR_REPO</span> = The root directory of your repository.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">$PYNJA_REPO</span> = The place where you downloaded or unzipped
+    the pynja repository.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">$BUILT_DIR</span> = The base directory where intermediate files
+    (like object files) are stored during a build.
+</p>
+</li>
+<li>
+<p>
+Out-of-source build = Pointing your <span class="monospaced">$BUILT_DIR</span> at a
+    location outside of your source repository.  This has many
+    benefits (like making your VCS easier to work with), and is
+    highly encouraged.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_pynja_and_ninja">1.2. Pynja and Ninja</h3>
+<div class="paragraph"><p>pynja is a meta-build system.
+Its job is to help you generate a file-level dependency graph
+that ninja can execute efficiently.</p></div>
+<div class="paragraph"><p>In the end, pynja helps you create a <span class="monospaced">build.ninja</span> file in your
+<span class="monospaced">$BUILT_DIR</span>.</p></div>
+<div class="paragraph"><p>Once you have a <span class="monospaced">build.ninja</span>, you can actually <strong>perform</strong> your build
+by invoking <a href="http://martine.github.com/ninja/"><span class="monospaced">ninja</span></a>.  For example:</p></div>
+<div class="listingblock">
+<div class="content monospaced">
+<pre>pushd $BUILT_DIR
+ninja</pre>
+</div></div>
+<div class="paragraph"><p>or</p></div>
+<div class="listingblock">
+<div class="content monospaced">
+<pre>ninja -C $BUILT_DIR</pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_basic_concepts">1.3. Basic Concepts</h3>
+<div class="paragraph"><p>pynja makes you organize your build into <span class="monospaced">Project</span> classes.
+Each class should have a specific goal.  Some common project types
+and outputs are:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+CppProject
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://en.wikipedia.org/wiki/Static_library">static library</a>
+</p>
+</li>
+<li>
+<p>
+<a href="https://en.wikipedia.org/wiki/Shared_library">shared library</a>
+        aka DLL or dynamic shared object
+</p>
+</li>
+<li>
+<p>
+<a href="http://en.wikipedia.org/wiki/Executable">executable</a>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+JavaProject
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://en.wikipedia.org/wiki/Jar_file">jar file</a>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>In real life, you will find that you need to build the same project
+in multiple ways.</p></div>
+<div class="paragraph"><p>The most common example is a debug vs release build.  Debug typically
+has optimizations disabled, more debug information output, special
+preprocessor defines for logging, etc.  Some other common variations are
+compiler-toolchain, architecture, and C-runtime-linkage (static vs dynamic).</p></div>
+<div class="paragraph"><p>pynja lets you handle this variation by letting you define <span class="monospaced">Variant</span>
+classes, and then create one <span class="monospaced">Project</span> instance per <span class="monospaced">Variant</span>.
+A <span class="monospaced">Variant</span> class is composed of fields such as
+<span class="monospaced">toolchain</span> (<em>gcc</em>, <em>msvc</em>), <span class="monospaced">arch</span> (<em>x86</em>, <em>x64</em>),
+and <span class="monospaced">config</span> (<em>debug</em>, <em>release</em>).
+Variants have a canonical string form, which is useful for defining
+directory names for outputs, or when specifying targets on the
+commandline.  For example, <span class="monospaced">gcc-x86-debug</span> speaks for itself.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/important.png" alt="Important">
+</td>
+<td class="content">Pynja was specifically designed with multi-arch, multi-platform,
+multi-language development in mind&#8201;&#8212;&#8201;in contrast with most other build systems.
+<a href="#pynja-variants-are-better">Read here for more details.</a></td>
+</tr></table>
+</div>
+<div class="paragraph"><p>To support cross-platform, cross-toolchain builds, pynja has some
+standard abstractions for <span class="monospaced">ToolChains</span> and compilation <span class="monospaced">Tasks</span>.  A
+<span class="monospaced">ToolChain</span> embodies the rules needed to invoke a specific compiler
+(like <span class="monospaced">gcc</span>), and a <span class="monospaced">Task</span> abstracts compiler options as fields of
+a python class.  With C++ builds, each <span class="monospaced">Project</span> <em>instance</em> is
+associated with exactly one toolchain.  The same <span class="monospaced">Project</span> may be
+instanced multiple times using multiple <span class="monospaced">ToolChains</span>.</p></div>
+<div class="paragraph"><p>Finally there&#8217;s the <span class="monospaced">ProjectMan</span> class.  ProjectMan enforces the rule of
+"one <span class="monospaced">Project</span> instance per <span class="monospaced">Variant</span>", provides a central dictionary for
+<span class="monospaced">ToolChain</span> instances, and helps coordinate the write-out
+of build.ninja.</p></div>
+<div class="paragraph"><p>Here&#8217;s how these elements interact in code:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="c"># $REPO_ROOT/packages/repo/cpp.py</span>
+<span class="k">class</span> <span class="nc">SimpleCppVariant</span><span class="p">(</span><span class="n">pynja</span><span class="o">.</span><span class="n">Variant</span><span class="p">):</span>                              <span class="c"># <img src="./images/icons/callouts/1.png" alt="1"></span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_field_defs</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">get_field_defs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fieldDefs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s">&quot;toolchain&quot;</span><span class="p">,</span>    <span class="p">[</span> <span class="s">&quot;gcc&quot;</span><span class="p">,</span> <span class="s">&quot;clang&quot;</span> <span class="p">],</span>                     <span class="c"># <img src="./images/icons/callouts/2.png" alt="2"></span>
+            <span class="s">&quot;arch&quot;</span><span class="p">,</span>         <span class="p">[</span> <span class="s">&quot;x86&quot;</span><span class="p">,</span> <span class="s">&quot;x64&quot;</span> <span class="p">],</span>                       <span class="c"># <img src="./images/icons/callouts/3.png" alt="3"></span>
+            <span class="s">&quot;config&quot;</span><span class="p">,</span>       <span class="p">[</span> <span class="s">&quot;dbg&quot;</span><span class="p">,</span> <span class="s">&quot;prof&quot;</span><span class="p">,</span> <span class="s">&quot;rel&quot;</span> <span class="p">],</span>               <span class="c"># <img src="./images/icons/callouts/4.png" alt="4"></span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">fieldDefs</span>
+
+<span class="k">class</span> <span class="nc">SimpleCppProject</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39; ... __init__ and other methods ... &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">set_cpp_compile_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_cpp_compile_options</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">debugLevel</span> <span class="o">=</span> <span class="mi">2</span>                                         <span class="c"># <img src="./images/icons/callouts/5.png" alt="5"></span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">config</span> <span class="o">==</span> <span class="s">&quot;dbg&quot;</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">optLevel</span> <span class="o">=</span> <span class="mi">0</span>                                       <span class="c"># <img src="./images/icons/callouts/6.png" alt="6"></span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">optLevel</span> <span class="o">=</span> <span class="mi">3</span>                                       <span class="c"># <img src="./images/icons/callouts/7.png" alt="7"></span>
+</pre></div></div></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="c"># $REPO_ROOT/code/program/program.py</span>
+<span class="nd">@pynja.project</span>
+<span class="k">class</span> <span class="nc">program</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">cpp</span><span class="o">.</span><span class="n">SimpleCppProject</span><span class="p">):</span>                           <span class="c"># <img src="./images/icons/callouts/8.png" alt="8"></span>
+    <span class="k">def</span> <span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>                                                 <span class="c"># <img src="./images/icons/callouts/9.png" alt="9"></span>
+            <span class="s">&quot;src/main.cpp&quot;</span><span class="p">,</span>
+            <span class="s">&quot;src/util.cpp&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="k">as</span> <span class="n">tasks</span><span class="p">:</span>                    <span class="c"># <img src="./images/icons/callouts/10.png" alt="10"></span>
+            <span class="k">pass</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input_library</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">rootPaths</span><span class="o">.</span><span class="n">zlib</span><span class="p">)</span>                 <span class="c"># <img src="./images/icons/callouts/11.png" alt="11"></span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>                 <span class="c"># <img src="./images/icons/callouts/12.png" alt="12"></span>
+            <span class="k">pass</span>
+</pre></div></div></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="c"># $REPO_ROOT/remake.py</span>
+<span class="k">def</span> <span class="nf">generate_ninja_build</span><span class="p">(</span><span class="n">projectMan</span><span class="p">):</span>
+    <span class="n">cppVariants</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="sd">&#39;&#39;&#39; ... create toolchain objects ... &#39;&#39;&#39;</span>
+    <span class="n">cppVariants</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">cpp</span><span class="o">.</span><span class="n">SimpleCppVariant</span><span class="p">(</span><span class="s">&quot;gcc-x86-dbg&quot;</span><span class="p">))</span>    <span class="c"># <img src="./images/icons/callouts/13.png" alt="13"></span>
+    <span class="n">cppVariants</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">cpp</span><span class="o">.</span><span class="n">SimpleCppVariant</span><span class="p">(</span><span class="s">&quot;gcc-x86-rel&quot;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">variant</span> <span class="ow">in</span> <span class="n">cppVariants</span><span class="p">:</span>
+        <span class="n">projectMan</span><span class="o">.</span><span class="n">get_project</span><span class="p">(</span><span class="s">&quot;program&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="p">)</span>                  <span class="c"># <img src="./images/icons/callouts/14.png" alt="14"></span>
+</pre></div></div></div>
+<div class="colist arabic"><table>
+<tr><td><img src="./images/icons/callouts/1.png" alt="1"></td><td>
+Define a <span class="monospaced">Variant</span> class.  Instances will be referred to as <span class="monospaced">variant</span>.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/2.png" alt="2"></td><td>
+<span class="monospaced">variant.toolchain</span> can be one of (<em>gcc</em>, <em>clang</em>, <em>msvc11</em>)
+</td></tr>
+<tr><td><img src="./images/icons/callouts/3.png" alt="3"></td><td>
+<span class="monospaced">variant.arch</span> can be one of (<em>x86</em>, <em>x64</em>)
+</td></tr>
+<tr><td><img src="./images/icons/callouts/4.png" alt="4"></td><td>
+<span class="monospaced">variant.config</span> can be one of (<em>dbg</em>, <em>prof</em>, <em>rel</em>)
+</td></tr>
+<tr><td><img src="./images/icons/callouts/5.png" alt="5"></td><td>
+All compilations produce debug info.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/6.png" alt="6"></td><td>
+In <em>dbg</em> configuration, all optimizations are disabled.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/7.png" alt="7"></td><td>
+In other configurations, all optimizations are enabled.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/8.png" alt="8"></td><td>
+Define a Project to build the program executable.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/9.png" alt="9"></td><td>
+Declare source files in a regular python list.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/10.png" alt="10"></td><td>
+Declare C++ compilation targets, using the source files
+    specified in the <span class="monospaced">sources</span> list.
+    The project determines where the object files will be written
+    (somewhere in the $BUILT_DIR).  The project also
+    "remembers" the list of generated object files.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/11.png" alt="11"></td><td>
+Cause the final target to link against <span class="monospaced">zlib</span>.
+    Note that the order w.r.t. compilation is significant here.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/12.png" alt="12"></td><td>
+Declare an executable named <span class="monospaced">prog0</span> (or <span class="monospaced">prog0.exe</span> on Windows).
+    The executable will be created by linking all the object files
+    from previous <span class="monospaced">cpp_compile</span> calls and any <span class="monospaced">add_input_library</span> calls.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/13.png" alt="13"></td><td>
+Declare global variants that we want to create targets for.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/14.png" alt="14"></td><td>
+Cause the <span class="monospaced">program</span> class to be instanced for all variants
+    we created previously, causing all the relevant targets to
+    be declared.
+</td></tr>
+</table></div>
+<div class="paragraph"><p>Remember that no actual compilation occurs throughout this entire process.
+We are simply defining targets to be built later using <span class="monospaced">ninja</span>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_prerequisites">1.4. Prerequisites</h3>
+<div class="paragraph"><p>You will need a copy of Python 3.2 or greater.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+On Windows or Mac, download it from <a href="http://python.org">http://python.org</a> .
+</p>
+</li>
+<li>
+<p>
+On Linux, use your package manager.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+On Ubuntu you can use e.g. <span class="monospaced">sudo apt-get install python3.3</span>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Download a copy of the pynja repository:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://github.com/fifoforlifo/pynja/archive/master.zip">https://github.com/fifoforlifo/pynja/archive/master.zip</a>
+</p>
+</li>
+<li>
+<p>
+Or if you prefer, clone the git repository:
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content monospaced">
+<pre>mkdir $PYNJA_REPO
+cd $PYNJA_REPO
+git clone https://github.com/fifoforlifo/pynja.git .</pre>
+</div></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_brief_tour_of_the_components">2. Brief Tour of the Components</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>There are 4 code categories in a pynja build:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The pynja package: you typically don&#8217;t modify this.
+</p>
+</li>
+<li>
+<p>
+The repo package: you copy this and tweak this.
+</p>
+</li>
+<li>
+<p>
+Project files: you write these in your source directories.
+</p>
+</li>
+<li>
+<p>
+Root-level script <span class="monospaced">remake.py</span>: you copy and tweak this.
+</p>
+</li>
+</ul></div>
+<div class="sect2">
+<h3 id="_pynja_package">2.1. pynja package</h3>
+<div class="paragraph"><p>Find this in <a href="https://github.com/fifoforlifo/pynja/tree/master/packages/pynja"><span class="monospaced">$PYNJA_REPO/packages/pynja</span></a> .</p></div>
+<div class="paragraph"><p>I recommend copying this into your repository, so that a stable
+copy of pynja revisions along with your source code.</p></div>
+<div class="paragraph"><p>Then your <span class="monospaced">remake.py</span> can add the pynja package location to your
+<a href="http://docs.python.org/3/library/sys.html#sys.path">sys.path</a>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_repo_package">2.2. repo package</h3>
+<div class="paragraph"><p>Find this in <a href="https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo"><span class="monospaced">$PYNJA_REPO/test2/build/repo</span></a> .</p></div>
+<div class="paragraph"><p>The <strong>repo</strong> package is intended to be specialized for your particular
+<strong>repo</strong>sitory.</p></div>
+<div class="paragraph"><p>The repo package serves several purposes:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Define all the project directories in your repository.
+</p>
+<div class="olist loweralpha"><ol class="loweralpha">
+<li>
+<p>
+This also provides support for <a href="#micro-branching">[micro-branching]</a>.
+</p>
+</li>
+</ol></div>
+</li>
+<li>
+<p>
+Define all the <span class="monospaced">Variant</span> types supported by your repository.
+</p>
+</li>
+<li>
+<p>
+Define specializations of <span class="monospaced">class CppProject</span>, <span class="monospaced">class JavaProject</span>, etc. to
+    be used as base classes throughout the rest of the build.
+    These common base classes will set compiler flags based on your
+    repository-specific <span class="monospaced">Variant</span> fields.
+</p>
+</li>
+</ol></div>
+</div>
+<div class="sect2">
+<h3 id="_project_files">2.3. project files</h3>
+<div class="paragraph"><p>Find an example <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py"><span class="monospaced">$PYNJA_REPO/test2/code/a1.py</span></a>.</p></div>
+<div class="paragraph"><p>A project file is just a python source file that declares one or more
+Project classes.  Each Project class may be instantiated once per
+Variant.  A C++ Project will generate a single library or executable
+per instance.</p></div>
+<div class="paragraph"><p>You will typically define project files alongside your source code.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_root_level_script">2.4. root-level script</h3>
+<div class="paragraph"><p>Find an example <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py"><span class="monospaced">$PYNJA_REPO/test2/remake.py</span></a>.</p></div>
+<div class="paragraph"><p>This script is literally what causes the <span class="monospaced">build.ninja</span> file to be created.
+Its job is to instantiate all supported Variants, and all desired
+top-level projects and targets using those Variants.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_c_build">3. C++ Build</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_cppproject">3.1. CppProject</h3>
+<div class="paragraph"><p>CppProject is designed to create exactly one static library, shared library,
+or executable per instance.  That is, a CppProject represents one
+linker invocation and all the sub-targets needed to feed the linker.</p></div>
+<div class="paragraph"><p>You will need to specialize <span class="monospaced">pynja.CppProject</span> into your own
+<span class="monospaced">repo.cpp.Project</span>, in order to translate your Variants to appropriate
+compiler flags.</p></div>
+<div class="paragraph"><p>The CppProject holds an internal list of inputs that need to be
+passed to the linker.  You can directly add to that list as follows:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">add_input</span> : add an object file
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">add_input_lib</span> : add a library dependency
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_compiling_and_cpptasks">3.2. Compiling and CppTasks</h3>
+<div class="paragraph"><p>The <span class="monospaced">cpp_compile_one</span> function compiles one source file to an object file.
+The object file name is automatically computed based on the <span class="monospaced">project.builtDir</span>
+and then added via <span class="monospaced">add_input</span>.</p></div>
+<div class="paragraph"><p>Each compilation is represented by a <span class="monospaced">CppTask</span> instance.  This class has
+a public field for each commonly used compiler option.  It&#8217;s the ToolChain&#8217;s
+job to later translate the portable CppTask fields into toolchain-specific
+compiler flags and build directives.</p></div>
+<div class="sect3">
+<h4 id="_control_flow">3.2.1. Control Flow</h4>
+<div class="paragraph"><p>CppTasks flow from a most-generic to a most-specific scope.  At each step
+of the way, any option may be overridden.  Lists may also be appended to
+or even completely replaced.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">pynja.CppProject.cpp_compile_one</span>: CppTask is created.
+    The default options are geared towards an optimized build.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">repo.CppProject.set_cpp_compile_options</span>: Set compiler options based
+    solely on the variant.  Typically you control optimization settings,
+    debug info, C runtime linkage, and other "generic" settings here.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">YourProject.set_cpp_compile_options</span>: Set compiler options for files
+    in your project.  Typically you control include paths and defines here.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">with</span> statement body: Set source-file-specific options.
+    Typically you control PCH usage, include paths and defines here.
+    But you can also easily implement any other one-off quick-fixes you need.
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile_one</span><span class="p">(</span><span class="s">&quot;foo.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;LOGLEVEL=50&quot;</span><span class="p">)</span>
+</pre></div></div></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cpptask_compiler_options">3.3. CppTask Compiler Options</h3>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+For the full list, look at the definition of `pynja/cpp.py 
+</dt>
+<dd>
+<p>
+CppTask`.
+Here&#8217;s a breakdown of the most useful flags.
+</p>
+</dd>
+</dl></div>
+<div class="ulist"><div class="title">Common</div><ul>
+<li>
+<p>
+<span class="monospaced">optLevel</span>: Optimization level, on a scale of 0 - 3.
+    Level 0 is recommended default for debug, 3 for release.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">debugLevel</span>: Controls how much debug info is emitted, on a scale of 0 - 3.
+    Level 2 is the recommended default.  DebugLevel <em>should not</em> affect optimization
+    level, but certain compilers don&#8217;t implement this perfectly.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+0: none
+</p>
+</li>
+<li>
+<p>
+1: just line tables (enough to set breakpoints, see source correspondence)
+</p>
+</li>
+<li>
+<p>
+2: level1 + debug symbols (scope and variable info)
+</p>
+</li>
+<li>
+<p>
+3: level2 + advanced features, like "edit &amp; continue" under msvc;
+        note that this debug level may be incompatible with other compiler flags
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+<span class="monospaced">warnLevel</span>: Warning level on a scale of 0 - 3.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">warningsAsErrors</span>: If true, warnings are converted to errors.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">includePaths</span>: A list of ordered include paths for preprocessor header
+    discovery.  Translates to <span class="monospaced">-I</span> for gcc.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">defines</span>: A list of ordered preprocessor defines.
+    Translates to <span class="monospaced">-D</span> for gcc.
+</p>
+</li>
+</ul></div>
+<div class="ulist"><div class="title">GCC</div><ul>
+<li>
+<p>
+<span class="monospaced">addressModel</span>: When using a toolchain that supports multi-arch, this
+    field can be specified as either <span class="monospaced">-m32</span> or <span class="monospaced">-m64</span>.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">std</span>: Selects the language standard using the <span class="monospaced">-std</span> flag as described
+    <a href="http://gcc.gnu.org/onlinedocs/gcc-4.8.0/gcc/C-Dialect-Options.html">here</a>.
+    You should only pass the language name here.  For example, <span class="monospaced">"c99"</span> or
+    <span class="monospaced">"gnu99"</span> for C99 compilation, and <span class="monospaced">c++11</span> or <span class="monospaced">gnu++11</span> for C++11.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">lto</span>: If true and optimizations are enabled, the compiler
+    emits an object file that supports Link Time Optimization as described
+    <a href="http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html">here</a>.
+</p>
+</li>
+</ul></div>
+<div class="ulist"><div class="title">MSVC</div><ul>
+<li>
+<p>
+<span class="monospaced">dynamicCRT</span>: If true, compile code that will link against the dynamic
+    C runtime.  If false, require the static C runtime.  Translates to
+    one of <span class="monospaced">/MT</span>, <span class="monospaced">/MTd</span>, <span class="monospaced">/MD</span>, <span class="monospaced">/MDd</span> depending on optimization level.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">asyncExceptionandling</span>: If true, then SEH exceptions are thrown as
+    C++ exceptions.  (note: you usually do NOT want to enable this for
+    perf reasons)  Translates to <span class="monospaced">/EHa</span> or <span class="monospaced">/EHs</span>.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">externCNoThrow</span>: If true, treat <span class="monospaced">extern "C"</span> functions as nothrow.
+    Translates to <span class="monospaced">/Ehc</span>.
+</p>
+</li>
+</ul></div>
+<div class="ulist"><div class="title">NVCC</div><ul>
+<li>
+<p>
+<span class="monospaced">relocatableDeviceCode</span>: If true, device code is statically linkable.
+    Translates to <span class="monospaced">-rdc</span>.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">deviceDebugLevel</span>: Debug level on a scale of 0 - 2.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+0: none
+</p>
+</li>
+<li>
+<p>
+1: just line tables; useful for debug and profiler; translates to <span class="monospaced">-lineinfo</span>
+</p>
+</li>
+<li>
+<p>
+2: full debug info; unfortunately forces optimization level of device
+        code down to none; translates to <span class="monospaced">-G</span>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_library_dependencies">3.4. Library Dependencies</h3>
+<div class="paragraph"><p>Use the <span class="monospaced">add_input_lib</span> method to define a dependency.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input_lib</span><span class="p">(</span><span class="n">libA0</span><span class="o">.</span><span class="n">libraryPath</span><span class="p">)</span>
+</pre></div></div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/warning.png" alt="Warning">
+</td>
+<td class="content">Better handling of transitive library dependencies for static libs
+is currently a work-in-progress.  This will probably require minor
+changes to APIs and standard Project fields.</td>
+</tr></table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_creating_libraries_and_executables">3.5. Creating Libraries and Executables</h3>
+<div class="paragraph"><p>After you&#8217;ve defined all your compilations and additional inputs,
+you can finally define the output of your project.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="c"># static library</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_static_lib</span><span class="p">(</span><span class="s">&quot;a0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="c"># shared library</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared_lib</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="c"># executable</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+            <span class="k">pass</span>
+</pre></div></div></div>
+<div class="paragraph"><p>After doing <em>one</em> of the above, your Project&#8217;s <span class="monospaced">outputPath</span>
+field will be defined to the absolute path of the resultant
+target.</p></div>
+<div class="paragraph"><p>Library projects will have an additional <span class="monospaced">libraryPath</span> field set.
+This points at the <span class="monospaced">.lib</span> file when building with MSVC, and
+the DSO or DLL when using other toolchains.  Always use a project&#8217;s
+<span class="monospaced">libraryPath</span> when adding library dependencies.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_precompiled_headers_pch">3.6. PreCompiled Headers (PCH)</h3>
+<div class="paragraph"><p>You can seriously speed up your build with PCHs.  They&#8217;re highly
+recommended, especially when your C++ code uses lots of STL, Boost,
+and large system headers.</p></div>
+<div class="paragraph"><p>pynja supports PCHs in the most generic way possible while still
+remaining portable:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+You can <em>create</em> a PCH at any time, from any project.
+</p>
+</li>
+<li>
+<p>
+You can <em>use</em> a PCH at any time, from any project.
+</p>
+</li>
+<li>
+<p>
+You can <em>chain-create</em> PCHs.  That is, one PCH may include
+    another PCH as its starting point.
+</p>
+</li>
+<li>
+<p>
+You may disable PCH creation by passing an additional
+    <span class="monospaced">False</span> parameter to <span class="monospaced">make_pch</span>.  In this mode, the PCH
+    is replaced by a force-include in order to guarantee
+    identical behavior.
+</p>
+</li>
+<li>
+<p>
+ToolChains that don&#8217;t support PCHs must emulate them
+    using force-include.
+</p>
+</li>
+<li>
+<p>
+Because some toolchains (MSVC) generate an object file
+    for each PCH, any code that uses a PCH must also link
+    against that object file.  Since the object file is
+    automatically added to the input list, the easiest and
+    best way to chain-create PCHs is by creating a separate
+    library project for each PCH.  Sharing PCHs across projects
+    is a good way to avoid repeatedly compiling the same code
+    anyways, so it&#8217;s a win all around.
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_pch</span><span class="p">(</span><span class="s">&quot;source/a0_pch.h&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pchTask</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="k">as</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">usePCH</span> <span class="o">=</span> <span class="n">pchTask</span><span class="o">.</span><span class="n">outputPath</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;FOO&quot;</span><span class="p">)</span>
+</pre></div></div></div>
+<div class="paragraph"><p>If you&#8217;re interested in the gory details of the PCH implementation,
+you can read more
+<a href="https://github.com/fifoforlifo/pynja/blob/master/doc/PrecompiledHeaders.txt">here</a> .</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/caution.png" alt="Caution">
+</td>
+<td class="content">Chain-creation of PCHs hasn&#8217;t been completely tested yet.</td>
+</tr></table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_protobuf_8594_c_code_generation">3.7. Protobuf &#8594; C++ Code Generation</h3>
+<div class="paragraph"><p><a href="https://code.google.com/p/protobuf/">libprotobuf</a> is a popular
+serialization library.  It allows you to
+<a href="https://developers.google.com/protocol-buffers/docs/overview">define Protocol Buffers messages in a custom DSL</a>,
+which then require generated headers and source files to use from C++.</p></div>
+<div class="paragraph"><p>Protocol Buffers also have a concept of inclusion (just like C header files).</p></div>
+<div class="paragraph"><p>There is a pynja ToolChain for dealing with Protocol Buffers.
+It properly creates a dep file so that implicit dependencies cause rebuilds.</p></div>
+<div class="paragraph"><p>Using it is this simple:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protoc_cpp_compile</span><span class="p">(</span><span class="s">&quot;somefile.proto&quot;</span><span class="p">)</span>
+
+    <span class="c"># in set_cpp_compile_options method</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">extra_deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span><span class="p">)</span>
+</pre></div></div></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_repository_and_source_organization">4. Repository and Source Organization</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Here are some tips and suggestions for how to organize your source
+repository, with thought towards both workflow and VCS interaction.</p></div>
+<div class="sect2">
+<h3 id="_a_id_micro_branching_a_micro_branching">4.1. <a id="micro-branching"></a> Micro-Branching</h3>
+<div class="paragraph"><p>Micro-branching lets you branch a single project within your build,
+and automatically have all dependencies transfer to the branch.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pynja_versus_the_world">5. Pynja versus The World</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>In this section I&#8217;ll make bold and brash claims describing pynja&#8217;s technical,
+philosophical, and moral superiority as compared to every other
+build system that has ever been created.  You&#8217;ll see how pynja
+has assimilated the best attributes of all other build systems
+while simultaneously avoiding all of their mistakes.</p></div>
+<div class="paragraph"><p>If you enjoy hyperbole and rhetoric, read on!</p></div>
+<div class="sect2">
+<h3 id="_a_id_pynja_variants_are_better_a_pynja_variants_are_better">5.1. <a id="pynja-variants-are-better"></a> Pynja variants are better</h3>
+<div class="paragraph"><p>pynja&#8217;s variants allow you to vary <strong>anything</strong>.  This isn&#8217;t possible
+with most of the popular alternatives.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+CMake:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Only one C++ Toolchain is usable per build!  This makes
+        developing multi-arch software absolutely torturous.
+</p>
+</li>
+<li>
+<p>
+If you want two variations of a static-library, e.g. linked
+        against static C runtime and dynamic C runtime, it&#8217;s more-or-less
+        easy to do.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+MSBuild:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Natively supports <em>Platform</em> and <em>Configuration</em>.
+</p>
+</li>
+<li>
+<p>
+Adding additional C++ Toolchain support requires
+        installing files to a system-global location!  Otherwise, only
+        <span class="monospaced">Win32</span> and <span class="monospaced">x64</span> are supported.
+</p>
+</li>
+<li>
+<p>
+Woe unto the person who attempts to use <em>AdditionalProperties</em>
+        on an MSBuildTask or a ProjectReference, for all indirectly-referenced
+        projects must correctly handle the named properties; otherwise
+        the same project will be instanced twice, leading to all kinds
+        of output corruption.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Make:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+It&#8217;s possible to support any kind of variant in Make.  However,
+        you must encode things like C++ Toolchain into variable
+        names and write macros to make this work.
+</p>
+</li>
+<li>
+<p>
+Common makefiles and tutorials are all geared towards single
+        arch, single toolchain support.
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_pynja_uses_a_real_programming_langague">5.2. Pynja uses a real programming langague</h3>
+<div class="paragraph"><p>I find it strange that so many build systems use a custom DSL where
+every variable is global, its type is a string, and sane scoping rules
+are notably absent.  Given the abundance of good scripting languages
+(like Python), this is really inexcusable.</p></div>
+<div class="paragraph"><p>Python also happens to have some good debuggers, which is sorely
+lacking in other build systems.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_pynja_is_imperative_not_declarative">5.3. Pynja is imperative, not declarative</h3>
+<div class="paragraph"><p>Imperative logic is very, very necessary to allow factoring of logic.</p></div>
+<div class="paragraph"><p>Let&#8217;s say one day you write a piece of code that crashes the
+MSC9 C++ compiler in x86 optimized builds.  (true story)</p></div>
+<div class="paragraph"><p>The declarative way would require you to write the outer product of
+(toolchains x architectures).  VC Projects from VS 2008 and earlier
+suffer from this syndrome.</p></div>
+<div class="paragraph"><p>With pynja, it&#8217;s as simple as this:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile_one</span><span class="p">(</span><span class="s">&quot;problem.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">variant</span><span class="o">.</span><span class="n">toolchain</span> <span class="o">==</span> <span class="s">&#39;msvc9&#39;</span> <span class="ow">and</span> <span class="n">variant</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s">&#39;x86&#39;</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">optLevel</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div></div></div>
+</div>
+<div class="sect2">
+<h3 id="_pynja_has_no_global_ordering_issues">5.4. Pynja has no global ordering issues</h3>
+<div class="paragraph"><p>In pynja, inter-project dependencies are expressed naturally, because
+you&#8217;re basically forced to instance a project from each place where
+you <em>need</em> it.  Other environments are not so forgiving.</p></div>
+<div class="paragraph"><p>CMake requires everything to be globally ordered correctly.
+It is all too easy (and all too common) to define a library dependency
+before the actual library.  It&#8217;s a big source of build bugs.</p></div>
+<div class="paragraph"><p>Ant, MSBuild, Gradle, Rake, and others fall in a different category.
+I call these
+<a href="http://en.wikipedia.org/wiki/Cargo_cult_science">cargo cult</a> build systems,
+because they use all the same
+words as real build systems, only without the same meaning
+or usefulness.</p></div>
+<div class="paragraph"><p>For example, these software packages talk about <em>Targets</em> and <em>Tasks</em>,
+but <em>Targets</em> aren&#8217;t files; there is no automated file-level dependency
+ordering.  Instead, <em>Targets</em> are just functions that can only execute once;
+and it&#8217;s up to <strong>you</strong> to sequence them correctly, globally, using
+<em>before-target</em> and <em>after-target</em> style wiring.  If it sounds incredibly
+brittle, that&#8217;s because it is.  The worst part is having to schedule
+your target before or after <em>some other named target</em>, because you
+need to know the name of that target.  The only way to know the target
+to schedule yourself before or after is to read every other script in
+the entire build system&#8201;&#8212;&#8201;which is obviously a maintenance and usability
+nightmare, in addition to being fragile.</p></div>
+<div class="paragraph"><p>Cargo cult build systems also have no chance of keeping up with the
+build speed of Ninja, because they must iterate through every "Target"
+or "Task" on every incremental build.  In the best cases, each "Target"
+is annotated with inputs and outputs that are used to determine
+"up-to-date" status.  In remaining cases, the "Target"/"Task" must
+be invoked and is responsible for performing the "up-to-date" check itself.</p></div>
+<div class="paragraph"><p>I will also mention that because CMake is designed to emit scripts
+for various cargo cult build systems, its design philosophy is
+significantly compromised&#8201;&#8212;&#8201;to the point of making statements like
+<a href="http://www.cmake.org/Wiki/CMake_FAQ#Why_does_CMake_generate_recursive_Makefiles.3F">"recursive make considered necessary"</a> .
+The result is a huge amount of false serialization
+being introduced, such as "project level dependencies", in order
+to accomodate the lack of file-level checks in non-Ninja backends.
+Unfortunately this spills over even into the Ninja generator since
+implicit dependencies are not expressed correctly, being encompassed
+by project-level dependencies instead.</p></div>
+<div class="paragraph"><p>pynja is in large part a response to the rising tide of cargo cult build systems
+that threaten to push moden software development backwards.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr></div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2013-05-17 00:20:50 Central Daylight Time
+</div>
+</div>
+</body>
+</html>
