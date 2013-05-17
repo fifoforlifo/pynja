@@ -1,0 +1,626 @@
+pynja v1.0 manual
+=================
+:Author: Avinash Baliga
+:Email: com DOT gmail AT fifoforlifo
+:source-highlighter: pygments
+:toc2:
+
+== Introduction
+
+pynja is a cross-platform meta-build system written in *Python 3* that produces
+link:http://martine.github.com/ninja/[Ninja Build files].
+
+When using pynja, it will help to be familiar with the
+link:http://python.org[Python] language.
+But -- if you don't know Python, don't worry.  In this manual, we'll be
+sharing plenty of recipes that you can copy/paste without worrying about
+too many Pythonic details.
+
+=== Conventions
+
+In this document, you might encounter these terms or variables:
+
+*   VCS = link:http://en.wikipedia.org/wiki/Revision_control[Version Control System]
+    = Source Control.  Programs like
+    CVS, SVN, Git, Mercurial, Perforce are types of VCSs.
+*   `$YOUR_REPO` = The root directory of your repository.
+*   `$PYNJA_REPO` = The place where you downloaded or unzipped
+    the pynja repository.
+*   `$BUILT_DIR` = The base directory where intermediate files
+    (like object files) are stored during a build.
+*   Out-of-source build = Pointing your `$BUILT_DIR` at a
+    location outside of your source repository.  This has many
+    benefits (like making your VCS easier to work with), and is
+    highly encouraged.
+
+
+=== Pynja and Ninja
+
+pynja is a meta-build system.
+Its job is to help you generate a file-level dependency graph
+that ninja can execute efficiently.
+
+In the end, pynja helps you create a `build.ninja` file in your
+`$BUILT_DIR`.
+
+Once you have a `build.ninja`, you can actually *perform* your build
+by invoking link:http://martine.github.com/ninja/[`ninja`].  For example:
+
+----
+pushd $BUILT_DIR
+ninja
+----
+or
+
+----
+ninja -C $BUILT_DIR
+----
+
+=== Basic Concepts
+
+pynja makes you organize your build into `Project` classes.
+Each class should have a specific goal.  Some common project types
+and outputs are:
+
+*   CppProject
+    **  link:https://en.wikipedia.org/wiki/Static_library[static library]
+    **  link:https://en.wikipedia.org/wiki/Shared_library[shared library]
+        aka DLL or dynamic shared object
+    **  link:http://en.wikipedia.org/wiki/Executable[executable]
+*   JavaProject
+    **  link:https://en.wikipedia.org/wiki/Jar_file[jar file]
+
+In real life, you will find that you need to build the same project
+in multiple ways.
+
+The most common example is a debug vs release build.  Debug typically
+has optimizations disabled, more debug information output, special
+preprocessor defines for logging, etc.  Some other common variations are
+compiler-toolchain, architecture, and C-runtime-linkage (static vs dynamic).
+
+pynja lets you handle this variation by letting you define `Variant`
+classes, and then create one `Project` instance per `Variant`.
+A `Variant` class is composed of fields such as
+`toolchain` ('gcc', 'msvc'), `arch` ('x86', 'x64'),
+and `config` ('debug', 'release').
+Variants have a canonical string form, which is useful for defining
+directory names for outputs, or when specifying targets on the
+commandline.  For example, `gcc-x86-debug` speaks for itself.
+
+IMPORTANT: Pynja was specifically designed with multi-arch, multi-platform,
+multi-language development in mind -- in contrast with most other build systems.
+<<pynja-variants-are-better, Read here for more details.>>
+
+To support cross-platform, cross-toolchain builds, pynja has some
+standard abstractions for `ToolChains` and compilation `Tasks`.  A
+`ToolChain` embodies the rules needed to invoke a specific compiler
+(like `gcc`), and a `Task` abstracts compiler options as fields of
+a python class.  With C++ builds, each `Project` 'instance' is
+associated with exactly one toolchain.  The same `Project` may be
+instanced multiple times using multiple `ToolChains`.
+
+Finally there's the `ProjectMan` class.  ProjectMan enforces the rule of
+"one `Project` instance per `Variant`", provides a central dictionary for
+`ToolChain` instances, and helps coordinate the write-out
+of build.ninja.
+
+Here's how these elements interact in code:
+
+[source, python]
+----
+# $REPO_ROOT/packages/repo/cpp.py
+class SimpleCppVariant(pynja.Variant):                              # <1>
+    def __init__(self, string):
+        super().__init__(string, self.get_field_defs())
+
+    def get_field_defs(self):
+        fieldDefs = [
+            "toolchain",    [ "gcc", "clang" ],                     # <2>
+            "arch",         [ "x86", "x64" ],                       # <3>
+            "config",       [ "dbg", "prof", "rel" ],               # <4>
+        ]
+        return fieldDefs
+
+class SimpleCppProject:
+    ''' ... __init__ and other methods ... '''
+
+    def set_cpp_compile_options(self, task):
+        super().set_cpp_compile_options(task)
+        task.debugLevel = 2                                         # <5>
+        if self.variant.config == "dbg":
+            task.optLevel = 0                                       # <6>
+        else:
+            task.optLevel = 3                                       # <7>
+----
+
+[source, python]
+----
+# $REPO_ROOT/code/program/program.py
+@pynja.project
+class program(repo.cpp.SimpleCppProject):                           # <8>
+    def emit(self):
+        sources = [                                                 # <9>
+            "src/main.cpp",
+            "src/util.cpp",
+        ]
+
+        with self.cpp_compile(sources) as tasks:                    # <10>
+            pass
+
+        self.add_input_library(repo.rootPaths.zlib)                 # <11>
+
+        with self.make_executable("prog0") as task:                 # <12>
+            pass
+
+----
+
+[source, python]
+----
+# $REPO_ROOT/remake.py
+def generate_ninja_build(projectMan):
+    cppVariants = []
+    ''' ... create toolchain objects ... '''
+    cppVariants.append(repo.cpp.SimpleCppVariant("gcc-x86-dbg"))    # <13>
+    cppVariants.append(repo.cpp.SimpleCppVariant("gcc-x86-rel"))
+
+    for variant in cppVariants:
+        projectMan.get_project("program", variant)                  # <14>
+----
+
+<1> Define a `Variant` class.  Instances will be referred to as `variant`.
+<2> `variant.toolchain` can be one of ('gcc', 'clang', 'msvc11')
+<3> `variant.arch` can be one of ('x86', 'x64')
+<4> `variant.config` can be one of ('dbg', 'prof', 'rel')
+<5> All compilations produce debug info.
+<6> In 'dbg' configuration, all optimizations are disabled.
+<7> In other configurations, all optimizations are enabled.
+<8> Define a Project to build the program executable.
+<9> Declare source files in a regular python list.
+<10> Declare C++ compilation targets, using the source files
+    specified in the `sources` list.
+    The project determines where the object files will be written
+    (somewhere in the $BUILT_DIR).  The project also
+    "remembers" the list of generated object files.
+<11> Cause the final target to link against `zlib`.
+    Note that the order w.r.t. compilation is significant here.
+<12> Declare an executable named `prog0` (or `prog0.exe` on Windows).
+    The executable will be created by linking all the object files
+    from previous `cpp_compile` calls and any `add_input_library` calls.
+<13> Declare global variants that we want to create targets for.
+<14> Cause the `program` class to be instanced for all variants
+    we created previously, causing all the relevant targets to
+    be declared.
+
+Remember that no actual compilation occurs throughout this entire process.
+We are simply defining targets to be built later using `ninja`.
+
+
+=== Prerequisites
+
+You will need a copy of Python 3.2 or greater.
+
+*   On Windows or Mac, download it from http://python.org .
+*   On Linux, use your package manager.
+    **  On Ubuntu you can use e.g. `sudo apt-get install python3.3`
+
+Download a copy of the pynja repository:
+
+*   https://github.com/fifoforlifo/pynja/archive/master.zip
+*   Or if you prefer, clone the git repository:
+
+----
+mkdir $PYNJA_REPO
+cd $PYNJA_REPO
+git clone https://github.com/fifoforlifo/pynja.git .
+----
+
+== Brief Tour of the Components
+
+There are 4 code categories in a pynja build:
+
+*   The pynja package: you typically don't modify this.
+*   The repo package: you copy this and tweak this.
+*   Project files: you write these in your source directories.
+*   Root-level script `remake.py`: you copy and tweak this.
+
+=== pynja package
+
+Find this in link:https://github.com/fifoforlifo/pynja/tree/master/packages/pynja[`$PYNJA_REPO/packages/pynja`] .
+
+I recommend copying this into your repository, so that a stable
+copy of pynja revisions along with your source code.
+
+Then your `remake.py` can add the pynja package location to your
+link:http://docs.python.org/3/library/sys.html#sys.path[sys.path].
+
+=== repo package
+
+Find this in link:https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo[`$PYNJA_REPO/test2/build/repo`] .
+
+The **repo** package is intended to be specialized for your particular
+**repo**sitory.
+
+The repo package serves several purposes:
+
+.   Define all the project directories in your repository.
+    ..  This also provides support for <<micro-branching>>.
+.   Define all the `Variant` types supported by your repository.
+.   Define specializations of `class CppProject`, `class JavaProject`, etc. to
+    be used as base classes throughout the rest of the build.
+    These common base classes will set compiler flags based on your
+    repository-specific `Variant` fields.
+
+=== project files
+
+Find an example link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py[`$PYNJA_REPO/test2/code/a1.py`].
+
+A project file is just a python source file that declares one or more
+Project classes.  Each Project class may be instantiated once per
+Variant.  A C++ Project will generate a single library or executable
+per instance.
+
+You will typically define project files alongside your source code.
+
+=== root-level script
+
+Find an example link:https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py[`$PYNJA_REPO/test2/remake.py`].
+
+This script is literally what causes the `build.ninja` file to be created.
+Its job is to instantiate all supported Variants, and all desired
+top-level projects and targets using those Variants.
+
+
+== C++ Build
+
+=== CppProject
+
+CppProject is designed to create exactly one static library, shared library,
+or executable per instance.  That is, a CppProject represents one
+linker invocation and all the sub-targets needed to feed the linker.
+
+You will need to specialize `pynja.CppProject` into your own
+`repo.cpp.Project`, in order to translate your Variants to appropriate
+compiler flags.
+
+The CppProject holds an internal list of inputs that need to be
+passed to the linker.  You can directly add to that list as follows:
+
+*   `add_input` : add an object file
+*   `add_input_lib` : add a library dependency
+
+
+=== Compiling and CppTasks
+
+The `cpp_compile_one` function compiles one source file to an object file.
+The object file name is automatically computed based on the `project.builtDir`
+and then added via `add_input`.
+
+Each compilation is represented by a `CppTask` instance.  This class has
+a public field for each commonly used compiler option.  It's the ToolChain's
+job to later translate the portable CppTask fields into toolchain-specific
+compiler flags and build directives.
+
+==== Control Flow
+
+CppTasks flow from a most-generic to a most-specific scope.  At each step
+of the way, any option may be overridden.  Lists may also be appended to
+or even completely replaced.
+
+*   `pynja.CppProject.cpp_compile_one`: CppTask is created.
+    The default options are geared towards an optimized build.
+*   `repo.CppProject.set_cpp_compile_options`: Set compiler options based
+    solely on the variant.  Typically you control optimization settings,
+    debug info, C runtime linkage, and other "generic" settings here.
+*   `YourProject.set_cpp_compile_options`: Set compiler options for files
+    in your project.  Typically you control include paths and defines here.
+*   `with` statement body: Set source-file-specific options.
+    Typically you control PCH usage, include paths and defines here.
+    But you can also easily implement any other one-off quick-fixes you need.
+
+[source, python]
+----
+    # in emit method
+        with self.cpp_compile_one("foo.cpp") as task:
+            task.defines.append("LOGLEVEL=50")
+----
+
+=== CppTask Compiler Options
+
+For the full list, look at the definition of `pynja/cpp.py :: CppTask`.
+Here's a breakdown of the most useful flags.
+
+.Common
+*   `optLevel`: Optimization level, on a scale of 0 - 3.
+    Level 0 is recommended default for debug, 3 for release.
+*   `debugLevel`: Controls how much debug info is emitted, on a scale of 0 - 3.
+    Level 2 is the recommended default.  DebugLevel 'should not' affect optimization
+    level, but certain compilers don't implement this perfectly.
+    **  0: none
+    **  1: just line tables (enough to set breakpoints, see source correspondence)
+    **  2: level1 + debug symbols (scope and variable info)
+    **  3: level2 + advanced features, like "edit & continue" under msvc;
+        note that this debug level may be incompatible with other compiler flags
+*   `warnLevel`: Warning level on a scale of 0 - 3.
+*   `warningsAsErrors`: If true, warnings are converted to errors.
+*   `includePaths`: A list of ordered include paths for preprocessor header
+    discovery.  Translates to `-I` for gcc.
+*   `defines`: A list of ordered preprocessor defines.
+    Translates to `-D` for gcc.
+
+.GCC
+*   `addressModel`: When using a toolchain that supports multi-arch, this
+    field can be specified as either `-m32` or `-m64`.
+*   `std`: Selects the language standard using the `-std` flag as described
+    link:http://gcc.gnu.org/onlinedocs/gcc-4.8.0/gcc/C-Dialect-Options.html[here].
+    You should only pass the language name here.  For example, `"c99"` or
+    `"gnu99"` for C99 compilation, and `c++11` or `gnu++11` for C++11.
+*   `lto`: If true and optimizations are enabled, the compiler
+    emits an object file that supports Link Time Optimization as described
+    link:http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html[here].
+
+.MSVC
+*   `dynamicCRT`: If true, compile code that will link against the dynamic
+    C runtime.  If false, require the static C runtime.  Translates to
+    one of `/MT`, `/MTd`, `/MD`, `/MDd` depending on optimization level.
+*   `asyncExceptionandling`: If true, then SEH exceptions are thrown as
+    C++ exceptions.  (note: you usually do NOT want to enable this for
+    perf reasons)  Translates to `/EHa` or `/EHs`.
+*   `externCNoThrow`: If true, treat `extern "C"` functions as nothrow.
+    Translates to `/Ehc`.
+
+.NVCC
+*   `relocatableDeviceCode`: If true, device code is statically linkable.
+    Translates to `-rdc`.
+*   `deviceDebugLevel`: Debug level on a scale of 0 - 2.
+    **  0: none
+    **  1: just line tables; useful for debug and profiler; translates to `-lineinfo`
+    **  2: full debug info; unfortunately forces optimization level of device
+        code down to none; translates to `-G`
+
+
+=== Library Dependencies
+
+Use the `add_input_lib` method to define a dependency.
+
+[source, python]
+----
+    # in emit method
+        self.add_input_lib(libA0.libraryPath)
+----
+
+[WARNING]
+Better handling of transitive library dependencies for static libs
+is currently a work-in-progress.  This will probably require minor
+changes to APIs and standard Project fields.
+
+
+=== Creating Libraries and Executables
+
+After you've defined all your compilations and additional inputs,
+you can finally define the output of your project.
+
+[source, python]
+----
+    # in emit method
+        # static library
+        with self.make_static_lib("a0") as task:
+            pass
+        # shared library
+        with self.make_shared_lib("a1") as task:
+            pass
+        # executable
+        with self.make_executable("prog0") as task:
+            pass
+----
+
+After doing 'one' of the above, your Project's `outputPath`
+field will be defined to the absolute path of the resultant
+target.
+
+Library projects will have an additional `libraryPath` field set.
+This points at the `.lib` file when building with MSVC, and
+the DSO or DLL when using other toolchains.  Always use a project's
+`libraryPath` when adding library dependencies.
+
+
+=== PreCompiled Headers (PCH)
+
+You can seriously speed up your build with PCHs.  They're highly
+recommended, especially when your C++ code uses lots of STL, Boost,
+and large system headers.
+
+pynja supports PCHs in the most generic way possible while still
+remaining portable:
+
+*   You can 'create' a PCH at any time, from any project.
+*   You can 'use' a PCH at any time, from any project.
+*   You can 'chain-create' PCHs.  That is, one PCH may include
+    another PCH as its starting point.
+*   You may disable PCH creation by passing an additional
+    `False` parameter to `make_pch`.  In this mode, the PCH
+    is replaced by a force-include in order to guarantee
+    identical behavior.
+*   ToolChains that don't support PCHs must emulate them
+    using force-include.
+*   Because some toolchains (MSVC) generate an object file
+    for each PCH, any code that uses a PCH must also link
+    against that object file.  Since the object file is
+    automatically added to the input list, the easiest and
+    best way to chain-create PCHs is by creating a separate
+    library project for each PCH.  Sharing PCHs across projects
+    is a good way to avoid repeatedly compiling the same code
+    anyways, so it's a win all around.
+
+[source, python]
+----
+    # in emit method
+        with self.make_pch("source/a0_pch.h") as pchTask:
+            pass
+
+        with self.cpp_compile(sources) as tasks:
+            tasks.usePCH = pchTask.outputPath
+            for task in tasks:
+                task.defines.append("FOO")
+----
+
+If you're interested in the gory details of the PCH implementation,
+you can read more
+link:https://github.com/fifoforlifo/pynja/blob/master/doc/PrecompiledHeaders.txt[here] .
+
+[CAUTION]
+Chain-creation of PCHs hasn't been completely tested yet.
+
+=== Protobuf -> C++ Code Generation
+
+link:https://code.google.com/p/protobuf/[libprotobuf] is a popular
+serialization library.  It allows you to
+link:https://developers.google.com/protocol-buffers/docs/overview[define Protocol Buffers messages in a custom DSL],
+which then require generated headers and source files to use from C++.
+
+Protocol Buffers also have a concept of inclusion (just like C header files).
+
+There is a pynja ToolChain for dealing with Protocol Buffers.
+It properly creates a dep file so that implicit dependencies cause rebuilds.
+
+Using it is this simple:
+
+[source, python]
+----
+    # in emit method
+        self.proto_sources = []
+        self.proto_sources = self.protoc_cpp_compile("somefile.proto")
+
+    # in set_cpp_compile_options method
+        task.extra_deps.extend(self.proto_sources)
+
+----
+
+
+== Repository and Source Organization
+
+Here are some tips and suggestions for how to organize your source
+repository, with thought towards both workflow and VCS interaction.
+
+=== [[micro-branching]] Micro-Branching
+
+Micro-branching lets you branch a single project within your build,
+and automatically have all dependencies transfer to the branch.
+
+
+== Pynja versus The World
+
+In this section I'll make bold and brash claims describing pynja's technical,
+philosophical, and moral superiority as compared to every other
+build system that has ever been created.  You'll see how pynja
+has assimilated the best attributes of all other build systems
+while simultaneously avoiding all of their mistakes.
+
+If you enjoy hyperbole and rhetoric, read on!
+
+=== [[pynja-variants-are-better]] Pynja variants are better
+
+pynja's variants allow you to vary *anything*.  This isn't possible
+with most of the popular alternatives.
+
+*   CMake:
+    **  Only one C++ Toolchain is usable per build!  This makes
+        developing multi-arch software absolutely torturous.
+    **  If you want two variations of a static-library, e.g. linked
+        against static C runtime and dynamic C runtime, it's more-or-less
+        easy to do.
+*   MSBuild:
+    **  Natively supports 'Platform' and 'Configuration'.
+    **  Adding additional C++ Toolchain support requires
+        installing files to a system-global location!  Otherwise, only
+        `Win32` and `x64` are supported.
+    **  Woe unto the person who attempts to use 'AdditionalProperties'
+        on an MSBuildTask or a ProjectReference, for all indirectly-referenced
+        projects must correctly handle the named properties; otherwise
+        the same project will be instanced twice, leading to all kinds
+        of output corruption.
+*   Make:
+    **  It's possible to support any kind of variant in Make.  However,
+        you must encode things like C++ Toolchain into variable
+        names and write macros to make this work.
+    **  Common makefiles and tutorials are all geared towards single
+        arch, single toolchain support.
+
+=== Pynja uses a real programming langague
+
+I find it strange that so many build systems use a custom DSL where
+every variable is global, its type is a string, and sane scoping rules
+are notably absent.  Given the abundance of good scripting languages
+(like Python), this is really inexcusable.
+
+Python also happens to have some good debuggers, which is sorely
+lacking in other build systems.
+
+=== Pynja is imperative, not declarative
+
+Imperative logic is very, very necessary to allow factoring of logic.
+
+Let's say one day you write a piece of code that crashes the
+MSC9 C++ compiler in x86 optimized builds.  (true story)
+
+The declarative way would require you to write the outer product of
+(toolchains x architectures).  VC Projects from VS 2008 and earlier
+suffer from this syndrome.
+
+With pynja, it's as simple as this:
+
+[source, python]
+----
+    with self.cpp_compile_one("problem.cpp") as task:
+        if variant.toolchain == 'msvc9' and variant.arch == 'x86':
+            task.optLevel = 0
+----
+
+=== Pynja has no global ordering issues
+
+In pynja, inter-project dependencies are expressed naturally, because
+you're basically forced to instance a project from each place where
+you 'need' it.  Other environments are not so forgiving.
+
+CMake requires everything to be globally ordered correctly.
+It is all too easy (and all too common) to define a library dependency
+before the actual library.  It's a big source of build bugs.
+
+Ant, MSBuild, Gradle, Rake, and others fall in a different category.
+I call these
+link:http://en.wikipedia.org/wiki/Cargo_cult_science[cargo cult] build systems,
+because they use all the same
+words as real build systems, only without the same meaning
+or usefulness.
+
+For example, these software packages talk about 'Targets' and 'Tasks',
+but 'Targets' aren't files; there is no automated file-level dependency
+ordering.  Instead, 'Targets' are just functions that can only execute once;
+and it's up to *you* to sequence them correctly, globally, using
+'before-target' and 'after-target' style wiring.  If it sounds incredibly
+brittle, that's because it is.  The worst part is having to schedule
+your target before or after 'some other named target', because you
+need to know the name of that target.  The only way to know the target
+to schedule yourself before or after is to read every other script in
+the entire build system -- which is obviously a maintenance and usability
+nightmare, in addition to being fragile.
+
+Cargo cult build systems also have no chance of keeping up with the
+build speed of Ninja, because they must iterate through every "Target"
+or "Task" on every incremental build.  In the best cases, each "Target"
+is annotated with inputs and outputs that are used to determine
+"up-to-date" status.  In remaining cases, the "Target"/"Task" must
+be invoked and is responsible for performing the "up-to-date" check itself.
+
+I will also mention that because CMake is designed to emit scripts
+for various cargo cult build systems, its design philosophy is
+significantly compromised -- to the point of making statements like
+link:http://www.cmake.org/Wiki/CMake_FAQ#Why_does_CMake_generate_recursive_Makefiles.3F["recursive make considered necessary"] .
+The result is a huge amount of false serialization
+being introduced, such as "project level dependencies", in order
+to accomodate the lack of file-level checks in non-Ninja backends.
+Unfortunately this spills over even into the Ninja generator since
+implicit dependencies are not expressed correctly, being encompassed
+by project-level dependencies instead.
+
+pynja is in large part a response to the rising tide of cargo cult build systems
+that threaten to push moden software development backwards.
