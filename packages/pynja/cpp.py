@@ -92,6 +92,7 @@ class LinkTask(build.BuildTask):
         project = self.project
         toolchain = project.toolchain
         self.inputs.extend(project._inputs)
+        self.inputs.extend(project._inputLibs)
         toolchain.emit_link(project, self)
         if self.phonyTarget:
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
@@ -103,6 +104,8 @@ class CppProject(build.Project):
         self.outputPath = None
         self.toolchain = self.get_toolchain()
         self._inputs = []
+        self._inputLibs = []
+        self.linkLibraries = []
 
 
     @abstractmethod
@@ -116,7 +119,9 @@ class CppProject(build.Project):
         self._inputs.append(filePath)
 
     def add_input_lib(self, filePath):
-        return self.add_input(filePath)
+        self._inputLibs.append(filePath)
+    def add_input_libs(self, filePaths):
+        self._inputLibs.extend(filePaths)
 
 
     # precompiled header
@@ -179,6 +184,8 @@ class CppProject(build.Project):
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
         self.libraryPath = outputPath
+        self.linkLibraries.append(self.libraryPath)
+        self.linkLibraries.extend(self._inputLibs)
 
         task = StaticLibTask(self, self.outputPath, self.projectDir)
         self.set_static_lib_options(task)
@@ -196,6 +203,7 @@ class CppProject(build.Project):
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
         self.libraryPath = libraryPath
+        self.linkLibraries.append(self.libraryPath)
 
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.outputLibraryPath = libraryPath

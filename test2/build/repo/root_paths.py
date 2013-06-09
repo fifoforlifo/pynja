@@ -20,6 +20,7 @@ class RootPaths(object):
     def init(self):
         add_project_dir("a0", "code/a0")
         add_project_dir("a1", "code/a1")
+        add_project_dir("a2", "code/a2")
         add_project_dir("prog0", "code/prog0")
         add_project_dir("java1", "code/java1")
         add_project_dir("java2", "code/java2")

@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #endif
 
-void a0_1()
+int a0_1()
 {
+    return a2_0();
 }

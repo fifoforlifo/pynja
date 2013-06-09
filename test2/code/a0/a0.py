@@ -5,6 +5,8 @@ import repo
 @pynja.project
 class a0(repo.CppProject):
     def emit(self):
+        libA2 = self.projectMan.get_project('a2', self.variant)
+
         proto_defs = [
             "source/address.proto",
             "source/person.proto"
@@ -20,6 +22,7 @@ class a0(repo.CppProject):
         ]
 
         with self.make_pch("source/a0_pch.h") as pchTask:
+            pchTask.usePCH = libA2.pchPath
             pass
 
         with self.cpp_compile(sources) as tasks:
@@ -27,11 +30,15 @@ class a0(repo.CppProject):
             for task in tasks:
                 task.defines.append("FOO")
 
+        self.add_input_libs(libA2.linkLibraries)
+
         with self.make_static_lib("a0") as task:
             pass
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
+        task.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
+        task.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
         # add google protobuf directory
         task.includePaths.append(os.path.join(self.builtDir, "source"))
         # add directory for generated headers from proto files

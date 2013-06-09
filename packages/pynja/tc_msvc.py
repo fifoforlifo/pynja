@@ -125,19 +125,27 @@ if os.name == "nt":
         # note: this should be called *before* adding additional force includes
         def translate_pch(self, options, task):
             if task.createPCH:
+                # TODO: figure out how to support PCH chain creation; for now we must fall back
+                # to force-including the usePCH's source header
+                if task.usePCH:
+                    headerPath = task.usePCH
+                    if task.usePCH.endswith(".pch"):
+                        headerPath = task.usePCH[:-4]
+                    options.append("/FI\"%s\"" % headerPath)
+                    task.extraDeps.append(headerPath)
                 options.append("/TP")
                 options.append("/Yc")
                 if task.debugLevel > 0:
                     options.append("/Yd")
                 task.extraOutputs.append(task.outputPath + ".obj")
-            if task.usePCH:
+            elif task.usePCH:
                 if not task.usePCH.endswith(".pch"):
                     options.append("/FI\"%s\"" % task.usePCH)
                     task.extraDeps.append(task.usePCH)
                 else:
                     headerPath = task.usePCH[:-4]
-                    options.append("/Yu\"%s\"" % headerPath)
                     options.append("/FI\"%s\"" % headerPath)
+                    options.append("/Yu\"%s\"" % headerPath)
                     options.append("/Fp\"%s\"" % task.usePCH)
                     task.extraDeps.append(headerPath)
                     task.extraDeps.append(task.usePCH)

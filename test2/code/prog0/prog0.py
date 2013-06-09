@@ -46,8 +46,8 @@ class prog0(repo.CppProject):
             tasks.warnLevel = 1
 
         # add libraries last
-        self.add_input_lib(libA0.libraryPath)
-        self.add_input_lib(libA1.libraryPath)
+        self.add_input_libs(libA0.linkLibraries)
+        self.add_input_libs(libA1.linkLibraries)
 
         with self.make_executable("prog0") as task:
             pass
