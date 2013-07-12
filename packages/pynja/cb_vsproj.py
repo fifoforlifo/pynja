@@ -70,7 +70,7 @@ r'''        <Configuration
                 BuildCommandLine="SET VS_UNICODE_OUTPUT= &#x0D;&#x0A; SET NINJA_STATUS=[%%s/%%t - %%e] &#x0D;&#x0A; cd {1} &#x0D;&#x0A; ninja {2}"
                 ReBuildCommandLine="SET VS_UNICODE_OUTPUT= &#x0D;&#x0A; SET NINJA_STATUS=[%%s/%t - %%e] &#x0D;&#x0A; cd {1} &#x0D;&#x0A; ninja -t clean {2} &#x0D;&#x0A; ninja {2}"
                 CleanCommandLine="SET VS_UNICODE_OUTPUT= &#x0D;&#x0A; SET NINJA_STATUS=[%%s/%%t - %%e] &#x0D;&#x0A; cd {1} &#x0D;&#x0A; ninja -t clean"
-                Output=""
+                Output="{6}"
                 PreprocessorDefinitions="{3}"
                 IncludeSearchPath="{4}"
                 ForcedIncludes="{5}"
@@ -79,7 +79,7 @@ r'''        <Configuration
                 CompileAsManaged=""
             />
         </Configuration>
-'''.format(variantName, ninjaDir, targetName, defines, includePaths, forceIncludes)
+'''.format(variantName, ninjaDir, targetName, defines, includePaths, forceIncludes, getattr(proj, "outputPath", "o"))
         return config
 
     def _def_files(sourceDir, relDir, strings):
@@ -179,7 +179,7 @@ class VS2010:
             forceIncludes = task.usePCH if task.usePCH else ""
         config = \
 r'''  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{0}|Win32'">
-    <NMakeOutput>o</NMakeOutput>
+    <NMakeOutput>{6}</NMakeOutput>
     <NMakeBuildCommandLine>SET VS_UNICODE_OUTPUT=
 SET NINJA_STATUS=[%%s/%%t - %%e]
 cd {1}
@@ -200,7 +200,7 @@ ninja {2}
     <NMakeIncludeSearchPath>{4}</NMakeIncludeSearchPath>
     <NMakeForcedIncludes>{5}</NMakeForcedIncludes>
   </PropertyGroup>
-'''.format(variantName, ninjaDir, targetName, defines, includePaths, forceIncludes)
+'''.format(variantName, ninjaDir, targetName, defines, includePaths, forceIncludes, getattr(proj, "outputPath", "o"))
         return config
 
     def _def_files(sourceDir, relDir, strings):

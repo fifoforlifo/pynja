@@ -17,11 +17,10 @@ def get_lib_name(path):
 class GccToolChain(build.ToolChain):
     """A toolchain object capable of driving gcc commandlines."""
 
-    def __init__(self, name, installDir, prefix = None, suffix = None):
+    def __init__(self, name, installDir, prefix = "", suffix = ""):
         super().__init__(name)
         self.installDir = installDir
         self.prefix = prefix
-        self.ccName = "gcc"
         self.suffix = suffix
         self.objectFileExt = ".o"
         self.pchFileExt = ".gch"
@@ -34,27 +33,24 @@ class GccToolChain(build.ToolChain):
         self.ltoSupport = False
 
     def emit_rules(self, ninjaFile):
-        prefix = self.prefix if self.prefix else "_NO_PREFIX_"
-        suffix = self.suffix if self.suffix else "_NO_SUFFIX_"
-
-        executable = "%s%s%s" % (self.prefix or "", self.ccName, self.suffix or "")
+        arName = "%sar%s" % (self.prefix, self.suffix)
 
         ninjaFile.write("#############################################\n")
         ninjaFile.write("# %s\n" % self.name)
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_cxx\n" % self.name)
         ninjaFile.write("  depfile = $DEP_FILE\n")
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir, executable))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  $TOOL_NAME  \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir))
         ninjaFile.write("  description = %s_cxx  $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_lib\n" % self.name)
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._lib_script, self.installDir, prefix, suffix))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s  \"$RSP_FILE\"\n" % (self._lib_script, self.installDir, arName))
         ninjaFile.write("  description = %s_lib  $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
         ninjaFile.write("rule %s_link\n" % self.name)
-        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  %s %s  \"$RSP_FILE\"\n" % (self._link_script, self.installDir, prefix, suffix))
+        ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$LOG_FILE\"  \"%s\"  $TOOL_NAME  \"$RSP_FILE\"\n" % (self._link_script, self.installDir))
         ninjaFile.write("  description = %s_link $DESC\n" % self.name)
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
@@ -122,7 +118,7 @@ class GccToolChain(build.ToolChain):
             options.append(task.addressModel)
 
     # See http://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-    def get_language_option(self, std):
+    def is_c_dialect(self, std):
         if  (   std == "c90"
             or  std == "c98"
             or  std == "iso9899:1990"
@@ -136,6 +132,12 @@ class GccToolChain(build.ToolChain):
             or  std == "gnu99"
             or  std == "gnu9x"
             ):
+            return True
+        else:
+            return False
+
+    def get_language_option(self, std):
+        if self.is_c_dialect(std):
             return "-x c-header"
         else:
             return "-x c++-header"
@@ -158,7 +160,7 @@ class GccToolChain(build.ToolChain):
 
     def translate_dialect(self, options, task):
         if task.std:
-            options.append("-std %s" % task.std)
+            options.append("-std=%s" % task.std)
 
 
     def translate_cpp_options(self, options, task):
@@ -210,6 +212,7 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("  DEP_FILE    = %s.d\n" % task.outputPath)
         ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
         ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  TOOL_NAME   = %s%s%s\n" % (self.prefix, "g++", self.suffix))
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
@@ -290,6 +293,8 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
         ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
         ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  TOOL_NAME   = %s%s%s\n" % (self.prefix, "g++", self.suffix))
         ninjaFile.write("  DESC        = %s\n" % outputName)
         ninjaFile.write("\n")
         ninjaFile.write("\n")
+
