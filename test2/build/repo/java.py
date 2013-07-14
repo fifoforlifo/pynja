@@ -29,5 +29,8 @@ class JavaProject(pynja.JavaProject):
     def get_project_dir(self):
         return getattr(rootPaths, self.__class__.__name__)
 
+    def get_project_rel_dir(self):
+        return getattr(rootPaths, self.__class__.__name__ + "_rel")
+
     def get_built_dir(self):
-        return os.path.join(rootPaths.built, getattr(rootPaths, self.__class__.__name__ + "_rel"), self.variant.str)
+        return os.path.join(rootPaths.built, self.get_project_rel_dir(), self.variant.str)

@@ -103,4 +103,4 @@ def generate_ninja_build(projectMan):
 if (__name__ == "__main__"):
     print("generating with rootDir=%s" % repo.rootDir)
     repo.rootPaths.init()
-    pynja.regenerate_build(generate_ninja_build, repo.rootPaths.built)
+    pynja.regenerate_build(generate_ninja_build, repo.rootPaths.built, repo.rootPaths.codeBrowsing)

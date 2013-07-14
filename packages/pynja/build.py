@@ -125,11 +125,16 @@ class Project(metaclass = ABCMeta):
         self.projectMan = projectMan
         self.variant = variant
         self.projectDir = self.get_project_dir()
+        self.projectRelDir = self.get_project_rel_dir()
         self.builtDir = self.get_built_dir()
         self.makeFiles = []
 
     @abstractmethod
     def get_project_dir(self):
+        pass
+
+    @abstractmethod
+    def get_project_rel_dir(self):
         pass
 
     @abstractmethod
@@ -174,6 +179,7 @@ class ProjectMan:
         self._phonyTargets = {}
         self.emitVS2008Projects = (os.name == 'nt')
         self.emitVS2010Projects = (os.name == 'nt')
+        self.emitVS2012Projects = (os.name == 'nt')
 
         self._copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
 

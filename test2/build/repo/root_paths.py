@@ -25,7 +25,9 @@ class RootPaths(object):
         add_project_dir("java1", "code/java1")
         add_project_dir("java2", "code/java2")
 
-        rootPaths.built = os.path.join(rootDir, "built")
+        rootPaths.out = os.path.join(rootDir, "_out")
+        rootPaths.built = os.path.join(rootPaths.out, "built")
+        rootPaths.codeBrowsing = os.path.join(rootPaths.out, "cb")
         rootPaths.protobuf = os.path.join(rootDir, "imports/protobuf-2.4.1")
 
         if (os.name == 'nt'):

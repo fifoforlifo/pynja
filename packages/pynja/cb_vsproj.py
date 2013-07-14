@@ -47,6 +47,14 @@ EndGlobal
 
 
 class VS2008:
+    def __init__(self, projectMan, codeBrowsingDir = None):
+        self.projectMan = projectMan
+        self.slnVer = "10.00"
+        self.slnFileName = "vs2008.sln"
+        if codeBrowsingDir:
+            self.codeBrowsingDir = codeBrowsingDir
+        else:
+            self.codeBrowsingDir = os.path.dirname(projectMan.ninjaPath)
 
     def _def_config(variantName, ninjaDir, targetName, proj):
         defines = ""
@@ -98,11 +106,11 @@ r'''        <Configuration
                 strings.append('        <File RelativePath="%s" />\n' % (path))
 
 
-    def _emit_vcproj(projectMan, projName, variants):
+    def _emit_vcproj(self, projName, variants):
         firstProj = next(iter(variants.values()))
-        vsProjPath = os.path.normpath(os.path.join(firstProj.builtDir, "..", projName + ".vcproj"))
-        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, projName)
-        ninjaDir = os.path.dirname(projectMan.ninjaPath)
+        vsProjPath = os.path.normpath(os.path.join(self.codeBrowsingDir, firstProj.projectRelDir, projName + ".vcproj"))
+        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, firstProj.projectDir)
+        ninjaDir = os.path.dirname(self.projectMan.ninjaPath)
         strings = []
 
         # create a sorted list of variants by name, so that the output is deterministic
@@ -145,21 +153,37 @@ r'''    </Configurations>
         io.write_file_if_different(vsProjPath, vsProjContents)
         return (projName, str(vsProjGuid).upper(), vsProjPath)
 
-    def emit_vs_projects(projectMan):
-        """Extension method of ProjectMan, to write out VS projects"""
+    def emit_vs_projects(self):
         vsProjList = []
-        variantNames = set()
-        for projName in sorted(projectMan._projects.keys()):
-            variants = projectMan._projects[projName]
+        allVariantNames = set()
+        for projName in sorted(self.projectMan._projects.keys()):
+            variants = self.projectMan._projects[projName]
+
+            # ignore non-C++ projects
+            firstProj = next(iter(variants.values()))
+            if not isinstance(firstProj, cpp.CppProject):
+                continue
+
+            variantNames = set()
             for variant in variants:
                 variantNames.add(variant.str)
+                allVariantNames.add(variant.str)
 
-            vsProjInfo = VS2008._emit_vcproj(projectMan, projName, variants)
+            vsProjInfo = self._emit_vcproj(projName, variants)
             vsProjList.append(vsProjInfo)
-        _emit_sln("10.00", vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2008.sln"), variantNames)
+        slnPath = os.path.join(self.codeBrowsingDir, self.slnFileName)
+        _emit_sln(self.slnVer, vsProjList, slnPath, allVariantNames)
 
 
 class VS2010:
+    def __init__(self, projectMan, codeBrowsingDir = None):
+        self.projectMan = projectMan
+        self.slnVer = "11.00"
+        self.slnFileName = "vs2010.sln"
+        if codeBrowsingDir:
+            self.codeBrowsingDir = codeBrowsingDir
+        else:
+            self.codeBrowsingDir = os.path.dirname(projectMan.ninjaPath)
 
     def _def_project_configuration(strings, variantName):
         strings.append('    <ProjectConfiguration Include="%s|Win32">\n' % (variantName))
@@ -219,11 +243,11 @@ ninja {2}
                 else:
                     strings.append('    <ClInclude Include="%s" />\n' % (path))
 
-    def _emit_vcxproj(projectMan, projName, variants):
+    def _emit_vcxproj(self, projName, variants):
         firstProj = next(iter(variants.values()))
-        vsProjPath = os.path.normpath(os.path.join(firstProj.builtDir, "..", projName + ".vcxproj"))
-        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, projName)
-        ninjaDir = os.path.dirname(projectMan.ninjaPath)
+        vsProjPath = os.path.normpath(os.path.join(self.codeBrowsingDir, firstProj.projectRelDir, projName + ".vcxproj"))
+        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, firstProj.projectDir)
+        ninjaDir = os.path.dirname(self.projectMan.ninjaPath)
         strings = []
 
         # create a sorted list of variants by name, so that the output is deterministic
@@ -265,15 +289,30 @@ r'''  </ItemGroup>
         return (projName, str(vsProjGuid).upper(), vsProjPath)
 
 
-    def emit_vs_projects(projectMan):
-        """Extension method of ProjectMan, to write out VS projects"""
+    def emit_vs_projects(self):
         vsProjList = []
-        variantNames = set()
-        for projName in sorted(projectMan._projects.keys()):
-            variants = projectMan._projects[projName]
+        allVariantNames = set()
+        for projName in sorted(self.projectMan._projects.keys()):
+            variants = self.projectMan._projects[projName]
+
+            # ignore non-C++ projects
+            firstProj = next(iter(variants.values()))
+            if not isinstance(firstProj, cpp.CppProject):
+                continue
+
+            variantNames = set()
             for variant in variants:
                 variantNames.add(variant.str)
+                allVariantNames.add(variant.str)
 
-            vsProjInfo = VS2010._emit_vcxproj(projectMan, projName, variants)
+            vsProjInfo = self._emit_vcxproj(projName, variants)
             vsProjList.append(vsProjInfo)
-        _emit_sln("11.00", vsProjList, os.path.join(os.path.dirname(projectMan.ninjaPath), "vs2010.sln"), variantNames)
+        slnPath = os.path.join(self.codeBrowsingDir, self.slnFileName)
+        _emit_sln(self.slnVer, vsProjList, slnPath, allVariantNames)
+
+
+class VS2012(VS2010):
+    def __init__(self, projectMan, codeBrowsingDir = None):
+        super().__init__(projectMan, codeBrowsingDir)
+        self.slnVer = "12.00"
+        self.slnFileName = "vs2012.sln"
