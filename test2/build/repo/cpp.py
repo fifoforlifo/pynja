@@ -1,5 +1,4 @@
 import os
-import re
 import pynja
 from .root_paths import *
 
@@ -38,6 +37,8 @@ class CppVariant(pynja.Variant):
 class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
+        if not isinstance(variant, CppVariant):
+            raise Exception("variant must be instanceof(CppVariant)")
         if self.variant.os == "windows":
             self.winsdkVer = 80
 
@@ -55,10 +56,10 @@ class CppProject(pynja.CppProject):
         return getattr(rootPaths, self.__class__.__name__ + "_rel")
 
     def get_built_dir(self):
-        return os.path.join(rootPaths.built, self.get_project_rel_dir(), self.variant.str)
+        return os.path.join(rootPaths.built, self.get_project_rel_dir(), str(self.variant))
 
     def set_gcc_machine_arch(self, task):
-        if re.match("(mingw)|(gcc)", self.variant.toolchain):
+        if ("gcc" in self.variant.toolchain) or ("mingw" in self.variant.toolchain):
             if self.variant.arch == "x86":
                 task.addressModel = "-m32"
             elif self.variant.arch == "amd64":

@@ -18,6 +18,7 @@ def add_project_dir(name, relPath, absPath = None):
 
 class RootPaths(object):
     def init(self):
+        add_project_dir("test2", "code")
         add_project_dir("a0", "code/a0")
         add_project_dir("a1", "code/a1")
         add_project_dir("a2", "code/a2")
@@ -25,9 +26,13 @@ class RootPaths(object):
         add_project_dir("java1", "code/java1")
         add_project_dir("java2", "code/java2")
 
+        # output paths
         rootPaths.out = os.path.join(rootDir, "_out")
         rootPaths.built = os.path.join(rootPaths.out, "built")
         rootPaths.codeBrowsing = os.path.join(rootPaths.out, "cb")
+        rootPaths.bin = os.path.join(rootPaths.out, "bin")
+
+        # tool paths
         rootPaths.protobuf = os.path.join(rootDir, "imports/protobuf-2.4.1")
 
         if (os.name == 'nt'):

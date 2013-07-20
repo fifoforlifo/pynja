@@ -6,8 +6,11 @@ import repo
 @pynja.project
 class prog0(repo.CppProject):
     def emit(self):
-        libA0 = self.projectMan.get_project('a0', self.variant)
-        libA1 = self.projectMan.get_project('a1', self.variant)
+        libA0 = self.get_project('a0', self.variant)
+        libA1 = self.get_project('a1', self.variant)
+        # add library dependencies (they will be added to the end of the linker cmdline)
+        self.add_input_libs(libA0.linkLibraries)
+        self.add_lib_dependency(libA1)
 
         # compile one file at a time with per-file settings
         with self.cpp_compile_one("source/e0_0.cpp") as task:
@@ -44,10 +47,6 @@ class prog0(repo.CppProject):
         with self.cpp_compile(sloppyFiles_b) as tasks:
             # broadcast write
             tasks.warnLevel = 1
-
-        # add libraries last
-        self.add_input_libs(libA0.linkLibraries)
-        self.add_input_libs(libA1.linkLibraries)
 
         with self.make_executable("prog0") as task:
             pass

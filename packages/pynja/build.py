@@ -39,14 +39,12 @@ def get_loaded_modules(rootDir):
 
 class Variant:
     def __init__(self, string, fieldDefs):
-        self.str = string
-        parts = self.str.split("-")
+        self.__str = string
+        parts = self.__str.split("-")
         for i in range(len(parts)):
             fieldValue   = parts[i]
             fieldName    = fieldDefs[i * 2 + 0]
             fieldOptions = fieldDefs[i * 2 + 1]
-            if fieldName == "str":
-                raise Exception("You may not call a variant field 'str'.  Anything else is fine.")
             if not (fieldValue in fieldOptions):
                 errstr = "%s is not valid for field %s\n" % (fieldValue, fieldName)
                 errstr = errstr + "Valid options are:\n"
@@ -56,8 +54,10 @@ class Variant:
             setattr(self, fieldName, fieldValue)
 
     def __lt__(self, other):
-        return self.str < other.str
+        return self.__str < other.__str
 
+    def __str__(self, ):
+        return self.__str
 
 
 class BuildTask(metaclass = ABCMeta):
@@ -122,12 +122,15 @@ class BuildTasks:
 
 class Project(metaclass = ABCMeta):
     def __init__(self, projectMan, variant):
+        if not isinstance(variant, Variant):
+            raise Exception("variant must be instanceof(Variant)")
         self.projectMan = projectMan
         self.variant = variant
         self.projectDir = self.get_project_dir()
         self.projectRelDir = self.get_project_rel_dir()
         self.builtDir = self.get_built_dir()
         self.makeFiles = []
+        self._runtimeDeps = {}
 
     @abstractmethod
     def get_project_dir(self):
@@ -145,6 +148,9 @@ class Project(metaclass = ABCMeta):
     def emit(self):
         pass
 
+    def get_project(self, projName, variant):
+        return self.projectMan.get_project(projName, variant)
+
     def get_abs_path(self, path):
         if os.path.isabs(path):
             return path
@@ -159,6 +165,28 @@ class Project(metaclass = ABCMeta):
         destPath = self.get_abs_path(dest)
         self.projectMan.emit_copy(origPath, destPath, phonyTarget)
 
+    def _add_runtime_dep(self, destPath, srcPath):
+        curPath = self._runtimeDeps.get(destPath, None)
+        if curPath:
+            if curPath != srcPath:
+                raise Exception("Conflicting runtime dependencies to destPath=%s;\nold = %s\nnew = %s" % (destPath, curPath, srcPath))
+        else:
+            self._runtimeDeps[destPath] = srcPath
+
+    def add_runtime_dependency(self, srcPath, destPath = None, destDir = None):
+        srcPath = os.path.normpath(srcPath)
+        if not os.path.isabs(srcPath):
+            raise Exception("srcPath is not an absolute path; srcPath=%s" % srcPath)
+        if not destPath:
+            destPath = os.path.basename(srcPath)
+        if destDir and not os.path.isabs(destPath):
+            destPath = os.path.join(destDir, destPath)
+        destPath = os.path.normpath(destPath)
+        return self._add_runtime_dep(destPath, srcPath)
+
+    def add_runtime_dependency_project(self, project, destDir = None):
+        for destPath, srcPath in project._runtimeDeps.items():
+            self.add_runtime_dependency(srcPath, destPath, destDir)
 
 class ToolChain(metaclass = ABCMeta):
     def __init__(self, name):
@@ -183,14 +211,19 @@ class ProjectMan:
 
         self._copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
 
-    def get_project(self, projName, variantName):
+        self._deployFiles = {}
+
+    def get_project(self, projName, variant):
+        if not isinstance(variant, Variant):
+            raise Exception("variant must be instanceof(Variant)")
+        variantName = str(variant)
         variants = self._projects.get(projName)
         if variants == None:
             variants = {}
             self._projects[projName] = variants
         project = variants.get(variantName)
         if project == None:
-            project = projectFactory[projName](self, variantName)
+            project = projectFactory[projName](self, variant)
             variants[variantName] = project
             project.emit()
         return project
@@ -271,6 +304,10 @@ class ProjectMan:
             ninjaFile.write("\n")
         ninjaFile.write("\n")
 
+    def emit_deploy_targets(self):
+        for destPath, srcPath in self._deployFiles.items():
+            self.emit_copy(srcPath, destPath)
+
     def get_project_list(self):
         projects = []
         for projName, variants in sorted(self._projects.items()):
@@ -308,6 +345,21 @@ class ProjectMan:
         ninjaFile.write("    %s\n" % remakeScriptPathEsc)
         ninjaFile.write("\n");
         ninjaFile.write("\n");
+
+    def deploy(self, deployFiles, destDir = None):
+        if destDir:
+            destDir = os.path.normpath(destDir)
+            if not os.path.isabs(destDir):
+                raise Exception("destDir is not an absolute path; destDir=%s" % destDir)
+        for destPath, srcPath in deployFiles.items():
+            if destDir and not os.path.isabs(destPath):
+                destPath = os.path.join(destDir, destPath)
+            curPath = self._deployFiles.get(destPath, None)
+            if curPath:
+                if curPath != srcPath:
+                    raise Exception("Conflicting deploy files:\n  dest =%s;\n  old  = %s\n  new  = %s" % (destPath, curPath, srcPath))
+            else:
+                self._deployFiles[destPath] = srcPath
 
 
 projectFactory = {}

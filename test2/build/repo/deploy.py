@@ -1,32 +1,23 @@
 import os
-import re
 import pynja
 from .root_paths import *
 
-
-class JavaVariant(pynja.Variant):
+class DeployVariant(pynja.Variant):
     def __init__(self, string):
         super().__init__(string, self.get_field_defs())
 
     def get_field_defs(self):
         fieldDefs = [
-            "toolchain",    [ "javac"  ],
+            "product",      [ "app32", "app64", "sdk" ],
+            "config",       [ "dbg", "rel" ],
         ]
         return fieldDefs
 
-
-class JavaProject(pynja.JavaProject):
+class DeployProject(pynja.DeployProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
-        if not isinstance(variant, JavaVariant):
-            raise Exception("variant must be instanceof(JavaVariant)")
-
-    def get_toolchain(self):
-        toolchainName = "%s" % (self.variant.toolchain)
-        toolchain = self.projectMan.get_toolchain(toolchainName)
-        if not toolchain:
-            raise Exception("Could not find toolchain " + toolchainName)
-        return toolchain
+        if not isinstance(variant, DeployVariant):
+            raise Exception("variant must be instanceof(DeployVariant)")
 
     def get_project_dir(self):
         return getattr(rootPaths, self.__class__.__name__)

@@ -11,3 +11,4 @@ from .tc_nvcc import *
 from .tc_javac import *
 from .user import *
 from .protoc import *
+from .deploy import *

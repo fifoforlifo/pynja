@@ -25,6 +25,7 @@ def generate_ninja_build(projectMan):
     # define cpp_variants and toolchains on a per-OS basis
     cpp_variants = []
     java_variants = []
+    deploy_variants = []
 
     if os.name == 'nt':
         if build_cpp:
@@ -81,6 +82,11 @@ def generate_ninja_build(projectMan):
     else:
         raise Exception("Not implemented")
 
+    deploy_variants.append(repo.DeployVariant("app32-dbg"))
+    deploy_variants.append(repo.DeployVariant("app32-rel"))
+    deploy_variants.append(repo.DeployVariant("app64-dbg"))
+    deploy_variants.append(repo.DeployVariant("app64-rel"))
+
     projectMan.add_toolchain(repo.protocToolChain)
     projectMan.emit_rules()
 
@@ -93,9 +99,12 @@ def generate_ninja_build(projectMan):
         projectMan.get_project("prog0", variant)
     for variant in java_variants:
         projectMan.get_project("java2", variant)
+    for variant in deploy_variants:
+        projectMan.get_project("test2", variant)
 
 
     projectMan.emit_phony_targets()
+    projectMan.emit_deploy_targets()
     projectMan.emit_regenerator_target(get_current_script_path())
 
 

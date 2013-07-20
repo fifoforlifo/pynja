@@ -114,7 +114,7 @@ r'''        <Configuration
         strings = []
 
         # create a sorted list of variants by name, so that the output is deterministic
-        sortedVariants = sorted(variants.keys(), key = lambda variant: variant.str)
+        sortedVariants = sorted(variants.keys(), key = lambda variant: str(variant))
 
         strings.append(r'''<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
@@ -137,7 +137,7 @@ r'''        <Configuration
 
         for variant in sortedVariants:
             proj = variants[variant]
-            strings.append(VS2008._def_config(variant.str, ninjaDir, proj.outputPath, proj))
+            strings.append(VS2008._def_config(str(variant), ninjaDir, proj.outputPath, proj))
         strings.append(VS2008._def_config("all", ninjaDir, projName, None))
 
         strings.append(
@@ -166,8 +166,8 @@ r'''    </Configurations>
 
             variantNames = set()
             for variant in variants:
-                variantNames.add(variant.str)
-                allVariantNames.add(variant.str)
+                variantNames.add(str(variant))
+                allVariantNames.add(str(variant))
 
             vsProjInfo = self._emit_vcproj(projName, variants)
             vsProjList.append(vsProjInfo)
@@ -251,14 +251,14 @@ ninja {2}
         strings = []
 
         # create a sorted list of variants by name, so that the output is deterministic
-        sortedVariants = sorted(variants.keys(), key = lambda variant: variant.str)
+        sortedVariants = sorted(variants.keys(), key = lambda variant: str(variant))
 
         strings.append(r'''<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
 ''')
         for variant in sortedVariants:
-            VS2010._def_project_configuration(strings, variant.str)
+            VS2010._def_project_configuration(strings, str(variant))
         VS2010._def_project_configuration(strings, "all")
 
         strings.append(
@@ -275,7 +275,7 @@ r'''  </ItemGroup>
 
         for variant in sortedVariants:
             proj = variants[variant]
-            strings.append(VS2010._def_config_props(variant.str, ninjaDir, proj.outputPath, proj))
+            strings.append(VS2010._def_config_props(str(variant), ninjaDir, proj.outputPath, proj))
         strings.append(VS2010._def_config_props("all", ninjaDir, projName, None))
 
         strings.append('  <ItemGroup>\n')
@@ -302,8 +302,8 @@ r'''  </ItemGroup>
 
             variantNames = set()
             for variant in variants:
-                variantNames.add(variant.str)
-                allVariantNames.add(variant.str)
+                variantNames.add(str(variant))
+                allVariantNames.add(str(variant))
 
             vsProjInfo = self._emit_vcxproj(projName, variants)
             vsProjList.append(vsProjInfo)

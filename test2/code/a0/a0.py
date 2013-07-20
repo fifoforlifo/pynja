@@ -5,7 +5,7 @@ import repo
 @pynja.project
 class a0(repo.CppProject):
     def emit(self):
-        libA2 = self.projectMan.get_project('a2', self.variant)
+        libA2 = self.get_project('a2', self.variant)
 
         proto_defs = [
             "source/address.proto",

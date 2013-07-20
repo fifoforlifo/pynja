@@ -123,6 +123,10 @@ class CppProject(build.Project):
     def add_input_libs(self, filePaths):
         self._inputLibs.extend(filePaths)
 
+    def add_lib_dependency(self, project):
+        self._inputLibs.extend(project.linkLibraries)
+        self.add_runtime_dependency_project(project)
+
 
     # precompiled header
 
@@ -204,6 +208,7 @@ class CppProject(build.Project):
         self.outputPath = outputPath
         self.libraryPath = libraryPath
         self.linkLibraries.append(self.libraryPath)
+        self.add_runtime_dependency(self.outputPath)
 
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.outputLibraryPath = libraryPath
@@ -222,6 +227,7 @@ class CppProject(build.Project):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
+        self.add_runtime_dependency(self.outputPath)
 
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.makeExecutable = True
