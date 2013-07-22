@@ -7,6 +7,11 @@ from . import cpp
 def _is_source_file(filename):
     return filename.endswith(".c") or filename.endswith(".cpp") or filename.endswith(".cxx")
 
+def _get_project_data(project, ext, codeBrowsingDir):
+    projName = type(project).__name__
+    vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, project.projectDir)
+    vsProjPath = os.path.normpath(os.path.join(codeBrowsingDir, project.projectRelDir, projName + ext))
+    return (projName, vsProjGuid, vsProjPath)
 
 def _emit_sln(slnVersion, vsProjList, vsSlnPath, variantNames):
     variantNames = sorted(variantNames)
@@ -15,8 +20,9 @@ def _emit_sln(slnVersion, vsProjList, vsSlnPath, variantNames):
     strings.append("Microsoft Visual Studio Solution File, Format Version %s\n" % (slnVersion))
     for vsProjInfo in vsProjList:
         (projName, vsProjGuid, vsProjPath) = vsProjInfo
+        vsProjGuidStr = str(vsProjGuid).upper()
         strings.append(r'''Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%s", "%s", "{%s}"%s'''
-                       % (projName, vsProjPath, vsProjGuid, "\n"))
+                       % (projName, vsProjPath, vsProjGuidStr, "\n"))
         strings.append("EndProject\n")
     strings.append(r'''Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,11 +52,34 @@ EndGlobal
     io.write_file_if_different(vsSlnPath, vsSlnContents)
 
 
-class VS2008:
+class VSGenerator:
+    def __init__(self):
+        self._projectsEmitted = False
+
+    def emit_sln(self, slnName, cbProjectRefs):
+        if not self._projectsEmitted:
+            self.emit_vs_projects()
+
+        vsProjList = []
+        allVariantNames = set()
+        for project in cbProjectRefs:
+            vsProjInfo = _get_project_data(project, self.projExt, self.codeBrowsingDir)
+            vsProjList.append(vsProjInfo)
+            variants = self.projectMan._projects[vsProjInfo[0]]
+            for variant in variants:
+                allVariantNames.add(str(variant))
+
+        slnPath = os.path.join(self.codeBrowsingDir, slnName + self.slnBaseName)
+        _emit_sln(self.slnVer, vsProjList, slnPath, allVariantNames)
+
+
+class VS2008(VSGenerator):
     def __init__(self, projectMan, codeBrowsingDir = None):
+        super().__init__()
         self.projectMan = projectMan
         self.slnVer = "10.00"
-        self.slnFileName = "vs2008.sln"
+        self.slnBaseName = "_vs2008.sln"
+        self.projExt = ".vcproj"
         if codeBrowsingDir:
             self.codeBrowsingDir = codeBrowsingDir
         else:
@@ -108,8 +137,7 @@ r'''        <Configuration
 
     def _emit_vcproj(self, projName, variants):
         firstProj = next(iter(variants.values()))
-        vsProjPath = os.path.normpath(os.path.join(self.codeBrowsingDir, firstProj.projectRelDir, projName + ".vcproj"))
-        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, firstProj.projectDir)
+        (_projName, vsProjGuid, vsProjPath) = _get_project_data(firstProj, self.projExt, self.codeBrowsingDir)
         ninjaDir = os.path.dirname(self.projectMan.ninjaPath)
         strings = []
 
@@ -171,15 +199,17 @@ r'''    </Configurations>
 
             vsProjInfo = self._emit_vcproj(projName, variants)
             vsProjList.append(vsProjInfo)
-        slnPath = os.path.join(self.codeBrowsingDir, self.slnFileName)
+        slnPath = os.path.join(self.codeBrowsingDir, "all" + self.slnBaseName)
         _emit_sln(self.slnVer, vsProjList, slnPath, allVariantNames)
 
 
-class VS2010:
+class VS2010(VSGenerator):
     def __init__(self, projectMan, codeBrowsingDir = None):
+        super().__init__()
         self.projectMan = projectMan
         self.slnVer = "11.00"
-        self.slnFileName = "vs2010.sln"
+        self.slnBaseName = "_vs2010.sln"
+        self.projExt = ".vcxproj"
         if codeBrowsingDir:
             self.codeBrowsingDir = codeBrowsingDir
         else:
@@ -245,8 +275,7 @@ ninja {2}
 
     def _emit_vcxproj(self, projName, variants):
         firstProj = next(iter(variants.values()))
-        vsProjPath = os.path.normpath(os.path.join(self.codeBrowsingDir, firstProj.projectRelDir, projName + ".vcxproj"))
-        vsProjGuid = uuid.uuid5(uuid.NAMESPACE_DNS, firstProj.projectDir)
+        (_projName, vsProjGuid, vsProjPath) = _get_project_data(firstProj, '.vcxproj', self.codeBrowsingDir)
         ninjaDir = os.path.dirname(self.projectMan.ninjaPath)
         strings = []
 
@@ -290,6 +319,10 @@ r'''  </ItemGroup>
 
 
     def emit_vs_projects(self):
+        if self._projectsEmitted:
+            return
+        self._projectsEmitted = True
+
         vsProjList = []
         allVariantNames = set()
         for projName in sorted(self.projectMan._projects.keys()):
@@ -307,7 +340,7 @@ r'''  </ItemGroup>
 
             vsProjInfo = self._emit_vcxproj(projName, variants)
             vsProjList.append(vsProjInfo)
-        slnPath = os.path.join(self.codeBrowsingDir, self.slnFileName)
+        slnPath = os.path.join(self.codeBrowsingDir, "all" + self.slnBaseName)
         _emit_sln(self.slnVer, vsProjList, slnPath, allVariantNames)
 
 
@@ -315,4 +348,4 @@ class VS2012(VS2010):
     def __init__(self, projectMan, codeBrowsingDir = None):
         super().__init__(projectMan, codeBrowsingDir)
         self.slnVer = "12.00"
-        self.slnFileName = "vs2012.sln"
+        self.slnBaseName = "_vs2012.sln"

@@ -103,10 +103,9 @@ class CppProject(build.Project):
         super().__init__(projectMan, variant)
         self.outputPath = None
         self.toolchain = self.get_toolchain()
+        self.linkLibraries = []
         self._inputs = []
         self._inputLibs = []
-        self.linkLibraries = []
-
 
     @abstractmethod
     def get_toolchain(self):
@@ -126,7 +125,7 @@ class CppProject(build.Project):
     def add_lib_dependency(self, project):
         self._inputLibs.extend(project.linkLibraries)
         self.add_runtime_dependency_project(project)
-
+        self.add_cb_project_reference(project)
 
     # precompiled header
 

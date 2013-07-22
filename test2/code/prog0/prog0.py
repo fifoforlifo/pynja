@@ -8,8 +8,8 @@ class prog0(repo.CppProject):
     def emit(self):
         libA0 = self.get_project('a0', self.variant)
         libA1 = self.get_project('a1', self.variant)
-        # add library dependencies (they will be added to the end of the linker cmdline)
-        self.add_input_libs(libA0.linkLibraries)
+        # add library dependencies in link order (they will be added to the end of the linker cmdline)
+        self.add_lib_dependency(libA0)
         self.add_lib_dependency(libA1)
 
         # compile one file at a time with per-file settings

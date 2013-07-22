@@ -37,3 +37,6 @@ class test2(repo.DeployProject):
 
         else:
             raise Exception("Unsupported product %s" % self.variant.product)
+
+        # do this last, to capture referenced projects
+        self.projectMan.add_cb_project_root(self)

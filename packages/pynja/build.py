@@ -131,6 +131,7 @@ class Project(metaclass = ABCMeta):
         self.builtDir = self.get_built_dir()
         self.makeFiles = []
         self._runtimeDeps = {}
+        self._cbProjectRefs = set()
 
     @abstractmethod
     def get_project_dir(self):
@@ -187,6 +188,13 @@ class Project(metaclass = ABCMeta):
     def add_runtime_dependency_project(self, project, destDir = None):
         for destPath, srcPath in project._runtimeDeps.items():
             self.add_runtime_dependency(srcPath, destPath, destDir)
+        self.add_cb_project_reference(project)
+
+    def add_cb_project_reference(self, project):
+        self._cbProjectRefs.add(project)
+        for ref in project._cbProjectRefs:
+            self._cbProjectRefs.add(ref)
+
 
 class ToolChain(metaclass = ABCMeta):
     def __init__(self, name):
@@ -205,13 +213,11 @@ class ProjectMan:
         self._projects = {}
         self._toolchains = {}
         self._phonyTargets = {}
-        self.emitVS2008Projects = (os.name == 'nt')
-        self.emitVS2010Projects = (os.name == 'nt')
-        self.emitVS2012Projects = (os.name == 'nt')
 
         self._copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
 
         self._deployFiles = {}
+        self._cbProjectRoots = {} # map projName -> slnName
 
     def get_project(self, projName, variant):
         if not isinstance(variant, Variant):
@@ -227,6 +233,12 @@ class ProjectMan:
             variants[variantName] = project
             project.emit()
         return project
+
+    def get_first_project(self, projName):
+        variants = self._projects.get(projName)
+        if variants == None:
+            return None
+        return next(iter(variants.values()))
 
     def add_toolchain(self, toolchain):
         if self._toolchains.get(toolchain.name):
@@ -360,6 +372,11 @@ class ProjectMan:
                     raise Exception("Conflicting deploy files:\n  dest =%s;\n  old  = %s\n  new  = %s" % (destPath, curPath, srcPath))
             else:
                 self._deployFiles[destPath] = srcPath
+
+    def add_cb_project_root(self, project, slnName = None):
+        if not slnName:
+            slnName = type(project).__name__
+        self._cbProjectRoots[type(project).__name__] = slnName
 
 
 projectFactory = {}
