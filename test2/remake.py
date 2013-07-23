@@ -103,8 +103,8 @@ def generate_ninja_build(projectMan):
         projectMan.get_project("test2", variant)
 
 
-    projectMan.emit_phony_targets()
     projectMan.emit_deploy_targets()
+    projectMan.emit_phony_targets()
     projectMan.emit_regenerator_target(get_current_script_path())
 
 

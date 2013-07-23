@@ -6,7 +6,9 @@ class DeployProject(build.Project):
         super().__init__(projectMan, variant)
         self._deployed = False
 
-    def deploy(self, destDir):
+    def deploy(self, destDir, phonyTarget = None):
         if self._deployed:
             raise Exception("deploy may only be called once per project")
-        self.projectMan.deploy(self._runtimeDeps, destDir)
+        if not phonyTarget:
+            phonyTarget = type(self).__name__
+        self.projectMan.deploy(self._runtimeDeps, destDir, phonyTarget)

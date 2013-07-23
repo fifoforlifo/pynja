@@ -317,8 +317,9 @@ class ProjectMan:
         ninjaFile.write("\n")
 
     def emit_deploy_targets(self):
-        for destPath, srcPath in self._deployFiles.items():
-            self.emit_copy(srcPath, destPath)
+        for destPath, srcInfo in self._deployFiles.items():
+            srcPath, phonyTarget = srcInfo
+            self.emit_copy(srcPath, destPath, phonyTarget)
 
     def get_project_list(self):
         projects = []
@@ -358,7 +359,7 @@ class ProjectMan:
         ninjaFile.write("\n");
         ninjaFile.write("\n");
 
-    def deploy(self, deployFiles, destDir = None):
+    def deploy(self, deployFiles, destDir = None, phonyTarget = None):
         if destDir:
             destDir = os.path.normpath(destDir)
             if not os.path.isabs(destDir):
@@ -366,12 +367,14 @@ class ProjectMan:
         for destPath, srcPath in deployFiles.items():
             if destDir and not os.path.isabs(destPath):
                 destPath = os.path.join(destDir, destPath)
-            curPath = self._deployFiles.get(destPath, None)
+            (curPath, curPhonyTarget) = self._deployFiles.get(destPath, (None, None))
             if curPath:
                 if curPath != srcPath:
                     raise Exception("Conflicting deploy files:\n  dest =%s;\n  old  = %s\n  new  = %s" % (destPath, curPath, srcPath))
+                if not curPhonyTarget and phonyTarget:
+                    self._deployFiles[destPath] = (srcPath, phonyTarget)
             else:
-                self._deployFiles[destPath] = srcPath
+                self._deployFiles[destPath] = (srcPath, phonyTarget)
 
     def add_cb_project_root(self, project, slnName = None):
         if not slnName:
