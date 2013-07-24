@@ -50,7 +50,6 @@ class CppProject(pynja.CppProject):
                 self.qtBuiltDir,
             ]
             self.qtLibDir = os.path.join(self.qtBinDir, "..", "lib")
-            self.qtLibPrefix = "Qt5"
             self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
 
     def get_toolchain(self):
@@ -282,10 +281,10 @@ class CppProject(pynja.CppProject):
                 self.cpp_compile(task.outputPath)
             # else, it's a .moc file, which would be #included into the .cpp file
 
-    def qt_add_lib_dependency(self, libName):
+    def qt_add_lib_dependency(self, libName, staticLink = False, forceRelease = False):
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
-            libName = self.qtLibPrefix + libName
-            if self.variant.config == 'dbg':
+            if not forceRelease and self.variant.config == 'dbg':
                 libName = libName + 'd'
-            self.add_input_lib(os.path.join(self.qtLibDir, libName + '.lib'))
+            if staticLink:
+                self.add_input_lib(os.path.join(self.qtLibDir, libName + '.lib'))
             self.add_runtime_dependency(os.path.join(self.qtBinDir, libName + '.dll'))
