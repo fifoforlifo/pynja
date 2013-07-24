@@ -11,8 +11,7 @@ class java2(repo.JavaProject):
             "com/java2/Runner.java",
         ]
 
-        with self.java_compile(sources) as task:
+        with self.java_compile_ex(sources) as task:
             task.workingDir = os.path.join(self.projectDir, "source")
 
-        with self.jar_create("java2.jar") as task:
-            pass
+        self.jar_create("java2.jar")

@@ -176,26 +176,28 @@ class CppProject(pynja.CppProject):
         task.keepDebugInfo = True
         self.add_platform_libs(task)
 
-    def protoc_one(self, sourcePath, language):
+    def _protoc_one(self, sourcePath, language):
         task = pynja.ProtocTask(self, sourcePath, self.builtDir, self.projectDir, language, protocToolChain)
         self.set_protoc_options(task)
         return task
 
     def protoc(self, filePaths, language):
-        taskList = []
-        for filePath in filePaths:
-            task = self.protoc_one(filePath, language)
-            taskList.append(task)
-        tasks = pynja.BuildTasks(taskList)
-        return tasks
+        if isinstance(filePaths, str):
+            return self._protoc_one(filePaths, language)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = self._protoc_one(filePath, language)
+                taskList.append(task)
+            tasks = pynja.BuildTasks(taskList)
+            return tasks
 
     def protoc_cpp_compile(self, filePaths):
         proto_sources = []
         with self.protoc(filePaths, 'cpp') as tasks:
             for task in tasks:
                 proto_sources.append(task.outputPath)
-                with self.cpp_compile_one(task.outputPath) as cppTask:
-                    pass
+            self.cpp_compile(proto_sources)
         return proto_sources
 
     def set_protoc_options(self, task):

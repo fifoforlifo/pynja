@@ -133,6 +133,11 @@ class CppProject(build.Project):
     # In that case, the source header will be force-included instead.  (and no other
     # modifications will be necessary to client code)
     def make_pch(self, sourcePath, reallyCreatePCH = True):
+        with self.make_pch_ex(sourcePath, reallyCreatePCH) as task:
+            pass
+        return task
+
+    def make_pch_ex(self, sourcePath, reallyCreatePCH = True):
         sourcePath = os.path.normpath(sourcePath)
         if self.toolchain.supportsPCH and reallyCreatePCH:
             if os.path.isabs(sourcePath):
@@ -155,7 +160,7 @@ class CppProject(build.Project):
 
     # C++ compile
 
-    def cpp_compile_one(self, sourcePath):
+    def _cpp_compile_one(self, sourcePath):
         sourcePath = os.path.normpath(sourcePath)
         if os.path.isabs(sourcePath):
             outputPath = os.path.join(self.builtDir, os.path.basename(sourcePath) + self.toolchain.objectFileExt)
@@ -168,12 +173,20 @@ class CppProject(build.Project):
         return task
 
     def cpp_compile(self, filePaths):
-        taskList = []
-        for filePath in filePaths:
-            task = self.cpp_compile_one(filePath)
-            taskList.append(task)
-        tasks = pynja.BuildTasks(taskList)
-        return tasks
+        with self.cpp_compile_ex(filePaths) as tasks:
+            pass
+        return tasks # this could be either a scalar CppTask or an iterable BuildTasks
+
+    def cpp_compile_ex(self, filePaths):
+        if isinstance(filePaths, str):
+            return self._cpp_compile_one(filePaths)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = self._cpp_compile_one(filePath)
+                taskList.append(task)
+            tasks = pynja.BuildTasks(taskList)
+            return tasks
 
     def set_cpp_compile_options(self, task):
         """Can be overridden to apply common compiler options to CppTask created by cpp_compile*."""
@@ -183,6 +196,11 @@ class CppProject(build.Project):
     # static lib creation
 
     def make_static_lib(self, outputPath):
+        with self.make_static_lib_ex(outputPath) as task:
+            pass
+        return task
+
+    def make_static_lib_ex(self, outputPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
@@ -202,6 +220,11 @@ class CppProject(build.Project):
     # shared lib creation
 
     def make_shared_lib(self, outputPath, libraryPath):
+        with self.make_shared_lib_ex(outputPath, libraryPath) as task:
+            pass
+        return task
+
+    def make_shared_lib_ex(self, outputPath, libraryPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
@@ -223,6 +246,11 @@ class CppProject(build.Project):
     # executable creation
 
     def make_executable(self, outputPath):
+        with self.make_executable_ex(outputPath) as task:
+            pass
+        return task
+
+    def make_executable_ex(self, outputPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath

@@ -11,8 +11,5 @@ class a1(repo.CppProject):
             "source/a1_3.cpp",
         ]
 
-        with self.cpp_compile(sources) as tasks:
-            pass
-
-        with self.make_shared_lib("a1") as task:
-            pass
+        self.cpp_compile(sources)
+        self.make_shared_lib("a1")

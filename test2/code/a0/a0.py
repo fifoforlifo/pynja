@@ -21,19 +21,16 @@ class a0(repo.CppProject):
             "source/a0_3.cpp",
         ]
 
-        with self.make_pch("source/a0_pch.h") as pchTask:
+        with self.make_pch_ex("source/a0_pch.h") as pchTask:
             pchTask.usePCH = libA2.pchPath
-            pass
 
-        with self.cpp_compile(sources) as tasks:
+        with self.cpp_compile_ex(sources) as tasks:
             tasks.usePCH = pchTask.outputPath
             for task in tasks:
                 task.defines.append("FOO")
 
-        self.add_input_libs(libA2.linkLibraries)
-
-        with self.make_static_lib("a0") as task:
-            pass
+        self.add_lib_dependency(libA2)
+        self.make_static_lib("a0")
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)

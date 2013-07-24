@@ -9,15 +9,12 @@ class a2(repo.CppProject):
             "source/a2_0.cpp",
         ]
 
-        with self.make_pch("source/a2_pch.h") as pchTask:
-            pass
-        self.pchPath = pchTask.outputPath
+        pchTask = self.make_pch("source/a2_pch.h")
+        self.pchPath = pchTask.outputPath # export a2's pchPath for other projects to use
+        with self.cpp_compile_ex(sources) as tasks:
+            tasks.usePCH = pchTask.outputPath
 
-        with self.cpp_compile(sources) as tasks:
-            tasks.usePCH = self.pchPath
-
-        with self.make_static_lib("a2") as task:
-            pass
+        self.make_static_lib("a2")
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)

@@ -54,6 +54,11 @@ class JavaProject(build.Project):
         return project
 
     def java_compile(self, sourceFilePaths, classPaths = None):
+        with self.java_compile(sourceFilePaths, classPaths) as task:
+            pass
+        return task
+
+    def java_compile_ex(self, sourceFilePaths, classPaths = None):
         task = JavaTask(self, self.projectDir, self.faninPath, self.outputDir)
         task.sourceFilePaths.extend(sourceFilePaths)
         if classPaths:
@@ -66,6 +71,11 @@ class JavaProject(build.Project):
         pass
 
     def jar_create(self, jarFileName):
+        with self.jar_create_ex(jarFileName) as task:
+            pass
+        return task
+
+    def jar_create_ex(self, jarFileName):
         if self.outputPath:
             raise Exception("outputPath already set for this project")
         self.outputPath = os.path.join(self.builtDir, jarFileName)
