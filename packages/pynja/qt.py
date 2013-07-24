@@ -10,8 +10,6 @@ class QtUiTask(build.BuildTask):
         self.outputPath = outputPath
         self.workingDir = workingDir
         self.toolchain = toolchain
-        self.tr = None
-        self.generateIncludeGuards = True
 
     def emit(self):
         project = self.project
@@ -20,6 +18,23 @@ class QtUiTask(build.BuildTask):
         if self.phonyTarget:
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
+class QtMocTask(build.BuildTask):
+    def __init__(self, project, sourcePath, outputPath, workingDir, toolchain):
+        super().__init__(project)
+        self.sourcePath = sourcePath
+        self.outputPath = outputPath
+        self.workingDir = workingDir
+        self.toolchain = toolchain
+        self.includePaths = []
+        self.defines = []
+        self.emitInclude = True
+
+    def emit(self):
+        project = self.project
+        toolchain = self.toolchain
+        toolchain.emit_moc(project, self)
+        if self.phonyTarget:
+            project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 class QtToolChain(build.ToolChain):
     """Qt tools driver."""
@@ -30,6 +45,8 @@ class QtToolChain(build.ToolChain):
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._uicScript = os.path.join(self._scriptDir, "qt-uic-invoke.py")
         self._uicRule = "%s_uic" % self.name
+        self._mocScript = os.path.join(self._scriptDir, "qt-moc-invoke.py")
+        self._mocRule = "%s_moc" % self.name
 
     def emit_rules(self, ninjaFile):
         ninjaFile.write("#############################################\n")
@@ -38,6 +55,14 @@ class QtToolChain(build.ToolChain):
         ninjaFile.write("rule %s\n" % self._uicRule)
         ninjaFile.write("  command = python \"%s\"  \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OUT_FILE\"  \"$LOG_FILE\"\n" % (self._uicScript, self.qtBinDir))
         ninjaFile.write("  description = uic $DESC\n")
+        ninjaFile.write("  restat = 1\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("#############################################\n")
+        ninjaFile.write("# Qt moc\n")
+        ninjaFile.write("\n")
+        ninjaFile.write("rule %s\n" % self._mocRule)
+        ninjaFile.write("  command = python \"%s\"  \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OUT_FILE\"  \"$LOG_FILE\"  \"$RSP_FILE\"\n" % (self._mocScript, self.qtBinDir))
+        ninjaFile.write("  description = moc $DESC\n")
         ninjaFile.write("  restat = 1\n")
         ninjaFile.write("\n")
 
@@ -64,5 +89,52 @@ class QtToolChain(build.ToolChain):
         ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
         ninjaFile.write("  OUT_FILE    = %s\n" % task.outputPath)
         ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
+        ninjaFile.write("\n")
+
+    def translate_include_paths(self, options, task):
+        for includePath in task.includePaths:
+            if not includePath:
+                raise Exception("empty includePath set for: " + task.outputPath)
+            options.append("-I\"%s\"" % includePath)
+
+    def translate_defines(self, options, task):
+        for define in task.defines:
+            if not define:
+                raise Exception("empty define set for: " + task.outputPath)
+            options.append("-D%s" % define)
+
+    def emit_moc(self, project, task):
+        # write response file; this also updates extraInputs/extraOutputs
+        options = []
+        self.translate_include_paths(options, task)
+        self.translate_defines(options, task)
+        if not task.emitInclude:
+            options.append("-i")
+        write_rsp_file(project, task, options)
+
+        # emit ninja file contents
+        ninjaFile = project.projectMan.ninjaFile
+        outputPath = build.ninja_esc_path(task.outputPath)
+        sourcePath = build.ninja_esc_path(task.sourcePath)
+        logPath = outputPath + ".log"
+        sourceName = os.path.basename(task.sourcePath)
+        outputName = os.path.basename(task.outputPath)
+        scriptPath = build.ninja_esc_path(self._mocScript)
+
+        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        ruleName = self._mocRule
+
+        # write build command
+        ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(ruleName)s  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s " % locals())
+        build.translate_extra_deps(ninjaFile, task, False)
+        build.translate_order_only_deps(ninjaFile, task, True)
+        ninjaFile.write("\n")
+
+        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
+        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
+        ninjaFile.write("  OUT_FILE    = %s\n" % task.outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")

@@ -18,8 +18,6 @@ class test2(repo.DeployProject):
             primaryVariantStr = "windows-%s-%s-dcrt" % (tools, self.variant.config)
             primaryVariant = repo.CppVariant(primaryVariantStr)
             self.add_runtime_dependency_project(self.get_project('prog0', primaryVariant))
-            if primaryVariant.toolchain == 'msvc11':
-                self.add_runtime_dependency_project(self.get_project('qt0', primaryVariant))
 
             self.deploy(productDir)
 

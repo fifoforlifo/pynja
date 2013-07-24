@@ -39,7 +39,8 @@ def cpp_compile():
             else:
                 match = re.match("Note: including file: ([ ]*)(.*)", logLine)
                 if match:
-                    depEsc = shell_escape_path(match.group(2))
+                    incPath = os.path.normpath(match.group(2))
+                    depEsc = shell_escape_path(incPath)
                     depFile.write("%s \\\n" % depEsc)
     if needToPrintLog:
         for logLine in logContents.splitlines():

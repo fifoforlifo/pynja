@@ -42,13 +42,15 @@ class CppProject(pynja.CppProject):
         if self.variant.os == "windows":
             self.winsdkVer = 80
 
-        if self.variant.toolchain == 'msvc11':
+        if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             self.qtBinDir = rootPaths.qt5vc11BinDir
             self.qtBuiltDir = os.path.join(self.builtDir, "qt")
             self.qtIncludePaths = [
                 os.path.join(self.qtBinDir, "..", "include"),
                 self.qtBuiltDir,
             ]
+            self.qtLibDir = os.path.join(self.qtBinDir, "..", "lib")
+            self.qtLibPrefix = "Qt5"
             self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
 
     def get_toolchain(self):
@@ -169,10 +171,10 @@ class CppProject(pynja.CppProject):
         if self.variant.os == "windows":
             if "msvc" in self.variant.toolchain:
                 winsdkLibDir = self.calc_winsdk_lib_dir()
-                task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
-                task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))
-                task.inputs.append(os.path.join(winsdkLibDir, "gdi32.lib"))
-                task.inputs.append(os.path.join(winsdkLibDir, "uuid.lib"))
+                self.add_input_lib(os.path.join(winsdkLibDir, "kernel32.lib"))
+                self.add_input_lib(os.path.join(winsdkLibDir, "user32.lib"))
+                self.add_input_lib(os.path.join(winsdkLibDir, "gdi32.lib"))
+                self.add_input_lib(os.path.join(winsdkLibDir, "uuid.lib"))
 
     def set_shared_lib_options(self, task):
         super().set_shared_lib_options(task)
@@ -244,3 +246,46 @@ class CppProject(pynja.CppProject):
                 taskList.append(task)
             tasks = pynja.BuildTasks(taskList)
             return tasks
+
+    def _qt_moc_one(self, sourcePath):
+        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
+        if ext == '.h' or ext == '.H' or ext == '.hpp' or ext == '.hxx':
+            outputPath = os.path.join(self.qtBuiltDir, "moc_" + barename + ".cpp")
+        else:
+            outputPath = os.path.join(self.qtBuiltDir, barename + ".moc")
+        if not os.path.isabs(sourcePath):
+            sourcePath = os.path.join(self.projectDir, sourcePath)
+        task = pynja.qt.QtMocTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
+        return task
+
+    def qt_moc(self, filePaths):
+        with self.qt_moc_ex(filePaths) as tasks:
+            pass
+        return tasks
+
+    def qt_moc_ex(self, filePaths):
+        if isinstance(filePaths, str):
+            return self._qt_moc_one(filePaths)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = self._qt_moc_one(filePath)
+                taskList.append(task)
+            tasks = pynja.BuildTasks(taskList)
+            return tasks
+
+    def qt_moc_cpp_compile(self, filePaths):
+        tasks = self.qt_moc(filePaths)
+        for task in tasks:
+            basename = os.path.basename(task.outputPath)
+            if basename.startswith("moc_"):
+                self.cpp_compile(task.outputPath)
+            # else, it's a .moc file, which would be #included into the .cpp file
+
+    def qt_add_lib_dependency(self, libName):
+        if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
+            libName = self.qtLibPrefix + libName
+            if self.variant.config == 'dbg':
+                libName = libName + 'd'
+            self.add_input_lib(os.path.join(self.qtLibDir, libName + '.lib'))
+            self.add_runtime_dependency(os.path.join(self.qtBinDir, libName + '.dll'))
