@@ -42,6 +42,15 @@ class CppProject(pynja.CppProject):
         if self.variant.os == "windows":
             self.winsdkVer = 80
 
+        if self.variant.toolchain == 'msvc11':
+            self.qtBinDir = rootPaths.qt5vc11BinDir
+            self.qtBuiltDir = os.path.join(self.builtDir, "qt")
+            self.qtIncludePaths = [
+                os.path.join(self.qtBinDir, "..", "include"),
+                self.qtBuiltDir,
+            ]
+            self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
+
     def get_toolchain(self):
         toolchainName = "%s-%s" % (self.variant.toolchain, self.variant.arch)
         toolchain = self.projectMan.get_toolchain(toolchainName)
@@ -67,6 +76,7 @@ class CppProject(pynja.CppProject):
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
+        task.extraDeps.extend(self._forcedDeps)
         task.phonyTarget = os.path.basename(task.sourcePath)
         if self.variant.os == "windows":
             if "msvc" in self.variant.toolchain:
@@ -176,9 +186,13 @@ class CppProject(pynja.CppProject):
         task.keepDebugInfo = True
         self.add_platform_libs(task)
 
+
+    # protoc
+
     def _protoc_one(self, sourcePath, language):
         task = pynja.ProtocTask(self, sourcePath, self.builtDir, self.projectDir, language, protocToolChain)
         self.set_protoc_options(task)
+        self._forcedDeps.add(task.outputHeader)
         return task
 
     def protoc(self, filePaths, language):
@@ -203,3 +217,30 @@ class CppProject(pynja.CppProject):
     def set_protoc_options(self, task):
         pass
 
+
+    # qt
+
+    def _qt_uic_one(self, sourcePath):
+        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
+        outputPath = os.path.join(self.qtBuiltDir, "ui_" + barename + ".h")
+        if not os.path.isabs(sourcePath):
+            sourcePath = os.path.join(self.projectDir, sourcePath)
+        task = pynja.qt.QtUiTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
+        self._forcedDeps.add(outputPath)
+        return task
+
+    def qt_uic(self, filePaths):
+        with self.qt_uic_ex(filePaths) as tasks:
+            pass
+        return tasks
+
+    def qt_uic_ex(self, filePaths):
+        if isinstance(filePaths, str):
+            return self._qt_uic_one(filePaths)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = self._qt_uic_one(filePath)
+                taskList.append(task)
+            tasks = pynja.BuildTasks(taskList)
+            return tasks

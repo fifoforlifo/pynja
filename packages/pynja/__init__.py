@@ -12,3 +12,4 @@ from .tc_javac import *
 from .user import *
 from .protoc import *
 from .deploy import *
+from . import qt

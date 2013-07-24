@@ -107,6 +107,9 @@ class CppProject(build.Project):
         self._inputs = []
         self._inputLibs = []
 
+        # for situations where we want to aggregate implicit dependencies for cpp_compiles
+        self._forcedDeps = set()
+
     @abstractmethod
     def get_toolchain(self):
         pass

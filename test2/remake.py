@@ -58,6 +58,8 @@ def generate_ninja_build(projectMan):
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-rel-dcrt"))
 
+            projectMan.add_toolchain(pynja.qt.QtToolChain('qt5vc11', repo.rootPaths.qt5vc11BinDir))
+
         if build_java:
             if os.path.exists(repo.rootPaths.jdk15):
                 projectMan.add_toolchain(pynja.JavacToolChain("javac", repo.rootPaths.jdk15))

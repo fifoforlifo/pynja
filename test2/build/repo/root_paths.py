@@ -25,6 +25,7 @@ class RootPaths(object):
         add_project_dir("prog0", "code/prog0")
         add_project_dir("java1", "code/java1")
         add_project_dir("java2", "code/java2")
+        add_project_dir("qt0", "code/qt0")
 
         # output paths
         rootPaths.out = os.path.join(rootDir, "_out")
@@ -55,5 +56,7 @@ class RootPaths(object):
             rootPaths.cuda50 = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v5.0"
 
             rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
+
+            rootPaths.qt5vc11BinDir = "C:\\Qt\\Qt5.0.2\\5.0.2\\msvc2012_64\\bin"
 
 rootPaths = RootPaths()

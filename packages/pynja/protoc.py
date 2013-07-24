@@ -36,7 +36,8 @@ class ProtocTask(build.BuildTask):
             task.sourcePath = os.path.join(task.workingDir, sourcePath)
         if task.outputLanguage == 'cpp':
             task.outputPath = basePath + ".pb.cc"
-            task.extraOutputs.append(basePath + ".pb.h")
+            task.outputHeader = basePath + ".pb.h"
+            task.extraOutputs.append(task.outputHeader)
         else:
             raise Exception("unknown language %s" % task.outputLanguage)
 
