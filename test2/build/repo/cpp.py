@@ -46,10 +46,10 @@ class CppProject(pynja.CppProject):
             self.qtBinDir = rootPaths.qt5vc11BinDir
             self.qtBuiltDir = os.path.join(self.builtDir, "qt")
             self.qtIncludePaths = [
-                os.path.join(self.qtBinDir, "..", "include"),
+                os.path.normpath(os.path.join(self.qtBinDir, "..", "include")),
                 self.qtBuiltDir,
             ]
-            self.qtLibDir = os.path.join(self.qtBinDir, "..", "lib")
+            self.qtLibDir = os.path.normpath(os.path.join(self.qtBinDir, "..", "lib"))
             self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
 
     def get_toolchain(self):
@@ -248,13 +248,18 @@ class CppProject(pynja.CppProject):
 
     def _qt_moc_one(self, sourcePath):
         (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
-        if ext == '.h' or ext == '.H' or ext == '.hpp' or ext == '.hxx':
+        ext = ext.lower()
+        isHeader = (ext == '.h' or ext == '.hpp' or ext == '.hxx')
+        if isHeader:
             outputPath = os.path.join(self.qtBuiltDir, "moc_" + barename + ".cpp")
         else:
             outputPath = os.path.join(self.qtBuiltDir, barename + ".moc")
         if not os.path.isabs(sourcePath):
             sourcePath = os.path.join(self.projectDir, sourcePath)
         task = pynja.qt.QtMocTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
+        if not isHeader:
+            task.emitInclude = False
+        self.set_qt_moc_options(task)
         return task
 
     def qt_moc(self, filePaths):
@@ -275,13 +280,20 @@ class CppProject(pynja.CppProject):
 
     def qt_moc_cpp_compile(self, filePaths):
         tasks = self.qt_moc(filePaths)
+        moc_includables = [] # *.moc, which are 'includable' in a cpp but not quite headers :)
         for task in tasks:
             basename = os.path.basename(task.outputPath)
             if basename.startswith("moc_"):
                 self.cpp_compile(task.outputPath)
-            # else, it's a .moc file, which would be #included into the .cpp file
+            else:
+                moc_includables.append(task.outputPath)
+        self._forcedDeps.update(moc_includables)
 
-    def qt_add_lib_dependency(self, libName, staticLink = False, forceRelease = False):
+    def set_qt_moc_options(self, task):
+        pass
+
+    def qt_add_lib_dependency(self, libName, staticLink = True, forceRelease = False):
+        # qt only enabled on this variant because the test machine only has this version of Qt available
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             if not forceRelease and self.variant.config == 'dbg':
                 libName = libName + 'd'
