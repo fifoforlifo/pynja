@@ -30,17 +30,10 @@ class qt0(repo.CppProject):
         self.add_lib_dependency(self.get_project("qt_xml", self.variant))
         self.make_executable("qt0")
 
-    # set c++ compile options that are common to all files in the project
-    def set_cpp_compile_options(self, task):
-        super().set_cpp_compile_options(task)
-        self.set_pp_options(task)
-
-    def set_qt_moc_options(self, task):
-        super().set_qt_moc_options(task)
-        self.set_pp_options(task)
-
-    # helper function to set include paths and defines
-    def set_pp_options(self, task):
+    # set include paths and defines for both c++ and moc tasks
+    def set_include_paths_and_defines(self, task):
+        super().set_include_paths_and_defines(task)
         task.includePaths.extend(self.qtIncludePaths)
         task.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
         task.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
+        task.defines.append("FOO")

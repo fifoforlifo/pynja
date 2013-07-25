@@ -130,6 +130,13 @@ class CppProject(build.Project):
         self.add_runtime_dependency_project(project)
         self.add_cb_project_reference(project)
 
+
+    # preprocessor-like tasks
+    def set_include_paths_and_defines(self, task):
+        """Can be overridden to apply .includePaths and .defines to any compatible task."""
+        pass
+
+
     # precompiled header
 
     # For convenience, you can disable PCH creation by setting reallyCreatePCH = False.
@@ -193,7 +200,7 @@ class CppProject(build.Project):
 
     def set_cpp_compile_options(self, task):
         """Can be overridden to apply common compiler options to CppTask created by cpp_compile*."""
-        pass
+        self.set_include_paths_and_defines(task)
 
 
     # static lib creation

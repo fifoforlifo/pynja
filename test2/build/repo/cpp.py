@@ -290,7 +290,8 @@ class CppProject(pynja.CppProject):
         self._forcedDeps.update(moc_includables)
 
     def set_qt_moc_options(self, task):
-        pass
+        """Can be overridden to apply common options to QtMocTask created by qt_moc*."""
+        self.set_include_paths_and_defines(task)
 
     def qt_add_lib_dependency(self, libName, staticLink=True, forceRelease=False):
         # qt only enabled on this variant because the test machine only has this version of Qt available
