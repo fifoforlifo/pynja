@@ -292,11 +292,12 @@ class CppProject(pynja.CppProject):
     def set_qt_moc_options(self, task):
         pass
 
-    def qt_add_lib_dependency(self, libName, staticLink = True, forceRelease = False):
+    def qt_add_lib_dependency(self, libName, staticLink=True, forceRelease=False):
         # qt only enabled on this variant because the test machine only has this version of Qt available
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             if not forceRelease and self.variant.config == 'dbg':
                 libName = libName + 'd'
             if staticLink:
-                self.add_input_lib(os.path.join(self.qtLibDir, libName + '.lib'))
+                libFilePath = os.path.join(self.qtLibDir, libName + '.lib')
+                self.add_input_lib(libFilePath)
             self.add_runtime_dependency(os.path.join(self.qtBinDir, libName + '.dll'))

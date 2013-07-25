@@ -2,7 +2,6 @@ import os
 import pynja
 import repo
 
-
 @pynja.project
 class qt0(repo.CppProject):
     def emit(self):
@@ -28,10 +27,7 @@ class qt0(repo.CppProject):
             "source/qbaz.cpp"
         ]
         self.cpp_compile(sources)
-        self.qt_add_lib_dependency("Qt5Core")
-        self.qt_add_lib_dependency("icuin49", staticLink=False, forceRelease=True)
-        self.qt_add_lib_dependency("icuuc49", staticLink=False, forceRelease=True)
-        self.qt_add_lib_dependency("icudt49", staticLink=False, forceRelease=True)
+        self.add_lib_dependency(self.get_project("qt_xml", self.variant))
         self.make_executable("qt0")
 
     # set c++ compile options that are common to all files in the project

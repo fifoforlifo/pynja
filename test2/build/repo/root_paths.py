@@ -18,6 +18,10 @@ def add_project_dir(name, relPath, absPath = None):
 
 class RootPaths(object):
     def init(self):
+        # qt helper projects
+        add_project_dir("qt_core", "build/repo/qt")
+        add_project_dir("qt_xml", "build/repo/qt")
+        # real source projects
         add_project_dir("test2", "code")
         add_project_dir("a0", "code/a0")
         add_project_dir("a1", "code/a1")

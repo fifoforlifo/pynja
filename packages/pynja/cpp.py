@@ -268,3 +268,9 @@ class CppProject(build.Project):
         """Can be overridden to apply options to LinkTask created by make_executable."""
         pass
 
+
+    # for pseudo-projects
+
+    def propagate_lib_dependencies(self):
+        self.linkLibraries.extend(self._inputLibs)
+
