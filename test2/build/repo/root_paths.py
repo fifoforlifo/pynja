@@ -1,4 +1,4 @@
-# declarations in this file are imported into the upynja namespace
+# declarations in this file are imported into the repo namespace
 
 import sys
 import os
@@ -21,6 +21,8 @@ class RootPaths(object):
         # qt helper projects
         add_project_dir("qt_core", "build/repo/qt")
         add_project_dir("qt_xml", "build/repo/qt")
+        # boost helper projects
+        add_project_dir("boost_build", "build/repo/boost")
         # real source projects
         add_project_dir("test2", "code")
         add_project_dir("a0", "code/a0")
@@ -62,5 +64,7 @@ class RootPaths(object):
             rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
 
             rootPaths.qt5vc11BinDir = "C:\\Qt\\Qt5.0.2\\5.0.2\\msvc2012_64\\bin"
+            rootPaths.boost150 = "D:\\work\\code\\boost\\boost_1_50_0"
+
 
 rootPaths = RootPaths()

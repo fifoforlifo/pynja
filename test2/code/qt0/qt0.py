@@ -28,12 +28,17 @@ class qt0(repo.CppProject):
         ]
         self.cpp_compile(sources)
         self.add_lib_dependency(self.get_project("qt_xml", self.variant))
+        self.add_boost_lib_dependency("thread")
+        self.add_boost_lib_dependency("chrono")
+        self.add_boost_lib_dependency("system")
         self.make_executable("qt0")
 
     # set include paths and defines for both c++ and moc tasks
     def set_include_paths_and_defines(self, task):
         super().set_include_paths_and_defines(task)
+        task.includePaths.append(repo.rootPaths.boost150)
         task.includePaths.extend(self.qtIncludePaths)
         task.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
         task.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
         task.defines.append("FOO")
+        task.defines.append("BOOST_ALL_NO_LIB")

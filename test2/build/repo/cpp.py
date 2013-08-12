@@ -219,6 +219,21 @@ class CppProject(pynja.CppProject):
         pass
 
 
+    # boost
+
+    def add_boost_lib_dependency(self, name, linkShared=True):
+        variant = self.variant
+        boostBuild = self.get_project("boost_build", self.variant)
+        basepath = boostBuild.calc_lib_basepath(name)
+        if 'msvc' in variant.toolchain:
+            if linkShared:
+                self.add_input_lib(basepath + ".lib")
+                self.add_runtime_dependency(basepath + ".dll")
+            else:
+                self.add_input_lib(basepath + ".lib")
+        else:
+            raise Exception("TODO: gcc boost dependencies")
+
     # qt
 
     def _qt_uic_one(self, sourcePath):

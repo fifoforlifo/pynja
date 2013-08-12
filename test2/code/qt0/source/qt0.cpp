@@ -1,5 +1,6 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
+#include <boost/thread.hpp>
 
 class QZero : public QObject
 {
@@ -14,6 +15,9 @@ int non_qt_function();
 
 int main()
 {
+    boost::mutex m;
+    boost::thread thd;
+
     QZero* zero = new QZero();
     delete zero;
     return non_qt_function();

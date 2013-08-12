@@ -278,13 +278,14 @@ class ProjectMan:
             toolchain.emit_rules(self.ninjaFile)
 
     def emit_custom_command(self, command, desc = None, inputs = [], outputs = []):
+        ninjaFile = self.ninjaFile
         ninjaFile.write("build $\n")
         for output in outputs:
             outputEsc = ninja_esc_path(output)
-            ninjaFile.write("    %s$\n" % outputEsc)
+            ninjaFile.write("    %s $\n" % outputEsc)
         ninjaFile.write("  : CUSTOM_COMMAND")
         for input in inputs:
-            inputEsc = ninjaFile(input)
+            inputEsc = ninja_esc_path(input)
             ninjaFile.write(" $\n    %s" % inputEsc)
         ninjaFile.write("\n")
 
