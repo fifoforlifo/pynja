@@ -224,7 +224,7 @@ class CppProject(pynja.CppProject):
     def add_boost_lib_dependency(self, name, linkShared=True):
         variant = self.variant
         boostBuild = self.get_project("boost_build", self.variant)
-        basepath = boostBuild.calc_lib_basepath(name)
+        basepath = boostBuild.calc_lib_basepath(name, linkShared)
         if 'msvc' in variant.toolchain:
             if linkShared:
                 self.add_input_lib(basepath + ".lib")

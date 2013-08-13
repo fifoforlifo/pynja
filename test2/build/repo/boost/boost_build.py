@@ -34,11 +34,34 @@ class boost_build(repo.CppProject):
             script = "%s\\boost-b2-msvc-invoke.py" % self.projectDir
             cmd = r'python %(script)s  "%(boostDir)s" %(vcVer)s "%(vcDir)s" %(arch)s %(runtimeLink)s %(config)s "%(stageDir)s" "%(logFilePath)s" "%(guardFileBase)s" "%(guardFilePath)s"' % locals()
             outputs = [guardFilePath, logFilePath]
-            self._add_outputs(outputs, "chrono")
-            self._add_outputs(outputs, "filesystem")
-            self._add_outputs(outputs, "regex")
-            self._add_outputs(outputs, "system")
-            self._add_outputs(outputs, "thread")
+
+
+            libnames = [
+                "chrono",
+                "date_time",
+                #"exception",
+                "filesystem",
+                #"graph",
+                #"graph_parallel",
+                #"iostreams",
+                "locale",
+                #"math", --> expands out to the following variants
+                "math_c99f", "math_c99l", "math_c99",
+                "math_tr1f", "math_tr1l", "math_tr1",
+                #"mpi",
+                "program_options",
+                #"python",
+                "regex",
+                #"serialization",
+                #"signals",
+                "system",
+                #"test",
+                "thread",
+                "timer",
+                #"wave",
+            ]
+            for libname in libnames:
+                self._add_outputs(outputs, libname)
 
             self.projectMan.emit_custom_command(cmd, "boost_build", [script], outputs)
 
@@ -46,21 +69,25 @@ class boost_build(repo.CppProject):
             # assume boost already built
             pass
 
-    def calc_lib_basepath(self, name):
+    def calc_lib_basepath(self, name, linkShared):
         variant = self.variant
         boostVer = "1_50"
         if 'msvc' in variant.toolchain:
             vcVer = variant.toolchain[4:]
             boostBuild = self.get_project("boost_build", self.variant)
+            debug = ""
+            if variant.config == 'dbg':
+                if variant.crt == 'dcrt':
+                    debug = "-gd"
+                else:
+                    debug = "-sgd"
 
-            if variant.crt == 'dcrt':
-                debug = "-gd" if variant.config == 'dbg' else ""
+            if linkShared:
                 basename = "boost_%s-vc%s0-mt%s-%s" % (name, vcVer, debug, boostVer)
                 basepath = os.path.join(self.stageDir, "lib", basename)
                 return basepath
             else:
-                debug = "gd" if variant.config == 'dbg' else ""
-                basename = "libboost_%s-vc%s0-mt-s%s-%s.lib" % (name, vcVer, debug, boostVer)
+                basename = "libboost_%s-vc%s0-mt%s-%s" % (name, vcVer, debug, boostVer)
                 basepath = os.path.join(self.stageDir, "lib", basename)
                 return basepath
         else:
@@ -68,12 +95,11 @@ class boost_build(repo.CppProject):
 
     def _add_outputs(self, outputs, name):
         variant = self.variant
-        basepath = self.calc_lib_basepath(name)
+        basepathShared = self.calc_lib_basepath(name, True)
+        basepathStatic = self.calc_lib_basepath(name, False)
         if 'msvc' in variant.toolchain:
-            if variant.crt == 'dcrt':
-                outputs.append(basepath + ".lib")
-                outputs.append(basepath + ".dll")
-            else:
-                outputs.append(basepath + ".lib")
+            outputs.append(basepathShared + ".lib")
+            outputs.append(basepathShared + ".dll")
+            outputs.append(basepathStatic + ".lib")
         else:
             raise Exception("TODO: gcc boost dependencies")

@@ -28,7 +28,29 @@ os.chdir(boostDir)
 os.environ["PYNJA_VC_DIR"] = vcDir
 
 # extend this list with additional libs you wish to build
-withLibs = "--with-thread --with-regex --with-filesystem"
+libnames = [
+    "chrono",
+    "date_time",
+    #"exception",
+    "filesystem",
+    #"graph",
+    #"graph_parallel",
+    #"iostreams",
+    "locale",
+    "math",
+    #"mpi",
+    "program_options",
+    #"python",
+    "regex",
+    #"serialization",
+    #"signals",
+    "system",
+    #"test",
+    "thread",
+    "timer",
+    #"wave",
+]
+withLibs = " ".join([("--with-" + libname) for libname in libnames])
 
 cmdStatic = r'b2 --build-dir=built toolset=msvc-%(vcVer)s.0 link=static runtime-link=%(runtimeLink)s %(withLibs)s stage --stagedir="%(stageDir)s" -j 9 address-model=%(addrModel)s %(config)s  2>&1  >"%(logFilePath)s"' % locals()
 cmdShared = r'b2 --build-dir=built toolset=msvc-%(vcVer)s.0 link=shared runtime-link=%(runtimeLink)s %(withLibs)s stage --stagedir="%(stageDir)s" -j 9 address-model=%(addrModel)s %(config)s  2>&1  >"%(logFilePath)s"' % locals()
@@ -43,6 +65,9 @@ for oldGuard in glob.glob(u'%(guardFileBase)s_*' % locals()):
 exitcodeStatic = os.system(cmdStatic)
 exitcodeShared = os.system(cmdShared)
 if exitcodeStatic or exitcodeShared:
+    with open(logFilePath, 'r') as logFile:
+        logContents = logFile.read()
+        print('%s' % logContents)
     sys.exit(1)
 
 # success! create guard file
