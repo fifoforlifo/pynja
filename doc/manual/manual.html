@@ -1167,7 +1167,7 @@ Root-level script <span class="monospaced">remake.py</span>: you copy and tweak 
 </ul></div>
 <div class="sect2">
 <h3 id="_pynja_package">2.1. pynja package</h3>
-<div class="paragraph"><p>Find this in <a href="https://github.com/fifoforlifo/pynja/tree/master/packages/pynja"><span class="monospaced">$PYNJA_REPO/packages/pynja</span></a> .</p></div>
+<div class="paragraph"><p>Find this here: <a href="https://github.com/fifoforlifo/pynja/tree/master/packages/pynja"><span class="monospaced">$PYNJA_REPO/packages/pynja</span></a> .</p></div>
 <div class="paragraph"><p>I recommend copying this into your repository, so that a stable
 copy of pynja revisions along with your source code.</p></div>
 <div class="paragraph"><p>Then your <span class="monospaced">remake.py</span> can add the pynja package location to your
@@ -1175,7 +1175,7 @@ copy of pynja revisions along with your source code.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_repo_package">2.2. repo package</h3>
-<div class="paragraph"><p>Find this in <a href="https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo"><span class="monospaced">$PYNJA_REPO/test2/build/repo</span></a> .</p></div>
+<div class="paragraph"><p>Find this here: <a href="https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo"><span class="monospaced">$PYNJA_REPO/test2/build/repo</span></a> .</p></div>
 <div class="paragraph"><p>The <strong>repo</strong> package is intended to be specialized for your particular
 <strong>repo</strong>sitory.</p></div>
 <div class="paragraph"><p>The repo package serves several purposes:</p></div>
@@ -1187,7 +1187,7 @@ Define all the project directories in your repository.
 <div class="olist loweralpha"><ol class="loweralpha">
 <li>
 <p>
-This also provides support for <a href="#micro-branching">[micro-branching]</a>.
+This also provides support for <a href="#micro-branching">micro-branching</a>.
 </p>
 </li>
 </ol></div>
@@ -1209,7 +1209,7 @@ Define specializations of <span class="monospaced">class CppProject</span>, <spa
 </div>
 <div class="sect2">
 <h3 id="_project_files">2.3. project files</h3>
-<div class="paragraph"><p>Find an example <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py"><span class="monospaced">$PYNJA_REPO/test2/code/a1.py</span></a>.</p></div>
+<div class="paragraph"><p>Example file: <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py"><span class="monospaced">$PYNJA_REPO/test2/code/a1.py</span></a>.</p></div>
 <div class="paragraph"><p>A project file is just a python source file that declares one or more
 Project classes.  Each Project class may be instantiated once per
 Variant.  A C++ Project will generate a single library or executable
@@ -1218,7 +1218,7 @@ per instance.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_root_level_script">2.4. root-level script</h3>
-<div class="paragraph"><p>Find an example <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py"><span class="monospaced">$PYNJA_REPO/test2/remake.py</span></a>.</p></div>
+<div class="paragraph"><p>Example file: <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py"><span class="monospaced">$PYNJA_REPO/test2/remake.py</span></a>.</p></div>
 <div class="paragraph"><p>This script is literally what causes the <span class="monospaced">build.ninja</span> file to be created.
 Its job is to instantiate all supported Variants, and all desired
 top-level projects and targets using those Variants.</p></div>
@@ -1229,7 +1229,50 @@ top-level projects and targets using those Variants.</p></div>
 <h2 id="_c_build">3. C++ Build</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_cppproject">3.1. CppProject</h3>
+<h3 id="_toolchains">3.1. Toolchains</h3>
+<div class="paragraph"><p>pynja supports the following toolchain families out of the box:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Microsoft Visual C++ (msvc)
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+VC8 and above (that is, the version from VS2005 and later)
+</p>
+</li>
+<li>
+<p>
+Works equally well with compilers from Visual Studio Pro, Visual Studio Express,
+        and those that come with Windows SDKs.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+GNU Compiler Collection (gcc) + binutils
+</p>
+</li>
+<li>
+<p>
+Clang + binutils
+</p>
+</li>
+<li>
+<p>
+NVIDIA CUDA Compiler (nvcc)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>In all cases, there is no requirement that a toolchain be installed on the system performing
+the build.  All environment handling is performed in pynja scripts.  This allows you to
+submit a pared down toolchain into your source control, and build entirely without installation
+dependencies.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_cppproject">3.2. CppProject</h3>
 <div class="paragraph"><p>CppProject is designed to create exactly one static library, shared library,
 or executable per instance.  That is, a CppProject represents one
 linker invocation and all the sub-targets needed to feed the linker.</p></div>
@@ -1246,14 +1289,14 @@ passed to the linker.  You can directly add to that list as follows:</p></div>
 </li>
 <li>
 <p>
-<span class="monospaced">add_input_lib</span> : add a library dependency
+<span class="monospaced">add_input_lib</span> : add a library dependency by filename
 </p>
 </li>
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_compiling_and_cpptasks">3.2. Compiling and CppTasks</h3>
-<div class="paragraph"><p>The <span class="monospaced">cpp_compile_one</span> function compiles one source file to an object file.
+<h3 id="_compiling_and_cpptasks">3.3. Compiling and CppTasks</h3>
+<div class="paragraph"><p>The <span class="monospaced">cpp_compile</span> function can compile a single source file to an object file.
 The object file name is automatically computed based on the <span class="monospaced">project.builtDir</span>
 and then added via <span class="monospaced">add_input</span>.</p></div>
 <div class="paragraph"><p>Each compilation is represented by a <span class="monospaced">CppTask</span> instance.  This class has
@@ -1261,14 +1304,14 @@ a public field for each commonly used compiler option.  It&#8217;s the ToolChain
 job to later translate the portable CppTask fields into toolchain-specific
 compiler flags and build directives.</p></div>
 <div class="sect3">
-<h4 id="_control_flow">3.2.1. Control Flow</h4>
+<h4 id="_control_flow">3.3.1. Control Flow</h4>
 <div class="paragraph"><p>CppTasks flow from a most-generic to a most-specific scope.  At each step
 of the way, any option may be overridden.  Lists may also be appended to
 or even completely replaced.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<span class="monospaced">pynja.CppProject.cpp_compile_one</span>: CppTask is created.
+<span class="monospaced">pynja.CppProject.cpp_compile</span>: CppTask is created.
     The default options are geared towards an optimized build.
 </p>
 </li>
@@ -1295,13 +1338,13 @@ or even completely replaced.</p></div>
 </ul></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile_one</span><span class="p">(</span><span class="s">&quot;foo.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="s">&quot;foo.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
             <span class="n">task</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;LOGLEVEL=50&quot;</span><span class="p">)</span>
 </pre></div></div></div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_cpptask_compiler_options">3.3. CppTask Compiler Options</h3>
+<h3 id="_cpptask_compiler_options">3.4. CppTask Compiler Options</h3>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 For the full list, look at the definition of `pynja/cpp.py 
@@ -1373,7 +1416,7 @@ Here&#8217;s a breakdown of the most useful flags.
 </p>
 </li>
 </ul></div>
-<div class="ulist"><div class="title">GCC</div><ul>
+<div class="ulist"><div class="title">GCC / Clang</div><ul>
 <li>
 <p>
 <span class="monospaced">addressModel</span>: When using a toolchain that supports multi-arch, this
@@ -1451,25 +1494,31 @@ Here&#8217;s a breakdown of the most useful flags.
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_library_dependencies">3.4. Library Dependencies</h3>
-<div class="paragraph"><p>Use the <span class="monospaced">add_input_lib</span> method to define a dependency.</p></div>
+<h3 id="_library_dependencies">3.5. Library Dependencies</h3>
+<div class="sect3">
+<h4 id="_typical_case_project_project_library_dependencies">3.5.1. Typical case: Project-Project library dependencies</h4>
+<div class="paragraph"><p>Typically, you will generate a library in one project and consume (link against) it
+in another.  For this case, use <span class="monospaced">add_lib_dependency</span> as follows:</p></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_input_lib</span><span class="p">(</span><span class="n">libA0</span><span class="o">.</span><span class="n">libraryPath</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_lib_dependency</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_project</span><span class="p">(</span><span class="s">&quot;logging&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="p">))</span>
 </pre></div></div></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/warning.png" alt="Warning">
-</td>
-<td class="content">Better handling of transitive library dependencies for static libs
-is currently a work-in-progress.  This will probably require minor
-changes to APIs and standard Project fields.</td>
-</tr></table>
+<div class="paragraph"><p>This causes the output library of project "logging" (typically <em>logging.lib</em> or <em>liblogging.a</em>)
+to be linked into the current project&#8217;s target, if the current project is producing an
+executable or shared library.  <span class="monospaced">add_lib_dependency</span> actually does more than this; see the
+section on <a href="#transitive-deps">transitive dependencies</a> for more details.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_atypical_case_direct_filename_reference">3.5.2. Atypical case: direct filename reference</h4>
+<div class="paragraph"><p>Use the <span class="monospaced">add_input_lib</span> method to define a dependency by filename.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_input_lib</span><span class="p">(</span><span class="n">someLibraryName</span><span class="p">)</span>
+</pre></div></div></div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_creating_libraries_and_executables">3.5. Creating Libraries and Executables</h3>
+<h3 id="_creating_libraries_and_executables">3.6. Creating Libraries and Executables</h3>
 <div class="paragraph"><p>After you&#8217;ve defined all your compilations and additional inputs,
 you can finally define the output of your project.</p></div>
 <div class="listingblock">
@@ -1493,7 +1542,7 @@ the DSO or DLL when using other toolchains.  Always use a project&#8217;s
 <span class="monospaced">libraryPath</span> when adding library dependencies.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_precompiled_headers_pch">3.6. PreCompiled Headers (PCH)</h3>
+<h3 id="_precompiled_headers_pch">3.7. PreCompiled Headers (PCH)</h3>
 <div class="paragraph"><p>You can seriously speed up your build with PCHs.  They&#8217;re highly
 recommended, especially when your C++ code uses lots of STL, Boost,
 and large system headers.</p></div>
@@ -1561,12 +1610,13 @@ you can read more
 <td class="icon">
 <img src="./images/icons/caution.png" alt="Caution">
 </td>
-<td class="content">Chain-creation of PCHs hasn&#8217;t been completely tested yet.</td>
+<td class="content">On some toolchains (MSVC), chain-creation of PCHs isn&#8217;t implemented as true chaining.  Instead,
+each PCH is compiled "from scratch".  Functionally it still works, but compilation speed isn&#8217;t as good as it ought to be.</td>
 </tr></table>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_protobuf_8594_c_code_generation">3.7. Protobuf &#8594; C++ Code Generation</h3>
+<h3 id="_protobuf_8594_c_code_generation">3.8. Protobuf &#8594; C++ Code Generation</h3>
 <div class="paragraph"><p><a href="https://code.google.com/p/protobuf/">libprotobuf</a> is a popular
 serialization library.  It allows you to
 <a href="https://developers.google.com/protocol-buffers/docs/overview">define Protocol Buffers messages in a custom DSL</a>,
@@ -1584,17 +1634,116 @@ It properly creates a dep file so that implicit dependencies cause rebuilds.</p>
         <span class="n">task</span><span class="o">.</span><span class="n">extra_deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span><span class="p">)</span>
 </pre></div></div></div>
 </div>
+<div class="sect2">
+<h3 id="_working_with_boost">3.9. Working with Boost</h3>
+<div class="paragraph"><p>There are helper functions to deal with both building boost and adding boost library dependencies to your
+own projects.  These are part of the <span class="monospaced">repo</span> package.  Example usage can be found in
+<a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py">qt0.py</a> and is as simple as:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">add_boost_lib_dependency</span><span class="p">(</span><span class="s">&quot;thread&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_boost_lib_dependency</span><span class="p">(</span><span class="s">&quot;chrono&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_boost_lib_dependency</span><span class="p">(</span><span class="s">&quot;system&quot;</span><span class="p">)</span>
+</pre></div></div></div>
+</div>
+<div class="sect2">
+<h3 id="_working_with_qt">3.10. Working with Qt</h3>
+<div class="paragraph"><p>Qt has two custom tools, the moc compiler (generating code for QObject classes) and the uic compiler (generating code for UI designs).
+Both tools are supported in pynja, with appropriate dependency propagation.</p></div>
+<div class="paragraph"><p>See <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py">qt0.py</a> for an example.  The essence of the
+build code looks like this:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>        <span class="n">ui_sources</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s">&quot;source/main_window.ui&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qt_uic</span><span class="p">(</span><span class="n">ui_sources</span><span class="p">)</span>
+
+        <span class="n">moc_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s">&quot;include/qbaz.h&quot;</span><span class="p">,</span>
+            <span class="s">&quot;source/qfizzle.h&quot;</span><span class="p">,</span>
+            <span class="s">&quot;source/qt0.cpp&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qt_moc_cpp_compile</span><span class="p">(</span><span class="n">moc_inputs</span><span class="p">)</span>
+</pre></div></div></div>
+<div class="paragraph"><p>To simplify build scripts, both <span class="monospaced">qt_uic</span> and <span class="monospaced">qt_moc</span> cause <em>all subsequently declared C++ compiles in the same project</em> to depend on the generated headers.
+(The implicit dependencies only apply within the project instance; they do not cross variant boundaries.)
+If you have code that does not depend on these headers, make sure to declare their compilations <em>before</em> any <span class="monospaced">qt_uic</span>/<span class="monospaced">qt_moc</span> calls,
+to allow for better build parallelism.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_runtime_and_a_id_transitive_deps_a_transitive_dependency_management">3.11. Runtime and <a id="transitive-deps"></a> Transitive Dependency Management</h3>
+<div class="paragraph"><p>pynja automates transitive dependencies for both library linkage and for runtime dependencies.</p></div>
+<div class="paragraph"><p>The overall idea is for each project to declare its immediate link-time and runtime dependencies.
+Then propagate these dependencies to all consumers in the chain, so that final executables
+and shared libraries have accumulated all dependencies implicitly.</p></div>
+<div class="paragraph"><p>Using <span class="monospaced">add_lib_dependency</span> performs all of this propagation at the project level.</p></div>
+<div class="sect3">
+<h4 id="_runtime_dependencies">3.11.1. Runtime Dependencies</h4>
+<div class="paragraph"><p>Runtime dependencies are used to indicate how binaries need to be "deployed"
+in a product&#8217;s directory layout.  To illustrate:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Executable depending on shared library:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+On Windows they are often placed in the same directory.
+</p>
+</li>
+<li>
+<p>
+On linux they are often placed in separate <span class="monospaced">bin</span> and <span class="monospaced">lib</span> directories.
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Shared library depending on another shared library:
+</p>
+</li>
+<li>
+<p>
+Shared library depending on data file.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>pynja allows you to specify a runtime dependency in any project, via the following methods,
+whose signatures are copied below.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="k">def</span> <span class="nf">add_runtime_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">srcPath</span><span class="p">,</span> <span class="n">destPath</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">destDir</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_runtime_dependency_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">destDir</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+</pre></div></div></div>
+<div class="paragraph"><p>Runtime dependencies are best expressed in the project where the dependency is known.  For example,
+if <span class="monospaced">common.dll</span> always depends on <span class="monospaced">helper.dll</span>, then the <span class="monospaced">common</span> project ought to add a runtime
+dependency on the <span class="monospaced">helper</span> project.  This way, any time an additional project <span class="monospaced">user</span> depends on <span class="monospaced">common</span>,
+the required dependency information is carried through.</p></div>
+<div class="paragraph"><p>It especially helps when <span class="monospaced">user</span> is not a direct client of <span class="monospaced">helper</span>, and therefore it would not be
+logical or intuitive for <span class="monospaced">user</span> to directly state a dependency on <span class="monospaced">helper</span>.  It also insulates the
+<span class="monospaced">user</span> project from all of <span class="monospaced">common's</span> dependencies, which may change over time.</p></div>
+<div class="paragraph"><p><em>TODO: good examples</em></p></div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_repository_and_source_organization">4. Repository and Source Organization</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Here are some tips and suggestions for how to organize your source
-repository, with thought towards both workflow and VCS interaction.</p></div>
+repository, with thought towards both workflow and VCS interaction.
+Pynja has been designed with all of these in mind.</p></div>
 <div class="sect2">
 <h3 id="_a_id_micro_branching_a_micro_branching">4.1. <a id="micro-branching"></a> Micro-Branching</h3>
-<div class="paragraph"><p>Micro-branching lets you branch a single project within your build,
-and automatically have all dependencies transfer to the branch.</p></div>
+<div class="paragraph"><p>Micro-branching lets you branch (copy) a single project within your build, and automatically have all
+dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
+<span class="monospaced">repo/root_paths.py</span>: add a 3rd <span class="monospaced">abs_path</span> parameter to the appropriate <span class="monospaced">add_project</span> call to
+point at your alternate project location.
+For example:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># in RootPaths::init()</span>
+        <span class="n">add_project_dir</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">,</span> <span class="s">&quot;code/a2&quot;</span><span class="p">,</span> <span class="s">&quot;/home/user/code/temp_branch_of_a2&quot;</span><span class="p">)</span>
+</pre></div></div></div>
 </div>
 </div>
 </div>
@@ -1690,18 +1839,35 @@ are notably absent.  Given the abundance of good scripting languages
 (like Python), this is really inexcusable.</p></div>
 <div class="paragraph"><p>Python also happens to have some good debuggers, which is sorely
 lacking in other build systems.</p></div>
+<div class="sect3">
+<h4 id="_case_study_cmake_8217_s_parameter_passing">5.2.1. Case study: CMake&#8217;s parameter passing</h4>
+<div class="paragraph"><p>CMake&#8217;s parameter passing is effectively broken.
+Every empty parameter and empty-string parameter in the caller is erased in the callee,
+<em>shifting</em> all subsequent parameters to lower argument positions in the callee scope.</p></div>
+<div class="paragraph"><p>A simple illustration of this would be:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>function(Foo arg1 arg2)
+    message(&quot;arg1=${arg1} arg2=${arg2}&quot;)
+endfunction()
+
+Foo(&quot;a&quot; &quot;b&quot;)            # arg1=a arg2=b
+Foo(&quot;a&quot; &quot;&quot; &quot;c&quot;)         # arg1=a arg2=c   &lt;--- empty string was erased!
+set(VAR)
+Foo(&quot;a&quot; VAR)            # ERROR: CMake complains of insufficient args [yeah]
+</pre></div></div></div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_pynja_is_imperative_not_declarative">5.3. Pynja is imperative, not declarative</h3>
 <div class="paragraph"><p>Imperative logic is very, very necessary to allow factoring of logic.</p></div>
 <div class="paragraph"><p>Let&#8217;s say one day you write a piece of code that crashes the
-MSC9 C++ compiler in x86 optimized builds.  (true story)</p></div>
+MSC9 C++ compiler only in x86 optimized builds.  (true story)</p></div>
 <div class="paragraph"><p>The declarative way would require you to write the outer product of
 (toolchains x architectures).  VC Projects from VS 2008 and earlier
 suffer from this syndrome.</p></div>
 <div class="paragraph"><p>With pynja, it&#8217;s as simple as this:</p></div>
 <div class="listingblock">
-<div class="content"><div class="highlight"><pre>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile_one</span><span class="p">(</span><span class="s">&quot;problem.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+<div class="content"><div class="highlight"><pre>    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="s">&quot;problem.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">variant</span><span class="o">.</span><span class="n">toolchain</span> <span class="o">==</span> <span class="s">&#39;msvc9&#39;</span> <span class="ow">and</span> <span class="n">variant</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s">&#39;x86&#39;</span><span class="p">:</span>
             <span class="n">task</span><span class="o">.</span><span class="n">optLevel</span> <span class="o">=</span> <span class="mi">0</span>
 </pre></div></div></div>
@@ -1756,7 +1922,7 @@ that threaten to push moden software development backwards.</p></div>
 <div id="footnotes"><hr></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-05-17 00:20:50 Central Daylight Time
+Last updated 2013-08-31 22:57:41 Central Daylight Time
 </div>
 </div>
 </body>

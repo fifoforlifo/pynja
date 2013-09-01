@@ -225,7 +225,7 @@ There are 4 code categories in a pynja build:
 
 === pynja package
 
-Find this in link:https://github.com/fifoforlifo/pynja/tree/master/packages/pynja[`$PYNJA_REPO/packages/pynja`] .
+Find this here: link:https://github.com/fifoforlifo/pynja/tree/master/packages/pynja[`$PYNJA_REPO/packages/pynja`] .
 
 I recommend copying this into your repository, so that a stable
 copy of pynja revisions along with your source code.
@@ -235,7 +235,7 @@ link:http://docs.python.org/3/library/sys.html#sys.path[sys.path].
 
 === repo package
 
-Find this in link:https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo[`$PYNJA_REPO/test2/build/repo`] .
+Find this here: link:https://github.com/fifoforlifo/pynja/tree/master/test2/build/repo[`$PYNJA_REPO/test2/build/repo`] .
 
 The **repo** package is intended to be specialized for your particular
 **repo**sitory.
@@ -243,7 +243,7 @@ The **repo** package is intended to be specialized for your particular
 The repo package serves several purposes:
 
 .   Define all the project directories in your repository.
-    ..  This also provides support for <<micro-branching>>.
+    ..  This also provides support for <<micro-branching, micro-branching>>.
 .   Define all the `Variant` types supported by your repository.
 .   Define specializations of `class CppProject`, `class JavaProject`, etc. to
     be used as base classes throughout the rest of the build.
@@ -252,7 +252,7 @@ The repo package serves several purposes:
 
 === project files
 
-Find an example link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py[`$PYNJA_REPO/test2/code/a1.py`].
+Example file: link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py[`$PYNJA_REPO/test2/code/a1.py`].
 
 A project file is just a python source file that declares one or more
 Project classes.  Each Project class may be instantiated once per
@@ -263,7 +263,7 @@ You will typically define project files alongside your source code.
 
 === root-level script
 
-Find an example link:https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py[`$PYNJA_REPO/test2/remake.py`].
+Example file: link:https://github.com/fifoforlifo/pynja/blob/master/test2/remake.py[`$PYNJA_REPO/test2/remake.py`].
 
 This script is literally what causes the `build.ninja` file to be created.
 Its job is to instantiate all supported Variants, and all desired
@@ -271,6 +271,23 @@ top-level projects and targets using those Variants.
 
 
 == C++ Build
+
+=== Toolchains
+
+pynja supports the following toolchain families out of the box:
+
+*   Microsoft Visual C++ (msvc)
+    **  VC8 and above (that is, the version from VS2005 and later)
+    **  Works equally well with compilers from Visual Studio Pro, Visual Studio Express,
+        and those that come with Windows SDKs.
+*   GNU Compiler Collection (gcc) + binutils
+*   Clang + binutils
+*   NVIDIA CUDA Compiler (nvcc)
+
+In all cases, there is no requirement that a toolchain be installed on the system performing
+the build.  All environment handling is performed in pynja scripts.  This allows you to
+submit a pared down toolchain into your source control, and build entirely without installation
+dependencies.
 
 === CppProject
 
@@ -286,12 +303,11 @@ The CppProject holds an internal list of inputs that need to be
 passed to the linker.  You can directly add to that list as follows:
 
 *   `add_input` : add an object file
-*   `add_input_lib` : add a library dependency
-
+*   `add_input_lib` : add a library dependency by filename
 
 === Compiling and CppTasks
 
-The `cpp_compile_one` function compiles one source file to an object file.
+The `cpp_compile` function can compile a single source file to an object file.
 The object file name is automatically computed based on the `project.builtDir`
 and then added via `add_input`.
 
@@ -306,7 +322,7 @@ CppTasks flow from a most-generic to a most-specific scope.  At each step
 of the way, any option may be overridden.  Lists may also be appended to
 or even completely replaced.
 
-*   `pynja.CppProject.cpp_compile_one`: CppTask is created.
+*   `pynja.CppProject.cpp_compile`: CppTask is created.
     The default options are geared towards an optimized build.
 *   `repo.CppProject.set_cpp_compile_options`: Set compiler options based
     solely on the variant.  Typically you control optimization settings,
@@ -320,7 +336,7 @@ or even completely replaced.
 [source, python]
 ----
     # in emit method
-        with self.cpp_compile_one("foo.cpp") as task:
+        with self.cpp_compile("foo.cpp") as task:
             task.defines.append("LOGLEVEL=50")
 ----
 
@@ -347,7 +363,7 @@ Here's a breakdown of the most useful flags.
 *   `defines`: A list of ordered preprocessor defines.
     Translates to `-D` for gcc.
 
-.GCC
+.GCC / Clang
 *   `addressModel`: When using a toolchain that supports multi-arch, this
     field can be specified as either `-m32` or `-m64`.
 *   `std`: Selects the language standard using the `-std` flag as described
@@ -380,19 +396,31 @@ Here's a breakdown of the most useful flags.
 
 === Library Dependencies
 
-Use the `add_input_lib` method to define a dependency.
+==== Typical case: Project-Project library dependencies
+
+Typically, you will generate a library in one project and consume (link against) it
+in another.  For this case, use `add_lib_dependency` as follows:
 
 [source, python]
 ----
     # in emit method
-        self.add_input_lib(libA0.libraryPath)
+        self.add_lib_dependency(self.get_project("logging", self.variant))
 ----
 
-[WARNING]
-Better handling of transitive library dependencies for static libs
-is currently a work-in-progress.  This will probably require minor
-changes to APIs and standard Project fields.
+This causes the output library of project "logging" (typically 'logging.lib' or 'liblogging.a')
+to be linked into the current project's target, if the current project is producing an
+executable or shared library.  `add_lib_dependency` actually does more than this; see the
+section on <<transitive-deps, transitive dependencies>> for more details.
 
+==== Atypical case: direct filename reference
+
+Use the `add_input_lib` method to define a dependency by filename.
+
+[source, python]
+----
+    # in emit method
+        self.add_input_lib(someLibraryName)
+----
 
 === Creating Libraries and Executables
 
@@ -421,7 +449,6 @@ Library projects will have an additional `libraryPath` field set.
 This points at the `.lib` file when building with MSVC, and
 the DSO or DLL when using other toolchains.  Always use a project's
 `libraryPath` when adding library dependencies.
-
 
 === PreCompiled Headers (PCH)
 
@@ -468,7 +495,8 @@ you can read more
 link:https://github.com/fifoforlifo/pynja/blob/master/doc/PrecompiledHeaders.txt[here] .
 
 [CAUTION]
-Chain-creation of PCHs hasn't been completely tested yet.
+On some toolchains (MSVC), chain-creation of PCHs isn't implemented as true chaining.  Instead,
+each PCH is compiled "from scratch".  Functionally it still works, but compilation speed isn't as good as it ought to be.
 
 === Protobuf -> C++ Code Generation
 
@@ -492,19 +520,111 @@ Using it is this simple:
 
     # in set_cpp_compile_options method
         task.extra_deps.extend(self.proto_sources)
-
 ----
+
+=== Working with Boost
+
+There are helper functions to deal with both building boost and adding boost library dependencies to your
+own projects.  These are part of the `repo` package.  Example usage can be found in
+link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py[qt0.py] and is as simple as:
+
+[source, python]
+----
+        self.add_boost_lib_dependency("thread")
+        self.add_boost_lib_dependency("chrono")
+        self.add_boost_lib_dependency("system")
+----
+
+=== Working with Qt
+
+Qt has two custom tools, the moc compiler (generating code for QObject classes) and the uic compiler (generating code for UI designs).
+Both tools are supported in pynja, with appropriate dependency propagation.
+
+See link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py[qt0.py] for an example.  The essence of the
+build code looks like this:
+
+[source, python]
+----
+        ui_sources = [
+            "source/main_window.ui",
+        ]
+        self.qt_uic(ui_sources)
+
+        moc_inputs = [
+            "include/qbaz.h",
+            "source/qfizzle.h",
+            "source/qt0.cpp",
+        ]
+        self.qt_moc_cpp_compile(moc_inputs)
+----
+
+To simplify build scripts, both `qt_uic` and `qt_moc` cause 'all subsequently declared C++ compiles in the same project' to depend on the generated headers.
+(The implicit dependencies only apply within the project instance; they do not cross variant boundaries.)
+If you have code that does not depend on these headers, make sure to declare their compilations 'before' any `qt_uic`/`qt_moc` calls,
+to allow for better build parallelism.
+
+=== Runtime and [[transitive-deps]] Transitive Dependency Management
+
+pynja automates transitive dependencies for both library linkage and for runtime dependencies.
+
+The overall idea is for each project to declare its immediate link-time and runtime dependencies.
+Then propagate these dependencies to all consumers in the chain, so that final executables
+and shared libraries have accumulated all dependencies implicitly.
+
+Using `add_lib_dependency` performs all of this propagation at the project level.
+
+==== Runtime Dependencies
+
+Runtime dependencies are used to indicate how binaries need to be "deployed"
+in a product's directory layout.  To illustrate:
+
+*   Executable depending on shared library:
+    **  On Windows they are often placed in the same directory.
+    **  On linux they are often placed in separate `bin` and `lib` directories.
+*   Shared library depending on another shared library:
+*   Shared library depending on data file.
+
+pynja allows you to specify a runtime dependency in any project, via the following methods,
+whose signatures are copied below.
+
+[source, python]
+----
+    def add_runtime_dependency(self, srcPath, destPath = None, destDir = None):
+    def add_runtime_dependency_project(self, project, destDir = None):
+----
+
+Runtime dependencies are best expressed in the project where the dependency is known.  For example,
+if `common.dll` always depends on `helper.dll`, then the `common` project ought to add a runtime
+dependency on the `helper` project.  This way, any time an additional project `user` depends on `common`,
+the required dependency information is carried through.
+
+It especially helps when `user` is not a direct client of `helper`, and therefore it would not be
+logical or intuitive for `user` to directly state a dependency on `helper`.  It also insulates the
+`user` project from all of `common's` dependencies, which may change over time.
+
+'TODO: good examples'
 
 
 == Repository and Source Organization
 
 Here are some tips and suggestions for how to organize your source
 repository, with thought towards both workflow and VCS interaction.
+Pynja has been designed with all of these in mind.
 
 === [[micro-branching]] Micro-Branching
 
-Micro-branching lets you branch a single project within your build,
-and automatically have all dependencies transfer to the branch.
+Micro-branching lets you branch (copy) a single project within your build, and automatically have all
+dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
+`repo/root_paths.py`: add a 3rd `abs_path` parameter to the appropriate `add_project` call to
+point at your alternate project location.
+For example:
+
+[source, python]
+----
+    # in RootPaths::init()
+        add_project_dir("a2", "code/a2", "/home/user/code/temp_branch_of_a2")
+----
+
 
 
 == Pynja versus The World
@@ -555,12 +675,32 @@ are notably absent.  Given the abundance of good scripting languages
 Python also happens to have some good debuggers, which is sorely
 lacking in other build systems.
 
+==== Case study: CMake's parameter passing
+
+CMake's parameter passing is effectively broken.
+Every empty parameter and empty-string parameter in the caller is erased in the callee,
+'shifting' all subsequent parameters to lower argument positions in the callee scope.
+
+A simple illustration of this would be:
+
+[source, text]
+----
+function(Foo arg1 arg2)
+    message("arg1=${arg1} arg2=${arg2}")
+endfunction()
+
+Foo("a" "b")            # arg1=a arg2=b
+Foo("a" "" "c")         # arg1=a arg2=c   <--- empty string was erased!
+set(VAR)
+Foo("a" VAR)            # ERROR: CMake complains of insufficient args [yeah]
+----
+
 === Pynja is imperative, not declarative
 
 Imperative logic is very, very necessary to allow factoring of logic.
 
 Let's say one day you write a piece of code that crashes the
-MSC9 C++ compiler in x86 optimized builds.  (true story)
+MSC9 C++ compiler only in x86 optimized builds.  (true story)
 
 The declarative way would require you to write the outer product of
 (toolchains x architectures).  VC Projects from VS 2008 and earlier
@@ -570,7 +710,7 @@ With pynja, it's as simple as this:
 
 [source, python]
 ----
-    with self.cpp_compile_one("problem.cpp") as task:
+    with self.cpp_compile("problem.cpp") as task:
         if variant.toolchain == 'msvc9' and variant.arch == 'x86':
             task.optLevel = 0
 ----
