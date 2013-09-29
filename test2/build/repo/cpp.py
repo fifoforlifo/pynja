@@ -33,12 +33,40 @@ class CppVariant(pynja.Variant):
         else:
             raise Exception("Not implemented")
 
+class CppLibVariant(pynja.Variant):
+    def __init__(self, string):
+        super().__init__(string, self.get_field_defs())
+
+    def get_field_defs(self):
+        if os.name == 'nt':
+            fieldDefs = [
+                "os",           [ "windows" ],
+                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11"  ],
+                "arch",         [ "x86", "amd64" ],
+                "config",       [ "dbg", "rel" ],
+                "crt",          [ "scrt", "dcrt" ],
+                "linkage",      [ "sta", "dyn" ],
+            ]
+            return fieldDefs
+        elif os.name == 'posix':
+            fieldDefs = [
+                "os",           [ "linux" ],
+                "toolchain",    [ "gcc", "clang" ],
+                "arch",         [ "x86", "amd64" ],
+                "config",       [ "dbg", "rel" ],
+                "crt",          [ "scrt", "dcrt" ],
+                "linkage",      [ "sta", "dyn" ],
+            ]
+            return fieldDefs
+        else:
+            raise Exception("Not implemented")
+
 
 class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
-        if not isinstance(variant, CppVariant):
-            raise Exception("variant must be instanceof(CppVariant)")
+        if not (isinstance(variant, CppVariant) or isinstance(variant, CppLibVariant)):
+            raise Exception("expecting CppVariant or CppLibVariant")
         if self.variant.os == "windows":
             self.winsdkVer = 80
 
@@ -131,6 +159,12 @@ class CppProject(pynja.CppProject):
 
         return task
 
+    def make_library(self, name):
+        if self.variant.linkage == "sta":
+            return self.make_static_lib(name)
+        else:
+            return self.make_shared_lib(name)
+
     def make_executable(self, name):
         name = os.path.normpath(name)
         if self.variant.os == "windows":
@@ -188,6 +222,30 @@ class CppProject(pynja.CppProject):
         self.add_platform_libs(task)
 
 
+    # Convenience functions that assumes that the current project
+    # has a CppVariant or CppLibVariant, and that the target
+    # project expects a CppLibVariant.
+
+    def get_cpplib_project(self, projName, linkage=None):
+        if linkage == None:
+            linkage = self.variant.linkage
+        variantStr = "%s-%s-%s-%s-%s-%s" % (
+            self.variant.os,
+            self.variant.toolchain,
+            self.variant.arch,
+            self.variant.config,
+            self.variant.crt,
+            linkage
+        )
+        variant = CppLibVariant(variantStr)
+        project = self.get_project(projName, variant)
+        return project
+
+    def add_cpplib_dependency(self, projName, linkage="dyn"):
+        project = self.get_cpplib_project(projName, linkage)
+        self.add_lib_dependency(project)
+
+
     # protoc
 
     def _protoc_one(self, sourcePath, language):
@@ -222,10 +280,9 @@ class CppProject(pynja.CppProject):
     # boost
 
     def add_boost_lib_dependency(self, name, linkShared=True):
-        variant = self.variant
         boostBuild = self.get_project("boost_build", self.variant)
         basepath = boostBuild.calc_lib_basepath(name, linkShared)
-        if 'msvc' in variant.toolchain:
+        if 'msvc' in self.variant.toolchain:
             if linkShared:
                 self.add_input_lib(basepath + ".lib")
                 self.add_runtime_dependency(basepath + ".dll")
@@ -308,8 +365,11 @@ class CppProject(pynja.CppProject):
         """Can be overridden to apply common options to QtMocTask created by qt_moc*."""
         self.set_include_paths_and_defines(task)
 
+    # Qt is always distributed as dynamic libraries; the staticLink argument
+    # controls whether the calling project should link against the library,
+    # as opposed to simply adding a runtime dependency.
     def qt_add_lib_dependency(self, libName, staticLink=True, forceRelease=False):
-        # qt only enabled on this variant because the test machine only has this version of Qt available
+        # Note: qt only enabled on this variant because the test machine only has this version of Qt available
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             if not forceRelease and self.variant.config == 'dbg':
                 libName = libName + 'd'

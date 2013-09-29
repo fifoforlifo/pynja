@@ -8,6 +8,8 @@ import repo
 @pynja.project
 class qt_xml(repo.CppProject):
     def emit(self):
+        if self.variant.linkage == "sta":
+            raise Exception("Qt static libs not supported.")
         self.qt_add_lib_dependency("Qt5Xml")
-        self.add_lib_dependency(self.get_project("qt_core", self.variant))
+        self.add_cpplib_dependency("qt_core")
         self.propagate_lib_dependencies()

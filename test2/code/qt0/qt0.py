@@ -27,7 +27,7 @@ class qt0(repo.CppProject):
             "source/qbaz.cpp"
         ]
         self.cpp_compile(sources)
-        self.add_lib_dependency(self.get_project("qt_xml", self.variant))
+        self.add_cpplib_dependency("qt_xml", "dyn")
         self.add_boost_lib_dependency("thread")
         self.add_boost_lib_dependency("chrono")
         self.add_boost_lib_dependency("system")
