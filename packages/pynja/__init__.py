@@ -11,5 +11,6 @@ from .tc_nvcc import *
 from .tc_javac import *
 from .user import *
 from .protoc import *
+from .re2c import *
 from .deploy import *
 from . import qt

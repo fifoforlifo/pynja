@@ -2,6 +2,8 @@
 #include <QtCore/QObject>
 #include <boost/thread.hpp>
 
+char *scan(char *p);
+
 class QZero : public QObject
 {
     Q_OBJECT
@@ -17,6 +19,8 @@ int main()
 {
     boost::mutex m;
     boost::thread thd;
+
+    char* p = scan("123");
 
     QZero* zero = new QZero();
     delete zero;

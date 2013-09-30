@@ -45,26 +45,27 @@ class RootPaths(object):
         if (os.name == 'nt'):
             # you can customize these paths to point at a location in source control
             if pynja.io.is_64bit_os():
-                rootPaths.msvc9 = "C:\\Program Files (x86)\\Microsoft Visual Studio 9.0"
-                rootPaths.msvc10 = "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0"
-                rootPaths.msvc11 = "C:\\Program Files (x86)\\Microsoft Visual Studio 11.0"
+                rootPaths.msvc9 = r"C:\Program Files (x86)\Microsoft Visual Studio 9.0"
+                rootPaths.msvc10 = r"C:\Program Files (x86)\Microsoft Visual Studio 10.0"
+                rootPaths.msvc11 = r"C:\Program Files (x86)\Microsoft Visual Studio 11.0"
             else:
-                rootPaths.msvc9 = "C:\\Program Files\\Microsoft Visual Studio 9.0"
-                rootPaths.msvc10 = "C:\\Program Files\\Microsoft Visual Studio 10.0"
-                rootPaths.msvc11 = "C:\\Program Files\\Microsoft Visual Studio 11.0"
+                rootPaths.msvc9 = r"C:\Program Files\Microsoft Visual Studio 9.0"
+                rootPaths.msvc10 = r"C:\Program Files\Microsoft Visual Studio 10.0"
+                rootPaths.msvc11 = r"C:\Program Files\Microsoft Visual Studio 11.0"
 
-            rootPaths.winsdk71 = 'C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1';
-            rootPaths.winsdk80 = 'C:\\Program Files (x86)\\Windows Kits\\8.0';
+            rootPaths.winsdk71 = r'C:\Program Files\Microsoft SDKs\Windows\v7.1';
+            rootPaths.winsdk80 = r'C:\Program Files (x86)\Windows Kits\8.0';
 
-            rootPaths.mingw = "C:\\MinGW"
-            rootPaths.mingw64 = "C:\\MinGW64"
+            rootPaths.mingw = r"C:\MinGW"
+            rootPaths.mingw64 = r"C:\MinGW64"
 
-            rootPaths.cuda50 = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v5.0"
+            rootPaths.cuda50 = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0"
 
             rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
 
-            rootPaths.qt5vc11BinDir = "C:\\Qt\\Qt5.0.2\\5.0.2\\msvc2012_64\\bin"
-            rootPaths.boost150 = "D:\\work\\code\\boost\\boost_1_50_0"
+            rootPaths.qt5vc11BinDir = r"C:\Qt\Qt5.0.2\5.0.2\msvc2012_64\bin"
+            rootPaths.boost150 = r"D:\work\code\boost\boost_1_50_0"
+            rootPaths.re2c = os.path.join(rootDir, r"prebuilt\windows\re2c\re2c-0.13.5-bin\re2c.exe")
 
 
 rootPaths = RootPaths()

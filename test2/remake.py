@@ -89,7 +89,11 @@ def generate_ninja_build(projectMan):
     deploy_variants.append(repo.DeployVariant("app64-dbg"))
     deploy_variants.append(repo.DeployVariant("app64-rel"))
 
-    projectMan.add_toolchain(repo.protocToolChain)
+    # assume protoc is in the path
+    projectMan.add_toolchain(pynja.ProtocToolChain("protoc"))
+    # add re2c
+    projectMan.add_toolchain(pynja.Re2cToolChain(repo.rootPaths.re2c))
+
     projectMan.emit_rules()
 
     projectMan.ninjaFile.write("\n");

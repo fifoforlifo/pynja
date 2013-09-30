@@ -8,6 +8,7 @@ class qt0(repo.CppProject):
         # minor optimization: put non-qt code first, so that they're not
         # affected by implicit header dependencies from qt generators
         self.cpp_compile("source/non_qt_code.cpp")
+        self.re2c_cpp_compile(["source/lexer.re2c"])
 
         ui_sources = [
             "source/main_window.ui",
