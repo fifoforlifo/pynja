@@ -5,7 +5,8 @@ import repo
 @pynja.project
 class a0(repo.CppProject):
     def emit(self):
-        libA2 = self.get_project('a2', self.variant)
+        a2 = self.add_cpplib_dependency('a2')
+        a2_client = self.get_cpplib_project('a2_client')
 
         proto_defs = [
             "source/address.proto",
@@ -22,15 +23,14 @@ class a0(repo.CppProject):
         ]
 
         with self.make_pch_ex("source/a0_pch.h") as pchTask:
-            pchTask.usePCH = libA2.pchPath
+            pchTask.usePCH = a2_client.pchPath
 
         with self.cpp_compile_ex(sources) as tasks:
             tasks.usePCH = pchTask.outputPath
             for task in tasks:
                 task.defines.append("FOO")
 
-        self.add_lib_dependency(libA2)
-        self.make_static_lib("a0")
+        self.make_library("a0")
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)

@@ -1,11 +1,10 @@
-#ifdef _WIN32
-__declspec(dllexport)
-#else
-__attribute__((visibility("default")))
-#endif
+#include <a2_0.h>
+#include "a1.h"
+
+DLL_EXPORT(a1)
 int a1_0()
 {
-    long long x = 2;
+    long long x = 2 + a2_0();
     return x;
 }
 

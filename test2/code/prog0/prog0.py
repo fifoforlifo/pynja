@@ -6,8 +6,8 @@ import repo
 @pynja.project
 class prog0(repo.CppProject):
     def emit(self):
-        libA0 = self.get_project('a0', self.variant)
-        libA1 = self.get_project('a1', self.variant)
+        libA0 = self.add_cpplib_dependency('a0', 'sta')
+        libA1 = self.add_cpplib_dependency('a1', 'dyn')
 
         # compile one file at a time with per-file settings
         with self.cpp_compile_ex("source/e0_0.cpp") as task:
@@ -45,8 +45,6 @@ class prog0(repo.CppProject):
             tasks.warnLevel = 1
 
         # add library dependencies in link order (they will be added to the end of the linker cmdline)
-        self.add_lib_dependency(libA0)
-        self.add_lib_dependency(libA1)
         self.make_executable("prog0")
 
         self.copy(self.outputPath, self.outputPath + ".copy")

@@ -61,6 +61,8 @@ class CppLibVariant(pynja.Variant):
 class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
+        self.defines = []           # defines broadcasted to compilations; appended by e.g. add_cpplib_dependency
+
         if not (isinstance(variant, CppVariant) or isinstance(variant, CppLibVariant)):
             raise Exception("expecting CppVariant or CppLibVariant")
         if self.variant.os == "windows":
@@ -125,6 +127,18 @@ class CppProject(pynja.CppProject):
 
         if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
+
+        # define macros to handle DLL import/export
+        # And add the dllexport.h header to include paths for every project.
+        linkage = getattr(self.variant, "linkage", None)
+        if linkage == 'dyn':
+            task.defines.append(type(self).__name__ + "_EXPORT=1")
+            task.defines.append(type(self).__name__ + "_SHARED=1")
+        else:
+            task.defines.append(type(self).__name__ + "_EXPORT=0")
+            task.defines.append(type(self).__name__ + "_SHARED=0")
+        task.defines.extend(self.defines)
+        task.includePaths.append(os.path.join(rootPaths.dllexport, "include"))
 
     def make_static_lib(self, name):
         name = os.path.normpath(name)
@@ -238,8 +252,14 @@ class CppProject(pynja.CppProject):
         return project
 
     def add_cpplib_dependency(self, projName, linkage="dyn"):
+        if linkage == 'dyn':
+            self.defines.append(projName + "_SHARED=1")
+        else:
+            self.defines.append(projName + "_SHARED=0")
+        self.defines.append(projName + "_EXPORT=0")
         project = self.get_cpplib_project(projName, linkage)
         self.add_lib_dependency(project)
+        return project
 
 
     # protoc
