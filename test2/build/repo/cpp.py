@@ -62,6 +62,7 @@ class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
         self.defines = []           # defines broadcasted to compilations; appended by e.g. add_cpplib_dependency
+        self.includePaths = []      # same deal
 
         if not (isinstance(variant, CppVariant) or isinstance(variant, CppLibVariant)):
             raise Exception("expecting CppVariant or CppLibVariant")
@@ -138,6 +139,7 @@ class CppProject(pynja.CppProject):
             task.defines.append(type(self).__name__ + "_EXPORT=0")
             task.defines.append(type(self).__name__ + "_SHARED=0")
         task.defines.extend(self.defines)
+        task.includePaths.extend(self.includePaths)
         task.includePaths.append(os.path.join(rootPaths.dllexport, "include"))
 
     def make_static_lib(self, name):

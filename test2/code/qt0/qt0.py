@@ -5,6 +5,13 @@ import repo
 @pynja.project
 class qt0(repo.CppProject):
     def emit(self):
+        self.includePaths.append(repo.rootPaths.boost150)
+        self.includePaths.extend(self.qtIncludePaths)
+        self.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
+        self.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
+        self.defines.append("FOO")
+        self.defines.append("BOOST_ALL_NO_LIB")
+
         # minor optimization: put non-qt code first, so that they're not
         # affected by implicit header dependencies from qt generators
         self.cpp_compile("source/non_qt_code.cpp")
@@ -33,13 +40,3 @@ class qt0(repo.CppProject):
         self.add_boost_lib_dependency("chrono")
         self.add_boost_lib_dependency("system")
         self.make_executable("qt0")
-
-    # set include paths and defines for both c++ and moc tasks
-    def set_include_paths_and_defines(self, task):
-        super().set_include_paths_and_defines(task)
-        task.includePaths.append(repo.rootPaths.boost150)
-        task.includePaths.extend(self.qtIncludePaths)
-        task.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
-        task.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
-        task.defines.append("FOO")
-        task.defines.append("BOOST_ALL_NO_LIB")

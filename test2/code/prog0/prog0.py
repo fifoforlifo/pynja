@@ -9,6 +9,9 @@ class prog0(repo.CppProject):
         libA0 = self.add_cpplib_dependency('a0', 'sta')
         libA1 = self.add_cpplib_dependency('a1', 'dyn')
 
+        self.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
+        self.includePaths.append(os.path.join(repo.rootPaths.a1, "include"))
+
         # compile one file at a time with per-file settings
         with self.cpp_compile_ex("source/e0_0.cpp") as task:
             task.includePaths.append(os.path.join(repo.rootPaths.a0, "includeSpecial"))
@@ -48,9 +51,3 @@ class prog0(repo.CppProject):
         self.make_executable("prog0")
 
         self.copy(self.outputPath, self.outputPath + ".copy")
-
-    # set c++ compile options that are common to all files in the project
-    def set_cpp_compile_options(self, task):
-        super().set_cpp_compile_options(task)
-        task.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
-        task.includePaths.append(os.path.join(repo.rootPaths.a1, "include"))

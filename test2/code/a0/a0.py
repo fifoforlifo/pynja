@@ -8,6 +8,16 @@ class a0(repo.CppProject):
         a2 = self.add_cpplib_dependency('a2')
         a2_client = self.get_cpplib_project('a2_client')
 
+        self.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
+        self.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
+        # add google protobuf directory
+        self.includePaths.append(os.path.join(self.builtDir, "source"))
+        # add directory for generated headers from proto files
+        self.includePaths.append(os.path.join(repo.rootPaths.protobuf, "src"))
+        if "msvc" in self.variant.toolchain:
+            self.defines.append("_CRT_SECURE_NO_WARNINGS")
+            self.defines.append("_SCL_SECURE_NO_WARNINGS")
+
         proto_defs = [
             "source/address.proto",
             "source/person.proto"
@@ -31,16 +41,3 @@ class a0(repo.CppProject):
                 task.defines.append("FOO")
 
         self.make_library("a0")
-
-    def set_cpp_compile_options(self, task):
-        super().set_cpp_compile_options(task)
-        task.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
-        task.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
-        # add google protobuf directory
-        task.includePaths.append(os.path.join(self.builtDir, "source"))
-        # add directory for generated headers from proto files
-        task.includePaths.append(os.path.join(repo.rootPaths.protobuf, "src"))
-        if "msvc" in self.variant.toolchain:
-            task.defines.append("_CRT_SECURE_NO_WARNINGS")
-            task.defines.append("_SCL_SECURE_NO_WARNINGS")
-        task.extraDeps.extend(self.proto_sources)
