@@ -10,7 +10,6 @@ class qt0(repo.CppProject):
         self.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
         self.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
         self.defines.append("FOO")
-        self.defines.append("BOOST_ALL_NO_LIB")
 
         # minor optimization: put non-qt code first, so that they're not
         # affected by implicit header dependencies from qt generators

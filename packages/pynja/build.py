@@ -339,25 +339,38 @@ class ProjectMan:
 
         ninjaFile.write("#############################################\n");
         ninjaFile.write("# Remake build.ninja if any python sources changed.\n");
-        ninjaFile.write("rule RERUN_MAKE\n");
+        ninjaFile.write("rule REGENERATE\n");
         ninjaFile.write("  command = python \"%s\"\n" % remakeScriptPath);
         ninjaFile.write("  description = Running remake script.\n");
         ninjaFile.write("  generator = 1\n");
         ninjaFile.write("  restat = 1\n");
         ninjaFile.write("\n");
 
+        buildInputs = set()
+        loadedModules = get_loaded_modules(rootDir)
+        for path in sorted(loadedModules):
+            buildInputs.add(ninja_esc_path(path))
+        buildInputs.add(remakeScriptPathEsc)
+
         ninjaFile.write("build %s $\n" % ninjaPathEsc)
         for project in projects:
             for path in project.makeFiles:
                 pathEsc = ninja_esc_path(path)
                 ninjaFile.write("    %s $\n" % pathEsc)
-        ninjaFile.write("  : RERUN_MAKE |$\n")
-        loadedModules = get_loaded_modules(rootDir)
-        for path in sorted(loadedModules):
-            pathEsc = ninja_esc_path(path)
+        ninjaFile.write("  : REGENERATE |$\n")
+        for pathEsc in buildInputs:
             ninjaFile.write("    %s $\n" % pathEsc)
-        ninjaFile.write("    %s\n" % remakeScriptPathEsc)
+        loadedModules = get_loaded_modules(rootDir)
         ninjaFile.write("\n");
+
+        # If a user removes a project, we don't want to trigger a 'missing input' error.
+        # Marking all buildInputs as being output from a phony build rule accomplishes this.
+        # https://groups.google.com/forum/#!topic/ninja-build/aXkhxZ_oXcw
+        ninjaFile.write("build $\n")
+        for pathEsc in buildInputs:
+            ninjaFile.write("    %s $\n" % pathEsc)
+        ninjaFile.write("  : phony $\n")
+
         ninjaFile.write("\n");
 
     def deploy(self, deployFiles, destDir = None, phonyTarget = None):
