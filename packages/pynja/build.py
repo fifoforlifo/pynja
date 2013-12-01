@@ -209,7 +209,6 @@ class ProjectMan:
     def __init__(self, ninjaFile, ninjaPath):
         self.ninjaFile = ninjaFile
         self.ninjaPath = ninjaPath
-        self.ninjaPathEsc = ninja_esc_path(ninjaPath)
         self._projects = {}
         self._toolchains = {}
         self._phonyTargets = {}
@@ -332,7 +331,6 @@ class ProjectMan:
     def emit_regenerator_target(self, remakeScriptPath):
         ninjaFile = self.ninjaFile
         ninjaPath = self.ninjaPath
-        ninjaPathEsc = ninja_esc_path(ninjaPath)
         remakeScriptPathEsc = ninja_esc_path(remakeScriptPath)
         projects = self.get_project_list()
         rootDir = os.path.dirname(remakeScriptPath)
@@ -352,7 +350,9 @@ class ProjectMan:
             buildInputs.add(ninja_esc_path(path))
         buildInputs.add(remakeScriptPathEsc)
 
-        ninjaFile.write("build %s $\n" % ninjaPathEsc)
+        # NOTE: Use of basename() is a work-around for a bug in ninja.
+        #   If you emit an absolute path here, the generator does not gain priority over missing source files.
+        ninjaFile.write("build %s $\n" % os.path.basename(ninjaPath))
         for project in projects:
             for path in project.makeFiles:
                 pathEsc = ninja_esc_path(path)
