@@ -1,3 +1,11 @@
+Unless otherwise labeled, pynja is distributed under the Apache License.
+-   Any "imported" 3rd party software retains its original license (of course).
+-   Individual libraries or source code intended for re-use may have more
+    permissive licenses.  See for example the "dllexport" library.
+
+
+Main copyright terms:
+
    Copyright 2013 Avinash Baliga
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +21,7 @@
    limitations under the License.
 
 
-A copy of the pristine Apache License, Version 2.0 is pasted below.
+A copy of the pristine Apache License, Version 2.0 is included below.
 
 
                                  Apache License
