@@ -7,32 +7,38 @@ from .root_dir import finder
 
 rootDir = finder.get_root_dir()
 
-def add_project_dir(name, relPath, absPath = None):
+def add_project_file(name, relPath, absPath = None, doImport = True):
     """Add a rootPath and import it."""
     if not absPath:
         absPath = os.path.normpath(os.path.join(rootDir, relPath))
+    existingAbsPath = getattr(rootPaths, name, None)
+    if existingAbsPath:
+        if existingAbsPath == absPath:
+            return
+        raise Exception("Attempting to add duplicate project '%s' from:\n    %s\n    %s" % (name, existingAbsPath, absPath))
     setattr(rootPaths, name, absPath)
     setattr(rootPaths, name + "_rel", os.path.normpath(relPath))
-    sys.path.append(absPath)
-    __import__(name)
+    if doImport:
+        if absPath not in sys.path: # O(N) check, but this is low-frequency code
+            sys.path.append(absPath)
+        __import__(name)
 
 class RootPaths(object):
     def init(self):
         # qt helper projects
-        add_project_dir("qt_core", "build/repo/qt")
-        add_project_dir("qt_xml", "build/repo/qt")
+        add_project_file("qt_core", "build/repo/qt")
+        add_project_file("qt_xml", "build/repo/qt")
         # boost helper projects
-        add_project_dir("boost_build", "build/repo/boost")
+        add_project_file("boost_build", "build/repo/boost")
         # real source projects
-        add_project_dir("test2", "code")
-        add_project_dir("a0", "code/a0")
-        add_project_dir("a1", "code/a1")
-        add_project_dir("a2", "code/a2")
-        add_project_dir("a2_client", "code/a2")
-        add_project_dir("prog0", "code/prog0")
-        add_project_dir("java1", "code/java1")
-        add_project_dir("java2", "code/java2")
-        add_project_dir("qt0", "code/qt0")
+        add_project_file("test2", "code")
+        add_project_file("a0", "code/a0")
+        add_project_file("a1", "code/a1")
+        add_project_file("a2", "code/a2")
+        add_project_file("prog0", "code/prog0")
+        add_project_file("java1", "code/java1")
+        add_project_file("java2", "code/java2")
+        add_project_file("qt0", "code/qt0")
 
         rootPaths.dllexport = os.path.join(rootDir, "code/dllexport")
 
