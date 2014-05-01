@@ -401,8 +401,8 @@ projectFactory = {}
 def project(projectType):
     name = projectType.__name__
     repo = __import__("repo")
-    absPath = getattr(repo.rootPaths, projectType.__module__, None)
-    relPath = getattr(repo.rootPaths, projectType.__module__+"_rel", None)
+    absPath = getattr(repo.rootPathsAbs, projectType.__module__, None)
+    relPath = getattr(repo.rootPathsRel, projectType.__module__, None)
     repo.add_project_file(projectType.__name__, relPath, absPath, doImport = False)
     projectFactory[name] = projectType
     return projectType
