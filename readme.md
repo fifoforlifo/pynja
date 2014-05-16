@@ -31,7 +31,7 @@ easy to reference all your multi-arch components in your 'install' rules or unit
 
 So far, the supported C++ toolchains are `gcc`, `msvc`, `clang`, `nvcc`.
 
-There are built in abstractions for C/C++ compilation.  Every common compiler option is represented as a
+There are built in abstractions for C/C++ compilation.  Each common compiler option is represented as a
 class field, which can be overridden at multiple stages.
 -   Set global compile flags on a per-variant basis in common code.
 -   Override per-project flags at the project level.
@@ -62,18 +62,17 @@ pynja can generate Visual Studio projects for code browsing.
 ## Simple example
 
 ```python
-# liba0.py
+# a0.py
 import pynja
 import repo
 
 @pynja.project
 class a0(repo.cpp.CppProject):
-    def emit(self):
+    def emit(proj):
         sources = [a0_one.cpp a0_two.cpp]
-        with self.cpp_compile(sources) as tasks:
-            pass
-        with self.make_static_lib("a0") as task:
-            pass
+        proj.cpp_compile(sources)
+
+        proj.make_static_lib("a0")
 
 # prog.py
 import os
@@ -82,16 +81,17 @@ import repo
 
 @pynja.project
 class prog(repo.cpp.CppProject):
-    def emit(self):
+    def emit(proj):
         sources = [prog_one.cpp prog_two.cpp]
 
-        liba0 = self.projectMan.get_project('a0', self.variant)
+        # add link-time dependency
+        libA0 = self.add_cpplib_dependency('a0', 'sta')
 
-        with self.cpp_compile(sources) as tasks:
+        self.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
+
+        with self.cpp_compile_ex(sources) as tasks:
             for task in tasks:
-                task.includePaths.append(os.path.join(liba0.projectDir, "include"))
-        self.add_input_lib(liba0.libraryPath)
-        with self.make_executable("prog") as task:
-            pass
-```
+                task.includePaths.append(os.path.join(libA0.builtDir, "generated"))
 
+        self.make_executable("prog")
+```

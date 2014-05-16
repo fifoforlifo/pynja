@@ -45,6 +45,8 @@ def add_project_file(name, relPath, absPath = None, doImport = True):
         # now all decorated project classes from the imported module will be available
 
 
+# Adds a project file by subdirectory path, relative to the invoking file's directory.
+# Most often called from a file imported by add_repo_subdirectory.
 def add_project_file_in_subdir(name, subdirPath):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
@@ -54,7 +56,10 @@ def add_project_file_in_subdir(name, subdirPath):
     add_project_file(name, relPath, absPath)
 
 
-def add_submodule(name, relPath, absPath = None):
+# Add a script in a subdirectory, that can contribute additional project definitions.
+# This allows modularizing the repository, where each subdirectory manages its own components.
+# This function is somewhat analagous to a CMake add_subdirectory.
+def add_repo_subdirectory(name, relPath, absPath = None):
     if not absPath:
         absPath = os.path.normpath(os.path.join(rootDir, relPath))
     if absPath not in sys.path: # O(N) check, but this is low-frequency code
@@ -73,7 +78,7 @@ def init():
     add_project_file("boost_build", "build/repo/boost")
     # real source projects
     add_project_file("test2", "code")
-    add_submodule("submodule_a", "code/a")
+    add_repo_subdirectory("subdir_a", "code/a")
     add_project_file("prog0", "code/prog0")
     add_project_file("java1", "code/java1")
     add_project_file("java2", "code/java2")

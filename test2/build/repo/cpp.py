@@ -302,9 +302,10 @@ class CppProject(pynja.CppProject):
         re2cToolChain = self.projectMan.get_toolchain("re2c")
         task = pynja.Re2cTask(self, sourcePath, self.builtDir, self.projectDir, re2cToolChain, ext)
         self.set_re2c_options(task)
+        self._forcedDeps.add(task.outputPath)
         return task
 
-    def re2c(self, filePaths, ext=".cpp"):
+    def re2c(self, filePaths, ext):
         if isinstance(filePaths, str):
             return self._re2c_one(filePaths, ext)
         else:
@@ -320,6 +321,8 @@ class CppProject(pynja.CppProject):
         with self.re2c(filePaths, ext) as tasks:
             for task in tasks:
                 re2c_sources.append(task.outputPath)
+                # undo the forced dependency since we no file will #include the outputPath
+                self._forcedDeps.remove(task.outputPath)
             self.cpp_compile(re2c_sources)
         return re2c_sources
 
@@ -382,6 +385,8 @@ class CppProject(pynja.CppProject):
         if not isHeader:
             task.emitInclude = False
         self.set_qt_moc_options(task)
+        if outputPath.endswith(".moc"):
+            self._forcedDeps.add(outputPath)
         return task
 
     def qt_moc(self, filePaths):
@@ -402,14 +407,13 @@ class CppProject(pynja.CppProject):
 
     def qt_moc_cpp_compile(self, filePaths):
         tasks = self.qt_moc(filePaths)
-        moc_includables = [] # *.moc, which are 'includable' in a cpp but not quite headers :)
+        moc_includables = [] # by convention these files are *.moc, which are 'includable' in a cpp but not quite headers :)
         for task in tasks:
             basename = os.path.basename(task.outputPath)
             if basename.startswith("moc_"):
                 self.cpp_compile(task.outputPath)
             else:
                 moc_includables.append(task.outputPath)
-        self._forcedDeps.update(moc_includables)
 
     def set_qt_moc_options(self, task):
         """Can be overridden to apply common options to QtMocTask created by qt_moc*."""

@@ -280,4 +280,3 @@ class CppProject(build.Project):
 
     def propagate_lib_dependencies(self):
         self.linkLibraries.extend(self._inputLibs)
-

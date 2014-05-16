@@ -1,4 +1,4 @@
-pynja v1.0 manual
+pynja v1.1 manual
 =================
 :Author: Avinash Baliga
 :Email: com DOT gmail AT fifoforlifo
@@ -144,13 +144,9 @@ class program(repo.cpp.SimpleCppProject):                           # <8>
             "src/util.cpp",
         ]
 
-        with self.cpp_compile(sources) as tasks:                    # <10>
-            pass
-
+        self.cpp_compile(sources)                                   # <10>
         self.add_input_library(repo.rootPaths.zlib)                 # <11>
-
-        with self.make_executable("prog0") as task:                 # <12>
-            pass
+        self.make_executable("prog0")                               # <12>
 
 ----
 
@@ -197,7 +193,7 @@ We are simply defining targets to be built later using `ninja`.
 
 === Prerequisites
 
-You will need a copy of Python 3.2 or greater.
+You will need a copy of Python 3.3 or greater.
 
 *   On Windows or Mac, download it from http://python.org .
 *   On Linux, use your package manager.
@@ -252,7 +248,7 @@ The repo package serves several purposes:
 
 === project files
 
-Example file: link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py[`$PYNJA_REPO/test2/code/a1.py`].
+Example file: link:https://github.com/fifoforlifo/pynja/blob/master/test2/code/a/a1/a1.py[`$PYNJA_REPO/test2/code/a/a1/a1.py`].
 
 A project file is just a python source file that declares one or more
 Project classes.  Each Project class may be instantiated once per
@@ -327,8 +323,11 @@ or even completely replaced.
 *   `repo.CppProject.set_cpp_compile_options`: Set compiler options based
     solely on the variant.  Typically you control optimization settings,
     debug info, C runtime linkage, and other "generic" settings here.
-*   `YourProject.set_cpp_compile_options`: Set compiler options for files
-    in your project.  Typically you control include paths and defines here.
+*   YourProject.includePaths and YourProject.defines apply not only to
+    C++ compilation, but many related build tasks.  For example, protobuf,
+    Qt, and custom preprocessing.
+*   `YourProject.set_cpp_compile_options`: Set compiler options for all files
+    in your project.
 *   `with` statement body: Set source-file-specific options.
     Typically you control PCH usage, include paths and defines here.
     But you can also easily implement any other one-off quick-fixes you need.
@@ -336,14 +335,20 @@ or even completely replaced.
 [source, python]
 ----
     # in emit method
-        with self.cpp_compile("foo.cpp") as task:
+        # simple method -- no per-task customization
+        self.cpp_compile("aaa.cpp")
+
+        # flexible method -- control per-task options
+        with self.cpp_compile_ex("foo.cpp") as task:
             task.defines.append("LOGLEVEL=50")
 ----
+
 
 === CppTask Compiler Options
 
 For the full list, look at the definition of `pynja/cpp.py :: CppTask`.
-Here's a breakdown of the most useful flags.
+
+Here's a breakdown of the most useful flags.  See the compiler's manual for more details.
 
 .Common
 *   `optLevel`: Optimization level, on a scale of 0 - 3.
@@ -363,7 +368,7 @@ Here's a breakdown of the most useful flags.
 *   `defines`: A list of ordered preprocessor defines.
     Translates to `-D` for gcc.
 
-.GCC / Clang
+.http://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html[GCC] / http://clang.llvm.org/docs/UsersManual.html[Clang]
 *   `addressModel`: When using a toolchain that supports multi-arch, this
     field can be specified as either `-m32` or `-m64`.
 *   `std`: Selects the language standard using the `-std` flag as described
@@ -373,8 +378,10 @@ Here's a breakdown of the most useful flags.
 *   `lto`: If true and optimizations are enabled, the compiler
     emits an object file that supports Link Time Optimization as described
     link:http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html[here].
+*   Note that clang strives to be command-line compatible with gcc, but may
+    add its own options as well.
 
-.MSVC
+.http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx[MSVC]
 *   `dynamicCRT`: If true, compile code that will link against the dynamic
     C runtime.  If false, require the static C runtime.  Translates to
     one of `/MT`, `/MTd`, `/MD`, `/MDd` depending on optimization level.
@@ -384,7 +391,7 @@ Here's a breakdown of the most useful flags.
 *   `externCNoThrow`: If true, treat `extern "C"` functions as nothrow.
     Translates to `/Ehc`.
 
-.NVCC
+.http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/[NVCC]
 *   `relocatableDeviceCode`: If true, device code is statically linkable.
     Translates to `-rdc`.
 *   `deviceDebugLevel`: Debug level on a scale of 0 - 2.
@@ -430,15 +437,14 @@ you can finally define the output of your project.
 [source, python]
 ----
     # in emit method
-        # static library
-        with self.make_static_lib("a0") as task:
-            pass
-        # shared library
-        with self.make_shared_lib("a1") as task:
-            pass
+        # explicit static library
+        self.make_static_lib("a0")
+        # explicit shared library
+        self.make_shared_lib("a1")
+        # create either static or shared library based on variant
+        self.make_library("a2")
         # executable
-        with self.make_executable("prog0") as task:
-            pass
+        self.make_executable("prog0")
 ----
 
 After doing 'one' of the above, your Project's `outputPath`
@@ -481,13 +487,10 @@ remaining portable:
 [source, python]
 ----
     # in emit method
-        with self.make_pch("source/a0_pch.h") as pchTask:
-            pass
+        self.make_pch("source/a0_pch.h")
 
         with self.cpp_compile(sources) as tasks:
             tasks.usePCH = pchTask.outputPath
-            for task in tasks:
-                task.defines.append("FOO")
 ----
 
 If you're interested in the gory details of the PCH implementation,
@@ -497,6 +500,24 @@ link:https://github.com/fifoforlifo/pynja/blob/master/doc/PrecompiledHeaders.txt
 [CAUTION]
 On some toolchains (MSVC), chain-creation of PCHs isn't implemented as true chaining.  Instead,
 each PCH is compiled "from scratch".  Functionally it still works, but compilation speed isn't as good as it ought to be.
+
+=== [[codegen-patterns]] Code Generation Patterns
+
+C++ code generators either generate includables (referenced by `#include`) or source files (primary input of
+a compilation).  For optimal build speed, these need to be handled differently.
+
+Generated source files are fully parallelizable, and create no implicit dependencies with other files in the build.
+
+Generated includables are a problem when bootstrapping, i.e. during the first time you run your build.  These dependencies
+need to be known to the build, so that any file that might `#include` it is scheduled to compile after the code generation.
+
+To simplify build scripts, generated includables cause 'all subsequent tasks in the same project' to depend on them.
+
+The implicit dependencies only apply within the project instance; they do not cross variant boundaries.
+
+If you have code that does not depend on these headers, make sure to declare their compilations 'before' any such calls,
+to allow for better build parallelism.
+
 
 === Protobuf -> C++ Code Generation
 
@@ -517,9 +538,6 @@ Using it is this simple:
     # in emit method
         self.proto_sources = []
         self.proto_sources = self.protoc_cpp_compile("somefile.proto")
-
-    # in set_cpp_compile_options method
-        task.extra_deps.extend(self.proto_sources)
 ----
 
 === Working with Boost
@@ -558,10 +576,8 @@ build code looks like this:
         self.qt_moc_cpp_compile(moc_inputs)
 ----
 
-To simplify build scripts, both `qt_uic` and `qt_moc` cause 'all subsequently declared C++ compiles in the same project' to depend on the generated headers.
-(The implicit dependencies only apply within the project instance; they do not cross variant boundaries.)
-If you have code that does not depend on these headers, make sure to declare their compilations 'before' any `qt_uic`/`qt_moc` calls,
-to allow for better build parallelism.
+As mentioned <<codegen-patterns, earlier>>, if you have code in the same project that does not depend on these generated headers,
+make sure to declare their compilations 'before' any `qt_uic`/`qt_moc` calls, to allow for better build parallelism.
 
 === Runtime and [[transitive-deps]] Transitive Dependency Management
 
@@ -581,7 +597,7 @@ in a product's directory layout.  To illustrate:
 *   Executable depending on shared library:
     **  On Windows they are often placed in the same directory.
     **  On linux they are often placed in separate `bin` and `lib` directories.
-*   Shared library depending on another shared library:
+*   Shared library depending on another shared library: same as above.
 *   Shared library depending on data file.
 
 pynja allows you to specify a runtime dependency in any project, via the following methods,
@@ -595,14 +611,29 @@ whose signatures are copied below.
 
 Runtime dependencies are best expressed in the project where the dependency is known.  For example,
 if `common.dll` always depends on `helper.dll`, then the `common` project ought to add a runtime
-dependency on the `helper` project.  This way, any time an additional project `user` depends on `common`,
-the required dependency information is carried through.
+dependency on the `helper` project.  This way, any time an additional project like `user` depends
+on `common`, the required dependency information is carried through.
 
-It especially helps when `user` is not a direct client of `helper`, and therefore it would not be
-logical or intuitive for `user` to directly state a dependency on `helper`.  It also insulates the
-`user` project from all of `common's` dependencies, which may change over time.
+==== Rationale with Examples
 
-'TODO: good examples'
+Transitive dependencies especially help when a `user` library is not a direct client of a `helper` library,
+and therefore it would not be logical or intuitive for `user` to directly state a dependency on `helper`.
+It also insulates the `user` project from all of `common's` dependencies, which may change over time.
+
+A bigger example:
+
+*   Initial State:
+    **  `user` -> `common`
+    **  `common -> A, B, C`
+*   Next Day:
+    **  `user` -> `common`
+    **  `common -> B, C, D`
+*   Next Day:
+    **  `user` -> `common`
+    **  `common -> B, D, F`
+
+In this example, only `common.py` ought to be updated daily with the new dependency list.  In the meantime,
+the `user` project stays completely untouched, as do the product-level "deployment" scripts.
 
 
 == Repository and Source Organization
@@ -617,12 +648,13 @@ Micro-branching lets you branch (copy) a single project within your build, and a
 dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
 `repo/root_paths.py`: add a 3rd `abs_path` parameter to the appropriate `add_project` call to
 point at your alternate project location.
+
 For example:
 
 [source, python]
 ----
-    # in RootPaths::init()
-        add_project_dir("a2", "code/a2", "/home/user/code/temp_branch_of_a2")
+    # in root_paths.py :: init()
+    add_project_file("a2", "code/a2", abs_path = "/home/user/code/temp_branch_of_a2")
 ----
 
 

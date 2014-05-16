@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="generator" content="AsciiDoc 8.6.8">
-<title>pynja v1.0 manual</title>
+<title>pynja v1.1 manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -830,7 +830,7 @@ asciidoc.install(2);
 </head>
 <body class="article">
 <div id="header">
-<h1>pynja v1.0 manual</h1>
+<h1>pynja v1.1 manual</h1>
 <span id="author">Avinash Baliga</span><br>
 <span id="email" class="monospaced">&lt;<a href="mailto:com DOT gmail AT fifoforlifo">com DOT gmail AT fifoforlifo</a>&gt;</span><br>
 <div id="toc">
@@ -1020,13 +1020,9 @@ of build.ninja.</p></div>
             <span class="s">&quot;src/util.cpp&quot;</span><span class="p">,</span>
         <span class="p">]</span>
 
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="k">as</span> <span class="n">tasks</span><span class="p">:</span>                    <span class="c"># <img src="./images/icons/callouts/10.png" alt="10"></span>
-            <span class="k">pass</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>                                   <span class="c"># <img src="./images/icons/callouts/10.png" alt="10"></span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_input_library</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">rootPaths</span><span class="o">.</span><span class="n">zlib</span><span class="p">)</span>                 <span class="c"># <img src="./images/icons/callouts/11.png" alt="11"></span>
-
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>                 <span class="c"># <img src="./images/icons/callouts/12.png" alt="12"></span>
-            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span>                               <span class="c"># <img src="./images/icons/callouts/12.png" alt="12"></span>
 </pre></div></div></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre><span class="c"># $REPO_ROOT/remake.py</span>
@@ -1097,7 +1093,7 @@ We are simply defining targets to be built later using <span class="monospaced">
 </div>
 <div class="sect2">
 <h3 id="_prerequisites">1.4. Prerequisites</h3>
-<div class="paragraph"><p>You will need a copy of Python 3.2 or greater.</p></div>
+<div class="paragraph"><p>You will need a copy of Python 3.3 or greater.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -1209,7 +1205,7 @@ Define specializations of <span class="monospaced">class CppProject</span>, <spa
 </div>
 <div class="sect2">
 <h3 id="_project_files">2.3. project files</h3>
-<div class="paragraph"><p>Example file: <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/a1/a1.py"><span class="monospaced">$PYNJA_REPO/test2/code/a1.py</span></a>.</p></div>
+<div class="paragraph"><p>Example file: <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/a/a1/a1.py"><span class="monospaced">$PYNJA_REPO/test2/code/a/a1/a1.py</span></a>.</p></div>
 <div class="paragraph"><p>A project file is just a python source file that declares one or more
 Project classes.  Each Project class may be instantiated once per
 Variant.  A C++ Project will generate a single library or executable
@@ -1324,8 +1320,15 @@ or even completely replaced.</p></div>
 </li>
 <li>
 <p>
-<span class="monospaced">YourProject.set_cpp_compile_options</span>: Set compiler options for files
-    in your project.  Typically you control include paths and defines here.
+YourProject.includePaths and YourProject.defines apply not only to
+    C++ compilation, but many related build tasks.  For example, protobuf,
+    Qt, and custom preprocessing.
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">YourProject.set_cpp_compile_options</span>: Set compiler options for all files
+    in your project.
 </p>
 </li>
 <li>
@@ -1338,7 +1341,11 @@ or even completely replaced.</p></div>
 </ul></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="s">&quot;foo.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+        <span class="c"># simple method -- no per-task customization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="s">&quot;aaa.cpp&quot;</span><span class="p">)</span>
+
+        <span class="c"># flexible method -- control per-task options</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile_ex</span><span class="p">(</span><span class="s">&quot;foo.cpp&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
             <span class="n">task</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;LOGLEVEL=50&quot;</span><span class="p">)</span>
 </pre></div></div></div>
 </div>
@@ -1352,10 +1359,10 @@ For the full list, look at the definition of `pynja/cpp.py
 <dd>
 <p>
 CppTask`.
-Here&#8217;s a breakdown of the most useful flags.
 </p>
 </dd>
 </dl></div>
+<div class="paragraph"><p>Here&#8217;s a breakdown of the most useful flags.  See the compiler&#8217;s manual for more details.</p></div>
 <div class="ulist"><div class="title">Common</div><ul>
 <li>
 <p>
@@ -1416,7 +1423,7 @@ Here&#8217;s a breakdown of the most useful flags.
 </p>
 </li>
 </ul></div>
-<div class="ulist"><div class="title">GCC / Clang</div><ul>
+<div class="ulist"><div class="title"><a href="http://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html">GCC</a> / <a href="http://clang.llvm.org/docs/UsersManual.html">Clang</a></div><ul>
 <li>
 <p>
 <span class="monospaced">addressModel</span>: When using a toolchain that supports multi-arch, this
@@ -1438,8 +1445,14 @@ Here&#8217;s a breakdown of the most useful flags.
     <a href="http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html">here</a>.
 </p>
 </li>
+<li>
+<p>
+Note that clang strives to be command-line compatible with gcc, but may
+    add its own options as well.
+</p>
+</li>
 </ul></div>
-<div class="ulist"><div class="title">MSVC</div><ul>
+<div class="ulist"><div class="title"><a href="http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx">MSVC</a></div><ul>
 <li>
 <p>
 <span class="monospaced">dynamicCRT</span>: If true, compile code that will link against the dynamic
@@ -1461,7 +1474,7 @@ Here&#8217;s a breakdown of the most useful flags.
 </p>
 </li>
 </ul></div>
-<div class="ulist"><div class="title">NVCC</div><ul>
+<div class="ulist"><div class="title"><a href="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/">NVCC</a></div><ul>
 <li>
 <p>
 <span class="monospaced">relocatableDeviceCode</span>: If true, device code is statically linkable.
@@ -1523,15 +1536,14 @@ section on <a href="#transitive-deps">transitive dependencies</a> for more detai
 you can finally define the output of your project.</p></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
-        <span class="c"># static library</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_static_lib</span><span class="p">(</span><span class="s">&quot;a0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
-            <span class="k">pass</span>
-        <span class="c"># shared library</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared_lib</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
-            <span class="k">pass</span>
+        <span class="c"># explicit static library</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_static_lib</span><span class="p">(</span><span class="s">&quot;a0&quot;</span><span class="p">)</span>
+        <span class="c"># explicit shared library</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_shared_lib</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">)</span>
+        <span class="c"># create either static or shared library based on variant</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_library</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">)</span>
         <span class="c"># executable</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
-            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_executable</span><span class="p">(</span><span class="s">&quot;prog0&quot;</span><span class="p">)</span>
 </pre></div></div></div>
 <div class="paragraph"><p>After doing <em>one</em> of the above, your Project&#8217;s <span class="monospaced">outputPath</span>
 field will be defined to the absolute path of the resultant
@@ -1594,13 +1606,10 @@ Because some toolchains (MSVC) generate an object file
 </ul></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_pch</span><span class="p">(</span><span class="s">&quot;source/a0_pch.h&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pchTask</span><span class="p">:</span>
-            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_pch</span><span class="p">(</span><span class="s">&quot;source/a0_pch.h&quot;</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpp_compile</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="k">as</span> <span class="n">tasks</span><span class="p">:</span>
             <span class="n">tasks</span><span class="o">.</span><span class="n">usePCH</span> <span class="o">=</span> <span class="n">pchTask</span><span class="o">.</span><span class="n">outputPath</span>
-            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;FOO&quot;</span><span class="p">)</span>
 </pre></div></div></div>
 <div class="paragraph"><p>If you&#8217;re interested in the gory details of the PCH implementation,
 you can read more
@@ -1616,7 +1625,19 @@ each PCH is compiled "from scratch".  Functionally it still works, but compilati
 </div>
 </div>
 <div class="sect2">
-<h3 id="_protobuf_8594_c_code_generation">3.8. Protobuf &#8594; C++ Code Generation</h3>
+<h3 id="_a_id_codegen_patterns_a_code_generation_patterns">3.8. <a id="codegen-patterns"></a> Code Generation Patterns</h3>
+<div class="paragraph"><p>C++ code generators either generate includables (referenced by <span class="monospaced">#include</span>) or source files (primary input of
+a compilation).  For optimal build speed, these need to be handled differently.</p></div>
+<div class="paragraph"><p>Generated source files are fully parallelizable, and create no implicit dependencies with other files in the build.</p></div>
+<div class="paragraph"><p>Generated includables are a problem when bootstrapping, i.e. during the first time you run your build.  These dependencies
+need to be known to the build, so that any file that might <span class="monospaced">#include</span> it is scheduled to compile after the code generation.</p></div>
+<div class="paragraph"><p>To simplify build scripts, generated includables cause <em>all subsequent tasks in the same project</em> to depend on them.</p></div>
+<div class="paragraph"><p>The implicit dependencies only apply within the project instance; they do not cross variant boundaries.</p></div>
+<div class="paragraph"><p>If you have code that does not depend on these headers, make sure to declare their compilations <em>before</em> any such calls,
+to allow for better build parallelism.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_protobuf_8594_c_code_generation">3.9. Protobuf &#8594; C++ Code Generation</h3>
 <div class="paragraph"><p><a href="https://code.google.com/p/protobuf/">libprotobuf</a> is a popular
 serialization library.  It allows you to
 <a href="https://developers.google.com/protocol-buffers/docs/overview">define Protocol Buffers messages in a custom DSL</a>,
@@ -1629,13 +1650,10 @@ It properly creates a dep file so that implicit dependencies cause rebuilds.</p>
 <div class="content"><div class="highlight"><pre>    <span class="c"># in emit method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protoc_cpp_compile</span><span class="p">(</span><span class="s">&quot;somefile.proto&quot;</span><span class="p">)</span>
-
-    <span class="c"># in set_cpp_compile_options method</span>
-        <span class="n">task</span><span class="o">.</span><span class="n">extra_deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proto_sources</span><span class="p">)</span>
 </pre></div></div></div>
 </div>
 <div class="sect2">
-<h3 id="_working_with_boost">3.9. Working with Boost</h3>
+<h3 id="_working_with_boost">3.10. Working with Boost</h3>
 <div class="paragraph"><p>There are helper functions to deal with both building boost and adding boost library dependencies to your
 own projects.  These are part of the <span class="monospaced">repo</span> package.  Example usage can be found in
 <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py">qt0.py</a> and is as simple as:</p></div>
@@ -1646,7 +1664,7 @@ own projects.  These are part of the <span class="monospaced">repo</span> packag
 </pre></div></div></div>
 </div>
 <div class="sect2">
-<h3 id="_working_with_qt">3.10. Working with Qt</h3>
+<h3 id="_working_with_qt">3.11. Working with Qt</h3>
 <div class="paragraph"><p>Qt has two custom tools, the moc compiler (generating code for QObject classes) and the uic compiler (generating code for UI designs).
 Both tools are supported in pynja, with appropriate dependency propagation.</p></div>
 <div class="paragraph"><p>See <a href="https://github.com/fifoforlifo/pynja/blob/master/test2/code/qt0/qt0.py">qt0.py</a> for an example.  The essence of the
@@ -1664,20 +1682,18 @@ build code looks like this:</p></div>
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qt_moc_cpp_compile</span><span class="p">(</span><span class="n">moc_inputs</span><span class="p">)</span>
 </pre></div></div></div>
-<div class="paragraph"><p>To simplify build scripts, both <span class="monospaced">qt_uic</span> and <span class="monospaced">qt_moc</span> cause <em>all subsequently declared C++ compiles in the same project</em> to depend on the generated headers.
-(The implicit dependencies only apply within the project instance; they do not cross variant boundaries.)
-If you have code that does not depend on these headers, make sure to declare their compilations <em>before</em> any <span class="monospaced">qt_uic</span>/<span class="monospaced">qt_moc</span> calls,
-to allow for better build parallelism.</p></div>
+<div class="paragraph"><p>As mentioned <a href="#codegen-patterns">earlier</a>, if you have code in the same project that does not depend on these generated headers,
+make sure to declare their compilations <em>before</em> any <span class="monospaced">qt_uic</span>/<span class="monospaced">qt_moc</span> calls, to allow for better build parallelism.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_runtime_and_a_id_transitive_deps_a_transitive_dependency_management">3.11. Runtime and <a id="transitive-deps"></a> Transitive Dependency Management</h3>
+<h3 id="_runtime_and_a_id_transitive_deps_a_transitive_dependency_management">3.12. Runtime and <a id="transitive-deps"></a> Transitive Dependency Management</h3>
 <div class="paragraph"><p>pynja automates transitive dependencies for both library linkage and for runtime dependencies.</p></div>
 <div class="paragraph"><p>The overall idea is for each project to declare its immediate link-time and runtime dependencies.
 Then propagate these dependencies to all consumers in the chain, so that final executables
 and shared libraries have accumulated all dependencies implicitly.</p></div>
 <div class="paragraph"><p>Using <span class="monospaced">add_lib_dependency</span> performs all of this propagation at the project level.</p></div>
 <div class="sect3">
-<h4 id="_runtime_dependencies">3.11.1. Runtime Dependencies</h4>
+<h4 id="_runtime_dependencies">3.12.1. Runtime Dependencies</h4>
 <div class="paragraph"><p>Runtime dependencies are used to indicate how binaries need to be "deployed"
 in a product&#8217;s directory layout.  To illustrate:</p></div>
 <div class="ulist"><ul>
@@ -1700,7 +1716,7 @@ On linux they are often placed in separate <span class="monospaced">bin</span> a
 </li>
 <li>
 <p>
-Shared library depending on another shared library:
+Shared library depending on another shared library: same as above.
 </p>
 </li>
 <li>
@@ -1717,12 +1733,70 @@ whose signatures are copied below.</p></div>
 </pre></div></div></div>
 <div class="paragraph"><p>Runtime dependencies are best expressed in the project where the dependency is known.  For example,
 if <span class="monospaced">common.dll</span> always depends on <span class="monospaced">helper.dll</span>, then the <span class="monospaced">common</span> project ought to add a runtime
-dependency on the <span class="monospaced">helper</span> project.  This way, any time an additional project <span class="monospaced">user</span> depends on <span class="monospaced">common</span>,
-the required dependency information is carried through.</p></div>
-<div class="paragraph"><p>It especially helps when <span class="monospaced">user</span> is not a direct client of <span class="monospaced">helper</span>, and therefore it would not be
-logical or intuitive for <span class="monospaced">user</span> to directly state a dependency on <span class="monospaced">helper</span>.  It also insulates the
-<span class="monospaced">user</span> project from all of <span class="monospaced">common's</span> dependencies, which may change over time.</p></div>
-<div class="paragraph"><p><em>TODO: good examples</em></p></div>
+dependency on the <span class="monospaced">helper</span> project.  This way, any time an additional project like <span class="monospaced">user</span> depends
+on <span class="monospaced">common</span>, the required dependency information is carried through.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_rationale_with_examples">3.12.2. Rationale with Examples</h4>
+<div class="paragraph"><p>Transitive dependencies especially help when a <span class="monospaced">user</span> library is not a direct client of a <span class="monospaced">helper</span> library,
+and therefore it would not be logical or intuitive for <span class="monospaced">user</span> to directly state a dependency on <span class="monospaced">helper</span>.
+It also insulates the <span class="monospaced">user</span> project from all of <span class="monospaced">common's</span> dependencies, which may change over time.</p></div>
+<div class="paragraph"><p>A bigger example:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Initial State:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">user</span> &#8594; <span class="monospaced">common</span>
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">common -&gt; A, B, C</span>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Next Day:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">user</span> &#8594; <span class="monospaced">common</span>
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">common -&gt; B, C, D</span>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Next Day:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">user</span> &#8594; <span class="monospaced">common</span>
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">common -&gt; B, D, F</span>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>In this example, only <span class="monospaced">common.py</span> ought to be updated daily with the new dependency list.  In the meantime,
+the <span class="monospaced">user</span> project stays completely untouched, as do the product-level "deployment" scripts.</p></div>
 </div>
 </div>
 </div>
@@ -1738,11 +1812,11 @@ Pynja has been designed with all of these in mind.</p></div>
 <div class="paragraph"><p>Micro-branching lets you branch (copy) a single project within your build, and automatically have all
 dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
 <span class="monospaced">repo/root_paths.py</span>: add a 3rd <span class="monospaced">abs_path</span> parameter to the appropriate <span class="monospaced">add_project</span> call to
-point at your alternate project location.
-For example:</p></div>
+point at your alternate project location.</p></div>
+<div class="paragraph"><p>For example:</p></div>
 <div class="listingblock">
-<div class="content"><div class="highlight"><pre>    <span class="c"># in RootPaths::init()</span>
-        <span class="n">add_project_dir</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">,</span> <span class="s">&quot;code/a2&quot;</span><span class="p">,</span> <span class="s">&quot;/home/user/code/temp_branch_of_a2&quot;</span><span class="p">)</span>
+<div class="content"><div class="highlight"><pre>    <span class="c"># in root_paths.py :: init()</span>
+    <span class="n">add_project_file</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">,</span> <span class="s">&quot;code/a2&quot;</span><span class="p">,</span> <span class="n">abs_path</span> <span class="o">=</span> <span class="s">&quot;/home/user/code/temp_branch_of_a2&quot;</span><span class="p">)</span>
 </pre></div></div></div>
 </div>
 </div>
@@ -1922,7 +1996,7 @@ that threaten to push moden software development backwards.</p></div>
 <div id="footnotes"><hr></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-31 22:57:41 Central Daylight Time
+Last updated 2014-05-16 09:16:11 Central Daylight Time
 </div>
 </div>
 </body>
