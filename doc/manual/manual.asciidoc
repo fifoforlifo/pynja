@@ -657,6 +657,26 @@ For example:
     add_project_file("a2", "code/a2", abs_path = "/home/user/code/temp_branch_of_a2")
 ----
 
+=== Modular Repository
+
+You don't need to define all projects in `repo/root_paths.py`.  If your repository is
+modular, and a subdirectory governs all projects contained within, you can define
+additional root paths as follows:
+
+[source, python]
+----
+    # in root_paths.py :: init()
+    add_repo_subdirectory("subdir_a", "code/a")
+
+    # in subdir_a.py
+    def add_root_paths():
+        repo.add_project_file_in_subdir("a0", "a0")
+        repo.add_project_file_in_subdir("a1", "a1")
+        repo.add_project_file_in_subdir("a2", "a2")
+----
+
+NOTE: This is analogous to CMake's `add_subdirectory`, and should allow easy porting.
+
 
 
 == Pynja versus The World
