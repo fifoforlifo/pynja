@@ -5,9 +5,11 @@ pynja v1.1 manual
 :source-highlighter: pygments
 :toc2:
 
+https://github.com/fifoforlifo/pynja
+
 == Introduction
 
-pynja is a cross-platform meta-build system written in *Python 3* that produces
+https://github.com/fifoforlifo/pynja[pynja] is a cross-platform meta-build system written in *Python 3* that produces
 link:http://martine.github.com/ninja/[Ninja Build files].
 
 When using pynja, it will help to be familiar with the
