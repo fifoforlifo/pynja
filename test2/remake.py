@@ -118,4 +118,5 @@ def generate_ninja_build(projectMan):
 if (__name__ == "__main__"):
     print("generating with rootDir=%s" % repo.rootDir)
     repo.init()
+    repo.import_repo_file('code/test2.py')
     pynja.regenerate_build(generate_ninja_build, repo.rootPaths.built, repo.rootPaths.codeBrowsing)

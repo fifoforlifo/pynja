@@ -150,16 +150,6 @@ def init():
     import_repo_file('build/repo/qt/qt_xml.py')
     # boost helper projects
     import_repo_file('build/repo/boost/boost_build.py')
-    # real source projects
-    import_repo_file('code/test2.py')
-    import_repo_dir('code/a')
-    import_repo_dir('code/prog0')
-    import_repo_dir('code/java1')
-    import_repo_dir('code/java2')
-    import_repo_dir('code/qt0')
-
-    # additional build/source paths
-    rootPaths.dllexport = os.path.join(rootDir, "code/dllexport")
 
     # output paths
     rootPaths.out = os.path.join(rootDir, "_out")

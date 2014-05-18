@@ -2,6 +2,15 @@ import os
 import pynja
 import repo
 
+repo.import_repo_dir('code/a')
+repo.import_repo_dir('code/prog0')
+repo.import_repo_dir('code/java1')
+repo.import_repo_dir('code/java2')
+repo.import_repo_dir('code/qt0')
+
+# additional build/source paths
+repo.rootPaths.dllexport = os.path.join(repo.rootDir, "code/dllexport")
+
 @pynja.project
 class test2(repo.DeployProject):
     def emit(self):
