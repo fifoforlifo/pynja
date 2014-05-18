@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="generator" content="AsciiDoc 8.6.8">
-<title>pynja v1.1 manual</title>
+<title>pynja v1.2 manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -830,7 +830,7 @@ asciidoc.install(2);
 </head>
 <body class="article">
 <div id="header">
-<h1>pynja v1.1 manual</h1>
+<h1>pynja v1.2 manual</h1>
 <span id="author">Avinash Baliga</span><br>
 <span id="email" class="monospaced">&lt;<a href="mailto:com DOT gmail AT fifoforlifo">com DOT gmail AT fifoforlifo</a>&gt;</span><br>
 <div id="toc">
@@ -1813,40 +1813,81 @@ the <span class="monospaced">user</span> project stays completely untouched, as 
 repository, with thought towards both workflow and VCS interaction.
 Pynja has been designed with all of these in mind.</p></div>
 <div class="sect2">
-<h3 id="_a_id_micro_branching_a_micro_branching">4.1. <a id="micro-branching"></a> Micro-Branching</h3>
-<div class="paragraph"><p>Micro-branching lets you branch (copy) a single project within your build, and automatically have all
-dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
-<span class="monospaced">repo/root_paths.py</span>: add a 3rd <span class="monospaced">abs_path</span> parameter to the appropriate <span class="monospaced">add_project</span> call to
-point at your alternate project location.</p></div>
-<div class="paragraph"><p>For example:</p></div>
+<h3 id="_modular_repository">4.1. Modular Repository</h3>
+<div class="paragraph"><p>You don&#8217;t need to define all projects in <span class="monospaced">repo/root_paths.py</span> nor <span class="monospaced">remake.py</span>.
+If your repository is modular, and a subdirectory governs all projects contained
+within, you can define additional root paths as follows:</p></div>
 <div class="listingblock">
-<div class="content"><div class="highlight"><pre>    <span class="c"># in root_paths.py :: init()</span>
-    <span class="n">add_project_file</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">,</span> <span class="s">&quot;code/a2&quot;</span><span class="p">,</span> <span class="n">abs_path</span> <span class="o">=</span> <span class="s">&quot;/home/user/code/temp_branch_of_a2&quot;</span><span class="p">)</span>
-</pre></div></div></div>
-</div>
-<div class="sect2">
-<h3 id="_modular_repository">4.2. Modular Repository</h3>
-<div class="paragraph"><p>You don&#8217;t need to define all projects in <span class="monospaced">repo/root_paths.py</span>.  If your repository is
-modular, and a subdirectory governs all projects contained within, you can define
-additional root paths as follows:</p></div>
-<div class="listingblock">
-<div class="content"><div class="highlight"><pre>    <span class="c"># in root_paths.py :: init()</span>
-    <span class="n">add_repo_subdirectory</span><span class="p">(</span><span class="s">&quot;subdir_a&quot;</span><span class="p">,</span> <span class="s">&quot;code/a&quot;</span><span class="p">)</span>
+<div class="content"><div class="highlight"><pre>    <span class="c"># remake.py</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_dir</span><span class="p">(</span><span class="s">&quot;code/projectX&quot;</span><span class="p">)</span>
 
-    <span class="c"># in subdir_a.py</span>
-    <span class="k">def</span> <span class="nf">add_root_paths</span><span class="p">():</span>
-        <span class="n">repo</span><span class="o">.</span><span class="n">add_project_file_in_subdir</span><span class="p">(</span><span class="s">&quot;a0&quot;</span><span class="p">,</span> <span class="s">&quot;a0&quot;</span><span class="p">)</span>
-        <span class="n">repo</span><span class="o">.</span><span class="n">add_project_file_in_subdir</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">,</span> <span class="s">&quot;a1&quot;</span><span class="p">)</span>
-        <span class="n">repo</span><span class="o">.</span><span class="n">add_project_file_in_subdir</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">,</span> <span class="s">&quot;a2&quot;</span><span class="p">)</span>
+    <span class="c"># code/projectX/projectX.py</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_subdir</span><span class="p">(</span><span class="s">&quot;a0&quot;</span><span class="p">)</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_subdir</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">)</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_subdir</span><span class="p">(</span><span class="s">&quot;a2&quot;</span><span class="p">)</span>
 </pre></div></div></div>
+<div class="paragraph"><p>There are actually 2 sets of functions:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Repository-relative import.  These are effectively absolute imports within your branch.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">repo.import_file()</span> : import the specified file
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">repo.import_dir()</span> : import the file whose name matches the specified directory
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Script-relative import.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<span class="monospaced">repo.import_subdir_file()</span>
+</p>
+</li>
+<li>
+<p>
+<span class="monospaced">repo.import_subdir()</span>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>You are encouraged to follow the convention of naming the build script after the directory
+it resides in, and use the shorter and more-convenient <span class="monospaced">import_dir</span> and <span class="monospaced">import_subdir</span>.</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
 <img src="./images/icons/note.png" alt="Note">
 </td>
-<td class="content">This is analogous to CMake&#8217;s <span class="monospaced">add_subdirectory</span>, and should allow easy porting.</td>
+<td class="content">Script-relative import is analogous to CMake&#8217;s <span class="monospaced">add_subdirectory</span>, and should allow for easy porting.</td>
 </tr></table>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_a_id_micro_branching_a_micro_branching">4.2. <a id="micro-branching"></a> Micro-Branching</h3>
+<div class="paragraph"><p>Micro-branching is a technique whereby you branch (copy) a single directory within your build,
+and automatically have all dependencies transfer to this branch.
+With pynja, this merely requires local modifications to your build scripts:
+add an <span class="monospaced">altPath</span> parameter to the appropriate <span class="monospaced">import_file/import_dir/import_subdir_file/import_subdir</span> call to
+point at your alternate location.</p></div>
+<div class="paragraph"><p>For example:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre>    <span class="c"># original (in source control)</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_subdir</span><span class="p">(</span><span class="s">&quot;threading&quot;</span><span class="p">)</span>
+    <span class="c"># with altPath</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">import_subdir</span><span class="p">(</span><span class="s">&quot;threading&quot;</span><span class="p">,</span> <span class="n">altPath</span> <span class="o">=</span> <span class="s">&quot;/home/you/ubranches/threading&quot;</span><span class="p">)</span>
+</pre></div></div></div>
 </div>
 </div>
 </div>
@@ -2025,7 +2066,7 @@ that threaten to push moden software development backwards.</p></div>
 <div id="footnotes"><hr></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-05-16 09:39:01 Central Daylight Time
+Last updated 2014-05-18 16:33:16 Central Daylight Time
 </div>
 </div>
 </body>
