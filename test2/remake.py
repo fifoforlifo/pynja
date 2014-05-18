@@ -14,13 +14,6 @@ build_cpp = True
 build_java = True
 
 
-def get_current_script_path():
-    if os.path.isabs(__file__):
-        return __file__
-    else:
-        return os.path.join(repo.rootDir, __file__)
-
-
 def generate_ninja_build(projectMan):
     # define cpp_variants and toolchains on a per-OS basis
     cpp_variants = []
@@ -108,10 +101,11 @@ def generate_ninja_build(projectMan):
     for variant in deploy_variants:
         projectMan.get_project("test2", variant)
 
+    currentScriptPath = os.path.join(repo.rootDir, os.path.basename(__file__))
 
     projectMan.emit_deploy_targets()
     projectMan.emit_phony_targets()
-    projectMan.emit_regenerator_target(get_current_script_path())
+    projectMan.emit_regenerator_target(currentScriptPath)
 
 
 
