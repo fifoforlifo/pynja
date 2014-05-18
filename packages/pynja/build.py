@@ -399,10 +399,7 @@ class ProjectMan:
 projectFactory = {}
 
 def project(projectType):
-    name = projectType.__name__
     repo = __import__("repo")
-    absPath = getattr(repo.rootPathsAbs, projectType.__module__, None)
-    relPath = getattr(repo.rootPathsRel, projectType.__module__, None)
-    repo.add_project_file(projectType.__name__, relPath, absPath, doImport = False)
-    projectFactory[name] = projectType
+    repo.root_paths._add_project_entry(projectType.__name__, projectType.__module__)
+    projectFactory[projectType.__name__] = projectType
     return projectType

@@ -3,87 +3,159 @@
 import sys
 import os
 import inspect
+import uuid
+import importlib.machinery
+
 import pynja
 from .root_dir import finder
 
-## note: There's a lot of extra book-keeping in some areas because
-##       Python <3.4 don't consistently provide __file__ as an abs. path.
+################################################################################
+#   There's a lot of extra book-keeping in some areas to work around the fact that
+#   Python <3.4 don't consistently provide __file__ as an absolute path.
+#
+#   Specifically, in these prior versions, the sys.path entry that was used
+#   to load the source file dictates the __file__ prefix.  If that entry was relative,
+#   the source file's __file__ is also relative.
+#
+#   cf. http://stackoverflow.com/questions/7116889/python-file-attribute-absolute-or-relative
+
+################################################################################
+#   Script loading
+
+_scriptPathsRel = {}            # map [uuid4] name -> relative path for script files
+_scriptPathsAbs = {}            # map [uuid4] name -> absolute path for script files
+_scriptRelToAbs = {}            # map relPath -> absPath for script files
+
+def _import_script(name, absPath):
+    absPath = os.path.normpath(absPath)
+    if not os.path.isabs(absPath):
+        raise Exception("expected absolute path, but absPath=%s" % (absPath))
+    loader = importlib.machinery.SourceFileLoader(name, absPath)
+    return loader.load_module(name)
+
+################################################################################
+#   rootPaths management
 
 rootDir = finder.get_root_dir()
 
 # Define a singleton rootPaths object.
 class RootPaths(object):
     pass
-rootPathsAbs = RootPaths()      # absolute paths
-rootPathsRel = RootPaths()      # relative paths from the repo
-rootPaths = rootPathsAbs        # shorter alias
 
-subdirPathsAbs = RootPaths()    # for impoort_root_paths
+rootPathsAbs = RootPaths()      # map project name -> absolute path
+rootPathsRel = RootPaths()      # map project name -> relative path from rootDir
+rootPaths = rootPathsAbs        # shorter alias for rootPathsAbs
 
 
-def add_project_file(name, relPath, absPath = None, doImport = True):
-    """ Add rootPath.<name> and optionally __import__(name)
+def _add_project_entry(projName, scriptName):
+    """Add project to rootPathsRel and rootPathAbs.
 
         Keyword arguments
-        name = name of file to be imported, and the "primary" project class
-        relPath = relative path from rootDir; this is the default un-microbranched location of the project file
-        absPath = absolute path, may be None; only needed for microbranching
+        projName -- __name__ of the project class
+        scriptName -- __name__ of the script in which the project class was defined
     """
-    if not absPath:
-        absPath = os.path.normpath(os.path.join(rootDir, relPath))
-    existingAbsPath = getattr(rootPaths, name, None)
-    if existingAbsPath:
-        if existingAbsPath == absPath:
+    relPath = os.path.dirname(_scriptPathsRel[scriptName])
+    absPath = os.path.dirname(_scriptPathsAbs[scriptName])
+    oldAbsPath = getattr(rootPaths, projName, None)
+    if oldAbsPath:
+        if oldAbsPath == absPath:
             return
-        raise Exception("Attempting to add duplicate project '%s' from:\n    %s\n    %s" % (name, existingAbsPath, absPath))
-    setattr(rootPathsAbs, name, absPath)
-    setattr(rootPathsRel, name, os.path.normpath(relPath))
-    if doImport:
-        if absPath not in sys.path: # O(N) check, but this is low-frequency code
-            sys.path.append(absPath)
-        __import__(name)
-        # now all decorated project classes from the imported module will be available
+        raise Exception("Attempting to add duplicate project '%s' from:\n    %s\n    %s" % (name, oldAbsPath, absPath))
+    setattr(rootPathsAbs, projName, absPath)
+    setattr(rootPathsRel, projName, relPath)
 
 
-# Adds a project file by subdirectory path, relative to the invoking file's directory.
-# Most often called from a file imported by add_repo_subdirectory.
-def add_project_file_in_subdir(name, subdirPath):
-    frame = inspect.stack()[1]
-    module = inspect.getmodule(frame[0])
-    parentName = module.__name__
-    relPath = os.path.join(getattr(rootPathsRel, parentName), subdirPath)
-    absPath = os.path.join(getattr(rootPathsAbs, parentName, None), subdirPath)
-    add_project_file(name, relPath, absPath)
+def import_repo_file(relPathFromRootDir, altPath = None):
+    """Import a file by relative-path-from-repo-rootDir; supports micro-branching.
 
+        Keyword arguments
+        relPathFromRootDir -- relative path from rootDir; this is the default un-microbranched location of the project file
+        altPath -- absolute path, may be None; only needed for microbranching
+    """
+    if os.path.isabs(relPathFromRootDir):
+        raise Exception("relPathFromRootDir must not be absolute: %s" % (relPathFromRootDir))
 
-# Add a script in a subdirectory, that can contribute additional project definitions.
-# This allows modularizing the repository, where each subdirectory manages its own components.
-# This function is somewhat analagous to a CMake add_subdirectory.
-def add_repo_subdirectory(name, relPath, absPath = None):
+    relPath = os.path.normpath(relPathFromRootDir)
+    absPath = altPath
     if not absPath:
         absPath = os.path.normpath(os.path.join(rootDir, relPath))
-    if absPath not in sys.path: # O(N) check, but this is low-frequency code
-        sys.path.append(absPath)
-    setattr(rootPathsAbs, name, absPath)
-    setattr(rootPathsRel, name, os.path.normpath(relPath))
-    submodule = __import__(name)
-    submodule.add_root_paths()
+
+    if relPath in _scriptRelToAbs:
+        oldAbsPath = _scriptRelToAbs[relPath]
+        if oldAbsPath != absPath:
+            raise Exception("Attempting to import same project_file with differing absPath:\n    %s\n    %s" % (oldAbsPath, absPath))
+        return
+
+    name = str(uuid.uuid4())
+    _scriptPathsAbs[name] = absPath
+    _scriptPathsRel[name] = relPath
+    _scriptRelToAbs[relPath] = absPath
+
+    return _import_script(name, absPath)
+
+
+def import_repo_dir(relDirFromRootDir, altPath = None):
+    """Call import_repo_file with the .py file whose name matches relDirFromRootDir."""
+    basename = os.path.basename(relDirFromRootDir)
+    relPathFromRootDir = os.path.join(relDirFromRootDir, basename + ".py")
+    return import_repo_file(relPathFromRootDir, altPath)
+
+
+def import_subdir_file(subPath, callerDepth = 1):
+    """Import a file by relative-path-from-invoking-script-dir; does not support micro-branching.
+
+        Keyword arguments
+        subdirPath -- filename, as relative path from invoking file's directory
+
+        subdirPath must be a nested subdirectory.  You may not "reach outside"
+        to a sibling or parent directory.  If you need to do this, consider
+        one of these alternatives:
+
+        *   importing from a parent directory's script
+        *   defining a rootPath and calling import_project_file() instead.
+    """
+    frame = inspect.stack()[callerDepth]
+    module = inspect.getmodule(frame[0])
+
+    subPath = os.path.normpath(subPath)
+    if len(subPath) > 3 and subPath[0] == '.' and subPath[1] == '.' and subPath[2] == os.path.sep:
+        raise Exception("you may not reach outside your directory: %s" % (subPath))
+
+    relPath = _scriptPathsRel[module.__name__]
+    absPath = _scriptPathsAbs[module.__name__]
+    relPath = os.path.join(os.path.dirname(relPath), subPath)
+    absPath = os.path.join(os.path.dirname(absPath), subPath)
+
+    name = str(uuid.uuid4())
+    _scriptPathsAbs[name] = absPath
+    _scriptPathsRel[name] = relPath
+    _scriptRelToAbs[relPath] = absPath
+
+    return _import_script(name, absPath)
+
+
+def import_subdir(subDir):
+    """Call import_subdir_file with the .py file whose name matches subDir."""
+    basename = os.path.basename(subDir)
+    subPath = os.path.join(subDir, basename + ".py")
+    return import_subdir_file(subPath, callerDepth = 2)
 
 
 def init():
     # qt helper projects
-    add_project_file("qt_core", "build/repo/qt")
-    add_project_file("qt_xml", "build/repo/qt")
+    import_repo_file('build/repo/qt/qt_core.py')
+    import_repo_file('build/repo/qt/qt_xml.py')
     # boost helper projects
-    add_project_file("boost_build", "build/repo/boost")
+    import_repo_file('build/repo/boost/boost_build.py')
     # real source projects
-    add_project_file("test2", "code")
-    add_repo_subdirectory("subdir_a", "code/a")
-    add_project_file("prog0", "code/prog0")
-    add_project_file("java1", "code/java1")
-    add_project_file("java2", "code/java2")
-    add_project_file("qt0", "code/qt0")
+    import_repo_file('code/test2.py')
+    import_repo_dir('code/a')
+    import_repo_dir('code/prog0')
+    import_repo_dir('code/java1')
+    import_repo_dir('code/java2')
+    import_repo_dir('code/qt0')
 
+    # additional build/source paths
     rootPaths.dllexport = os.path.join(rootDir, "code/dllexport")
 
     # output paths
