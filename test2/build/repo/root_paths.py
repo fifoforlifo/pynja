@@ -50,7 +50,7 @@ rootPaths = rootPathsAbs        # shorter alias for rootPathsAbs
 def _add_project_entry(projName, scriptName):
     """Add project to rootPathsRel and rootPathAbs.
 
-        Keyword arguments
+    Args:
         projName -- __name__ of the project class
         scriptName -- __name__ of the script in which the project class was defined
     """
@@ -66,11 +66,12 @@ def _add_project_entry(projName, scriptName):
 
 
 def import_repo_file(relPathFromRootDir, altPath = None):
-    """Import a file by relative-path-from-repo-rootDir; supports micro-branching.
+    """Import a file by relative-path-from-repo-rootDir.
 
-        Keyword arguments
+    Args:
         relPathFromRootDir -- relative path from rootDir; this is the default un-microbranched location of the project file
-        altPath -- absolute path, may be None; only needed for microbranching
+        altPath -- alternate absolute path to the file; defaults to None.
+            Specify this for local (temporary) microbranching.
     """
     if os.path.isabs(relPathFromRootDir):
         raise Exception("relPathFromRootDir must not be absolute: %s" % (relPathFromRootDir))
@@ -101,18 +102,20 @@ def import_repo_dir(relDirFromRootDir, altPath = None):
     return import_repo_file(relPathFromRootDir, altPath)
 
 
-def import_subdir_file(subPath, callerDepth = 1):
-    """Import a file by relative-path-from-invoking-script-dir; does not support micro-branching.
+def import_subdir_file(subPath, altPath = None, callerDepth = 1):
+    """Import a file by relative-path-from-invoking-script-dir.
 
-        Keyword arguments
+    Args:
         subdirPath -- filename, as relative path from invoking file's directory
+        altPath -- alternate absolute path to the file; defaults to None.
+            This path sepcifies a microbranch location.
 
-        subdirPath must be a nested subdirectory.  You may not "reach outside"
-        to a sibling or parent directory.  If you need to do this, consider
-        one of these alternatives:
+    subdirPath must be a nested subdirectory.  You may not "reach outside"
+    to a sibling or parent directory; permitting that would break modularity.
+    If you need to do this, consider one of these alternatives:
 
-        *   importing from a parent directory's script
-        *   defining a rootPath and calling import_project_file() instead.
+    *   calling import_subdir_file from a parent directory's script
+    *   defining a rootPath and calling import_repo_file() instead.
     """
     frame = inspect.stack()[callerDepth]
     module = inspect.getmodule(frame[0])
@@ -134,11 +137,11 @@ def import_subdir_file(subPath, callerDepth = 1):
     return _import_script(name, absPath)
 
 
-def import_subdir(subDir):
+def import_subdir(subDir, altPath = None):
     """Call import_subdir_file with the .py file whose name matches subDir."""
     basename = os.path.basename(subDir)
     subPath = os.path.join(subDir, basename + ".py")
-    return import_subdir_file(subPath, callerDepth = 2)
+    return import_subdir_file(subPath, altPath, callerDepth = 2)
 
 
 def init():
