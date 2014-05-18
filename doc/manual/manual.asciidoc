@@ -1,4 +1,4 @@
-pynja v1.1 manual
+pynja v1.2 manual
 =================
 :Author: Avinash Baliga
 :Email: com DOT gmail AT fifoforlifo
@@ -644,40 +644,56 @@ Here are some tips and suggestions for how to organize your source
 repository, with thought towards both workflow and VCS interaction.
 Pynja has been designed with all of these in mind.
 
+=== Modular Repository
+
+You don't need to define all projects in `repo/root_paths.py` nor `remake.py`.
+If your repository is modular, and a subdirectory governs all projects contained
+within, you can define additional root paths as follows:
+
+[source, python]
+----
+    # remake.py
+    repo.import_dir("code/projectX")
+
+    # code/projectX/projectX.py
+    repo.import_subdir("a0")
+    repo.import_subdir("a1")
+    repo.import_subdir("a2")
+----
+
+There are actually 2 sets of functions:
+
+*   Repository-relative import.  These are effectively absolute imports within your branch.
+    **  `repo.import_file()` : import the specified file
+    **  `repo.import_dir()` : import the file whose name matches the specified directory
+*   Script-relative import.
+    **  `repo.import_subdir_file()`
+    **  `repo.import_subdir()`
+
+You are encouraged to follow the convention of naming the build script after the directory
+it resides in, and use the shorter and more-convenient `import_dir` and `import_subdir`.
+
+NOTE: Script-relative import is analogous to CMake's `add_subdirectory`, and should allow for easy porting.
+
+
 === [[micro-branching]] Micro-Branching
 
-Micro-branching lets you branch (copy) a single project within your build, and automatically have all
-dependencies transfer to the branch.  With pynja, this merely requires local modifications to your
-`repo/root_paths.py`: add a 3rd `abs_path` parameter to the appropriate `add_project` call to
-point at your alternate project location.
+Micro-branching is a technique whereby you branch (copy) a single directory within your build,
+and automatically have all dependencies transfer to this branch.
+With pynja, this merely requires local modifications to your build scripts:
+add an `altPath` parameter to the appropriate `import_file/import_dir/import_subdir_file/import_subdir` call to
+point at your alternate location.
 
 For example:
 
 [source, python]
 ----
-    # in root_paths.py :: init()
-    add_project_file("a2", "code/a2", abs_path = "/home/user/code/temp_branch_of_a2")
+    # original (in source control)
+    repo.import_subdir("threading")
+    # with altPath
+    repo.import_subdir("threading", altPath = "/home/you/ubranches/threading")
 ----
 
-=== Modular Repository
-
-You don't need to define all projects in `repo/root_paths.py`.  If your repository is
-modular, and a subdirectory governs all projects contained within, you can define
-additional root paths as follows:
-
-[source, python]
-----
-    # in root_paths.py :: init()
-    add_repo_subdirectory("subdir_a", "code/a")
-
-    # in subdir_a.py
-    def add_root_paths():
-        repo.add_project_file_in_subdir("a0", "a0")
-        repo.add_project_file_in_subdir("a1", "a1")
-        repo.add_project_file_in_subdir("a2", "a2")
-----
-
-NOTE: This is analogous to CMake's `add_subdirectory`, and should allow easy porting.
 
 
 

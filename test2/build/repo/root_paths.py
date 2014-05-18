@@ -65,7 +65,7 @@ def _add_project_entry(projName, scriptName):
     setattr(rootPathsRel, projName, relPath)
 
 
-def import_repo_file(relPathFromRootDir, altPath = None):
+def import_file(relPathFromRootDir, altPath = None):
     """Import a file by relative-path-from-repo-rootDir.
 
     Args:
@@ -95,11 +95,17 @@ def import_repo_file(relPathFromRootDir, altPath = None):
     return _import_script(name, absPath)
 
 
-def import_repo_dir(relDirFromRootDir, altPath = None):
-    """Call import_repo_file with the .py file whose name matches relDirFromRootDir."""
+def import_dir(relDirFromRootDir, altPath = None):
+    """Call import_file with the .py file whose name matches relDirFromRootDir.
+
+    Example:
+            repo.import_dir("foo/thing")
+        is equivalent to
+            repo.import_file("foo/thing/thing.py")
+    """
     basename = os.path.basename(relDirFromRootDir)
     relPathFromRootDir = os.path.join(relDirFromRootDir, basename + ".py")
-    return import_repo_file(relPathFromRootDir, altPath)
+    return import_file(relPathFromRootDir, altPath)
 
 
 def import_subdir_file(subPath, altPath = None, callerDepth = 1):
@@ -115,7 +121,7 @@ def import_subdir_file(subPath, altPath = None, callerDepth = 1):
     If you need to do this, consider one of these alternatives:
 
     *   calling import_subdir_file from a parent directory's script
-    *   defining a rootPath and calling import_repo_file() instead.
+    *   defining a rootPath and calling import_file() instead.
     """
     frame = inspect.stack()[callerDepth]
     module = inspect.getmodule(frame[0])
@@ -138,49 +144,57 @@ def import_subdir_file(subPath, altPath = None, callerDepth = 1):
 
 
 def import_subdir(subDir, altPath = None):
-    """Call import_subdir_file with the .py file whose name matches subDir."""
+    """Call import_subdir_file with the .py file whose name matches subDir.
+
+    Example:
+            repo.import_subdir("foo/thing")
+        is equivalent to
+            repo.import_subdir_file("foo/thing/thing.py")
+    """
     basename = os.path.basename(subDir)
     subPath = os.path.join(subDir, basename + ".py")
     return import_subdir_file(subPath, altPath, callerDepth = 2)
 
 
 def init():
+    # define repo variable for consistent usage syntax with all other build scripts
+    repo = sys.modules[__name__]
     # qt helper projects
-    import_repo_file('build/repo/qt/qt_core.py')
-    import_repo_file('build/repo/qt/qt_xml.py')
+    repo.import_file('build/repo/qt/qt_core.py')
+    repo.import_file('build/repo/qt/qt_xml.py')
     # boost helper projects
-    import_repo_file('build/repo/boost/boost_build.py')
+    repo.import_file('build/repo/boost/boost_build.py')
 
     # output paths
-    rootPaths.out = os.path.join(rootDir, "_out")
-    rootPaths.built = os.path.join(rootPaths.out, "built")
-    rootPaths.codeBrowsing = os.path.join(rootPaths.out, "cb")
-    rootPaths.bin = os.path.join(rootPaths.out, "bin")
+    repo.rootPaths.out = os.path.join(repo.rootDir, "_out")
+    repo.rootPaths.built = os.path.join(repo.rootPaths.out, "built")
+    repo.rootPaths.codeBrowsing = os.path.join(repo.rootPaths.out, "cb")
+    repo.rootPaths.bin = os.path.join(repo.rootPaths.out, "bin")
 
     # tool paths
-    rootPaths.protobuf = os.path.join(rootDir, "imports/protobuf-2.4.1")
+    repo.rootPaths.protobuf = os.path.join(repo.rootDir, "imports/protobuf-2.4.1")
 
     if (os.name == 'nt'):
         # you can customize these paths to point at a location in source control
         if pynja.io.is_64bit_os():
-            rootPaths.msvc9 = r"C:\Program Files (x86)\Microsoft Visual Studio 9.0"
-            rootPaths.msvc10 = r"C:\Program Files (x86)\Microsoft Visual Studio 10.0"
-            rootPaths.msvc11 = r"C:\Program Files (x86)\Microsoft Visual Studio 11.0"
+            repo.rootPaths.msvc9 = r"C:\Program Files (x86)\Microsoft Visual Studio 9.0"
+            repo.rootPaths.msvc10 = r"C:\Program Files (x86)\Microsoft Visual Studio 10.0"
+            repo.rootPaths.msvc11 = r"C:\Program Files (x86)\Microsoft Visual Studio 11.0"
         else:
-            rootPaths.msvc9 = r"C:\Program Files\Microsoft Visual Studio 9.0"
-            rootPaths.msvc10 = r"C:\Program Files\Microsoft Visual Studio 10.0"
-            rootPaths.msvc11 = r"C:\Program Files\Microsoft Visual Studio 11.0"
+            repo.rootPaths.msvc9 = r"C:\Program Files\Microsoft Visual Studio 9.0"
+            repo.rootPaths.msvc10 = r"C:\Program Files\Microsoft Visual Studio 10.0"
+            repo.rootPaths.msvc11 = r"C:\Program Files\Microsoft Visual Studio 11.0"
 
-        rootPaths.winsdk71 = r'C:\Program Files\Microsoft SDKs\Windows\v7.1';
-        rootPaths.winsdk80 = r'C:\Program Files (x86)\Windows Kits\8.0';
+        repo.rootPaths.winsdk71 = r'C:\Program Files\Microsoft SDKs\Windows\v7.1';
+        repo.rootPaths.winsdk80 = r'C:\Program Files (x86)\Windows Kits\8.0';
 
-        rootPaths.mingw = r"C:\MinGW"
-        rootPaths.mingw64 = r"C:\MinGW64"
+        repo.rootPaths.mingw = r"C:\MinGW"
+        repo.rootPaths.mingw64 = r"C:\MinGW64"
 
-        rootPaths.cuda50 = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0"
+        repo.rootPaths.cuda50 = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0"
 
-        rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
+        repo.rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
 
-        rootPaths.qt5vc11BinDir = r"C:\Qt\Qt5.0.2\5.0.2\msvc2012_64\bin"
-        rootPaths.boost150 = r"D:\work\code\boost\boost_1_50_0"
-        rootPaths.re2c = os.path.join(rootDir, r"prebuilt\windows\re2c\re2c-0.13.5-bin\re2c.exe")
+        repo.rootPaths.qt5vc11BinDir = r"C:\Qt\Qt5.0.2\5.0.2\msvc2012_64\bin"
+        repo.rootPaths.boost150 = r"D:\work\code\boost\boost_1_50_0"
+        repo.rootPaths.re2c = os.path.join(rootDir, r"prebuilt\windows\re2c\re2c-0.13.5-bin\re2c.exe")

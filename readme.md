@@ -62,7 +62,19 @@ pynja can generate Visual Studio projects for code browsing.
 ## Simple example
 
 ```python
-# a0.py
+# $repo/remake.py
+import pynja
+import repo
+
+# ...
+repo.import_dir('code')
+
+# $repo/code/code.py
+import repo
+repo.import_subdir('a0')
+repo.import_subdir('prog')
+
+# $repo/code/a0/a0.py
 import pynja
 import repo
 
@@ -74,7 +86,7 @@ class a0(repo.cpp.CppProject):
 
         proj.make_static_lib("a0")
 
-# prog.py
+# $repo/code/prog/prog.py
 import os
 import pynja
 import repo

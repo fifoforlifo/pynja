@@ -2,11 +2,11 @@ import os
 import pynja
 import repo
 
-repo.import_repo_dir('code/a')
-repo.import_repo_dir('code/prog0')
-repo.import_repo_dir('code/java1')
-repo.import_repo_dir('code/java2')
-repo.import_repo_dir('code/qt0')
+repo.import_subdir('a')
+repo.import_subdir('prog0')
+repo.import_subdir('java1')
+repo.import_subdir('java2')
+repo.import_subdir('qt0')
 
 # additional build/source paths
 repo.rootPaths.dllexport = os.path.join(repo.rootDir, "code/dllexport")
