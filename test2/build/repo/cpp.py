@@ -93,7 +93,7 @@ class CppProject(pynja.CppProject):
         return getattr(rootPathsRel, type(self).__name__)
 
     def get_built_dir(self):
-        return os.path.join(rootPaths.built, self.get_project_rel_dir(), str(self.variant))
+        return os.path.join(rootPaths.built, self.get_project_rel_dir(), str(self.variant), type(self).__name__)
 
     def set_gcc_machine_arch(self, task):
         if ("gcc" in self.variant.toolchain) or ("mingw" in self.variant.toolchain):
@@ -142,17 +142,29 @@ class CppProject(pynja.CppProject):
         task.includePaths.extend(self.includePaths)
         task.includePaths.append(os.path.join(rootPaths.dllexport, "include"))
 
+
+    # library creation
+
     def make_static_lib(self, name):
+        with self.make_static_lib_ex(name) as task:
+            return task
+
+    def make_static_lib_ex(self, name):
         name = os.path.normpath(name)
         if "msvc" in self.variant.toolchain:
             outputPath = os.path.join(self.builtDir, name + ".lib")
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
-        task = super().make_static_lib(outputPath)
+
+        task = self.make_static_lib_abs_ex(outputPath)
         task.phonyTarget = name
         return task
 
     def make_shared_lib(self, name):
+        with self.make_shared_lib_ex(name) as task:
+            return task
+
+    def make_shared_lib_ex(self, name):
         name = os.path.normpath(name)
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".dll")
@@ -163,12 +175,11 @@ class CppProject(pynja.CppProject):
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".so")
             libraryPath = outputPath
-        task = super().make_shared_lib(outputPath, libraryPath)
-        task.phonyTarget = name
 
+        task = self.make_shared_lib_abs_ex(outputPath, libraryPath)
+        task.phonyTarget = name
         if self.variant.config == 'rel':
             task.lto = self.toolchain.ltoSupport
-
         return task
 
     def make_library(self, name):
@@ -177,19 +188,26 @@ class CppProject(pynja.CppProject):
         else:
             return self.make_shared_lib(name)
 
+
+    # executable creation
+
     def make_executable(self, name):
+        with self.make_executable_ex(name) as task:
+            return task
+
+    def make_executable_ex(self, name):
         name = os.path.normpath(name)
         if self.variant.os == "windows":
             outputPath = os.path.join(self.builtDir, name + ".exe")
         else:
             outputPath = os.path.join(self.builtDir, name)
-        task = super().make_executable(outputPath)
-        task.phonyTarget = name
 
+        task = self.make_executable_abs_ex(outputPath)
+        task.phonyTarget = name
         if self.variant.config == 'rel':
             task.lto = self.toolchain.ltoSupport
-
         return task
+
 
     def calc_winsdk_dir(self):
         name = 'winsdk' + str(self.winsdkVer)

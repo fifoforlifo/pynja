@@ -205,12 +205,11 @@ class CppProject(build.Project):
 
     # static lib creation
 
-    def make_static_lib(self, outputPath):
-        with self.make_static_lib_ex(outputPath) as task:
-            pass
-        return task
+    def make_static_lib_abs(self, outputPath):
+        with self.make_static_lib_abs_ex(outputPath) as task:
+            return task
 
-    def make_static_lib_ex(self, outputPath):
+    def make_static_lib_abs_ex(self, outputPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
@@ -229,12 +228,11 @@ class CppProject(build.Project):
 
     # shared lib creation
 
-    def make_shared_lib(self, outputPath, libraryPath):
-        with self.make_shared_lib_ex(outputPath, libraryPath) as task:
-            pass
-        return task
+    def make_shared_lib_abs(self, outputPath, libraryPath):
+        with self.make_shared_lib_abs_ex(outputPath, libraryPath) as task:
+            return task
 
-    def make_shared_lib_ex(self, outputPath, libraryPath):
+    def make_shared_lib_abs_ex(self, outputPath, libraryPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
@@ -255,12 +253,11 @@ class CppProject(build.Project):
 
     # executable creation
 
-    def make_executable(self, outputPath):
-        with self.make_executable_ex(outputPath) as task:
-            pass
-        return task
+    def make_executable_abs(self, outputPath):
+        with self.make_executable_abs_ex(outputPath) as task:
+            return task
 
-    def make_executable_ex(self, outputPath):
+    def make_executable_abs_ex(self, outputPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
         self.outputPath = outputPath
