@@ -128,14 +128,14 @@ class NvccToolChain(build.ToolChain):
         # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
-        outputPath = build.ninja_esc_path(task.outputPath)
-        sourcePath = build.ninja_esc_path(task.sourcePath)
+        outputPath = build.xlat_path(project, task.outputPath)
+        sourcePath = build.xlat_path(project, task.sourcePath)
         logPath = outputPath + ".log"
         sourceName = os.path.basename(task.sourcePath)
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._cxx_script)
 
-        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
@@ -143,12 +143,12 @@ class NvccToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
-        ninjaFile.write("  OBJ_FILE    = %s\n" % task.outputPath)
-        ninjaFile.write("  DEP_FILE    = %s.d\n" % task.outputPath)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  SRC_FILE    = %s\n" % sourcePath)
+        ninjaFile.write("  OBJ_FILE    = %s\n" % outputPath)
+        ninjaFile.write("  DEP_FILE    = %s.d\n" % outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
@@ -164,12 +164,12 @@ class NvccToolChain(build.ToolChain):
         # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
-        outputPath = build.ninja_esc_path(task.outputPath)
+        outputPath = build.xlat_path(project, task.outputPath)
         logPath = outputPath + ".log"
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._invoke_script)
 
-        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
 
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_path_list(ninjaFile, project, task.inputs)
@@ -177,9 +177,9 @@ class NvccToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s\n" % outputName)
         ninjaFile.write("\n")
         ninjaFile.write("\n")
@@ -187,10 +187,10 @@ class NvccToolChain(build.ToolChain):
     def emit_link(self, project, task):
         ninjaFile = project.projectMan.ninjaFile
         name = self.name
-        outputPath = build.ninja_esc_path(task.outputPath)
+        outputPath = build.xlat_path(project, task.outputPath)
         libraryPath = ""
         if task.outputLibraryPath and (task.outputLibraryPath != task.outputPath):
-            libraryPath = build.ninja_esc_path(task.outputLibraryPath)
+            libraryPath = build.xlat_path(project, task.outputLibraryPath)
         logPath = outputPath + ".log"
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._invoke_script)
@@ -207,9 +207,9 @@ class NvccToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s\n" % outputName)
         ninjaFile.write("\n")
         ninjaFile.write("\n")

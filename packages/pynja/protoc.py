@@ -79,14 +79,14 @@ class ProtocToolChain(build.ToolChain):
 
         # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
-        outputPath = build.ninja_esc_path(task.outputPath)
-        sourcePath = build.ninja_esc_path(task.sourcePath)
+        outputPath = build.xlat_path(project, task.outputPath)
+        sourcePath = build.xlat_path(project, task.sourcePath)
         logPath = outputPath + ".log"
         sourceName = os.path.basename(task.sourcePath)
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._protocScript)
 
-        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : protoc  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
@@ -94,11 +94,11 @@ class ProtocToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
-        ninjaFile.write("  OUT_FILE    = %s\n" % task.outputPath)
-        ninjaFile.write("  DEP_FILE    = %s.d\n" % task.outputPath)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  SRC_FILE    = %s\n" % sourcePath)
+        ninjaFile.write("  OUT_FILE    = %s\n" % outputPath)
+        ninjaFile.write("  DEP_FILE    = %s.d\n" % outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")

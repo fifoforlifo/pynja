@@ -69,14 +69,14 @@ class QtToolChain(build.ToolChain):
     def emit_uic(self, project, task):
         # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
-        outputPath = build.ninja_esc_path(task.outputPath)
-        sourcePath = build.ninja_esc_path(task.sourcePath)
+        outputPath = build.xlat_path(project, task.outputPath)
+        sourcePath = build.xlat_path(project, task.sourcePath)
         logPath = outputPath + ".log"
         sourceName = os.path.basename(task.sourcePath)
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._uicScript)
 
-        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
         ruleName = self._uicRule
 
         # write build command
@@ -85,10 +85,10 @@ class QtToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
-        ninjaFile.write("  OUT_FILE    = %s\n" % task.outputPath)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  SRC_FILE    = %s\n" % sourcePath)
+        ninjaFile.write("  OUT_FILE    = %s\n" % outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
@@ -115,14 +115,14 @@ class QtToolChain(build.ToolChain):
 
         # emit ninja file contents
         ninjaFile = project.projectMan.ninjaFile
-        outputPath = build.ninja_esc_path(task.outputPath)
-        sourcePath = build.ninja_esc_path(task.sourcePath)
+        outputPath = build.xlat_path(project, task.outputPath)
+        sourcePath = build.xlat_path(project, task.sourcePath)
         logPath = outputPath + ".log"
         sourceName = os.path.basename(task.sourcePath)
         outputName = os.path.basename(task.outputPath)
         scriptPath = build.ninja_esc_path(self._mocScript)
 
-        extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
+        extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
         ruleName = self._mocRule
 
         # write build command
@@ -131,10 +131,10 @@ class QtToolChain(build.ToolChain):
         build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
-        ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
-        ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
-        ninjaFile.write("  OUT_FILE    = %s\n" % task.outputPath)
-        ninjaFile.write("  LOG_FILE    = %s.log\n" % task.outputPath)
-        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
+        ninjaFile.write("  WORKING_DIR = %s\n" % build.xlat_path(project, task.workingDir))
+        ninjaFile.write("  SRC_FILE    = %s\n" % sourcePath)
+        ninjaFile.write("  OUT_FILE    = %s\n" % outputPath)
+        ninjaFile.write("  LOG_FILE    = %s.log\n" % outputPath)
+        ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
