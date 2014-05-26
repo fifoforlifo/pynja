@@ -7,21 +7,29 @@ from abc import *
 def ninja_esc_path(path):
     return path.replace('$','$$').replace(' ','$ ').replace(':', '$:')
 
-def translate_path_list(ninjaFile, paths, separator = " ", prefix = None):
+def xlat_path(project, path):
+    """Translate common prefix to variable reference."""
+    if path.startswith(project.projectDir):
+        return path.replace(project.projectDir, '$'+project._pdirName)
+    if path.startswith(project.builtDir):
+        return path.replace(project.builtDir, '$'+project._bdirName)
+    return ninja_esc_path(path)
+
+def translate_path_list(ninjaFile, project, paths, separator = " ", prefix = None):
     if prefix and (len(paths) > 0):
         ninjaFile.write(prefix)
     for path in paths:
-        pathEsc = ninja_esc_path(path)
+        pathEsc = xlat_path(project, path)
         ninjaFile.write(separator)
         ninjaFile.write(pathEsc)
 
-def translate_extra_deps(ninjaFile, task, needPipe):
+def translate_extra_deps(ninjaFile, project, task, needPipe):
     prefix = " |" if needPipe else ""
-    translate_path_list(ninjaFile, task.extraDeps, " $\n    ", prefix)
+    translate_path_list(ninjaFile, project, task.extraDeps, " $\n    ", prefix)
 
-def translate_order_only_deps(ninjaFile, task, needPipe):
+def translate_order_only_deps(ninjaFile, project, task, needPipe):
     prefix = " ||" if needPipe else ""
-    translate_path_list(ninjaFile, task.orderOnlyDeps, " $\n    ", prefix)
+    translate_path_list(ninjaFile, project, task.orderOnlyDeps, " $\n    ", prefix)
 
 def get_loaded_modules(rootDir):
     modules = []
@@ -212,11 +220,21 @@ class ProjectMan:
         self._projects = {}
         self._toolchains = {}
         self._phonyTargets = {}
+        self._ninjaVars = set()
 
         self._copyCommand = os.path.join(os.path.dirname(__file__), "scripts", "copy-file.py")
 
         self._deployFiles = {}
         self._cbProjectRoots = {} # map projName -> slnName
+
+    def _define_project_ninja_vars(self, project):
+        ninjaFile = self.ninjaFile
+        project._pdirName = type(project).__name__ + '_pdir'
+        if project._pdirName not in self._ninjaVars:
+            self._ninjaVars.add(project._pdirName)
+            ninjaFile.write('%s = %s\n' % (project._pdirName, project.projectDir))
+        project._bdirName = type(project).__name__ + str(project.variant)
+        ninjaFile.write('%s = %s\n' % (project._bdirName, project.builtDir))
 
     def get_project(self, projName, variant):
         if not isinstance(variant, Variant):
@@ -230,6 +248,7 @@ class ProjectMan:
         if project == None:
             project = projectFactory[projName](self, variant)
             variants[variantName] = project
+            self._define_project_ninja_vars(project)
             project.emit()
         return project
 

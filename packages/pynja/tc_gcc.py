@@ -202,8 +202,8 @@ class GccToolChain(build.ToolChain):
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -236,9 +236,9 @@ class GccToolChain(build.ToolChain):
         extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
 
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_lib | %(outputPath)s.rsp %(scriptPath)s" % locals())
-        build.translate_path_list(ninjaFile, task.inputs)
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_path_list(ninjaFile, project, task.inputs)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -286,8 +286,8 @@ class GccToolChain(build.ToolChain):
                 inputEsc = build.ninja_esc_path(input)
                 ninjaFile.write(" ")
                 ninjaFile.write(inputEsc)
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -297,4 +297,3 @@ class GccToolChain(build.ToolChain):
         ninjaFile.write("  DESC        = %s\n" % outputName)
         ninjaFile.write("\n")
         ninjaFile.write("\n")
-

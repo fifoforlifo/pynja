@@ -60,9 +60,9 @@ class JavacToolChain(build.ToolChain):
         # write build command
         ninjaFile.write("build %(outputPath)s.list %(extraOutputs)s %(outputPath)s.log : %(name)s_javac | %(outputPath)s.rsp %(outputPath)s.cp %(outputPath)s.src  %(scriptPath)s " % locals())
         absSourceFilePaths = [os.path.join(task.workingDir, p) for p in task.sourceFilePaths]
-        build.translate_path_list(ninjaFile, absSourceFilePaths)
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_path_list(ninjaFile, project, absSourceFilePaths)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -102,8 +102,8 @@ class JavacToolChain(build.ToolChain):
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(outputPath)s.log : %(name)s_jar | %(scriptPath)s " % locals())
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)

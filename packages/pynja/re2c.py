@@ -106,8 +106,8 @@ class Re2cToolChain(build.ToolChain):
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s : re2c  %(sourcePath)s | %(re2cPath)s" % locals())
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  SRC_FILE    = %s\n" % task.sourcePath)
@@ -115,4 +115,3 @@ class Re2cToolChain(build.ToolChain):
         ninjaFile.write("  OPTIONS     = %s\n" % optionsStr)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
-

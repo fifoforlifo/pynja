@@ -90,8 +90,8 @@ class ProtocToolChain(build.ToolChain):
 
         # write build command
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : protoc  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
-        build.translate_extra_deps(ninjaFile, task, False)
-        build.translate_order_only_deps(ninjaFile, task, True)
+        build.translate_extra_deps(ninjaFile, project, task, False)
+        build.translate_order_only_deps(ninjaFile, project, task, True)
         ninjaFile.write("\n")
 
         ninjaFile.write("  WORKING_DIR = %s\n" % task.workingDir)
@@ -102,4 +102,3 @@ class ProtocToolChain(build.ToolChain):
         ninjaFile.write("  RSP_FILE    = %s.rsp\n" % task.outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
-
