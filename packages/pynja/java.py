@@ -54,7 +54,7 @@ class JavaProject(build.Project):
         return project
 
     def java_compile(self, sourceFilePaths, classPaths = None):
-        with self.java_compile(sourceFilePaths, classPaths) as task:
+        with self.java_compile_ex(sourceFilePaths, classPaths) as task:
             pass
         return task
 
@@ -84,4 +84,3 @@ class JavaProject(build.Project):
         for extraDep in self.extraDepsForJar:
             task.extraDeps.append(extraDep)
         return task
-

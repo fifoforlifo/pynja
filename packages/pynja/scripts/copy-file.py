@@ -1,7 +1,7 @@
 import shutil
 import sys
 
-script, srcPath, dstPath = sys.argv
-
 if __name__ == '__main__':
+    script, srcPath, dstPath = sys.argv
+
     shutil.copyfile(srcPath, dstPath)
