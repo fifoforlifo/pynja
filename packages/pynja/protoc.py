@@ -1,7 +1,7 @@
 import os
 from .tc import *
 from . import build
-
+from . import monkey
 
 class ProtocTask(build.BuildTask):
     def __init__(self, project, sourcePath, builtDir, workingDir, language, toolchain):
@@ -102,3 +102,36 @@ class ProtocToolChain(build.ToolChain):
         ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
+
+def add_tool(cls):
+    def _protoc_one(self, sourcePath, language):
+        protocToolChain = self.projectMan.get_toolchain("protoc")
+        task = ProtocTask(self, sourcePath, self.builtDir, self.projectDir, language, protocToolChain)
+        self.set_protoc_options(task)
+        self._forcedDeps.add(task.outputHeader)
+        return task
+
+    @monkey.new_method(cls)
+    def protoc(self, filePaths, language):
+        if isinstance(filePaths, str):
+            return _protoc_one(self, filePaths, language)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = _protoc_one(self, filePath, language)
+                taskList.append(task)
+            tasks = build.BuildTasks(taskList)
+            return tasks
+
+    @monkey.new_method(cls)
+    def protoc_cpp_compile(self, filePaths):
+        proto_sources = []
+        with self.protoc(filePaths, 'cpp') as tasks:
+            for task in tasks:
+                proto_sources.append(task.outputPath)
+            self.cpp_compile(proto_sources)
+        return proto_sources
+
+    @monkey.new_method(cls)
+    def set_protoc_options(self, task):
+        pass

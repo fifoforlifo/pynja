@@ -282,72 +282,6 @@ class CppProject(pynja.CppProject):
         return project
 
 
-    # protoc
-
-    def _protoc_one(self, sourcePath, language):
-        protocToolChain = self.projectMan.get_toolchain("protoc")
-        task = pynja.ProtocTask(self, sourcePath, self.builtDir, self.projectDir, language, protocToolChain)
-        self.set_protoc_options(task)
-        self._forcedDeps.add(task.outputHeader)
-        return task
-
-    def protoc(self, filePaths, language):
-        if isinstance(filePaths, str):
-            return self._protoc_one(filePaths, language)
-        else:
-            taskList = []
-            for filePath in filePaths:
-                task = self._protoc_one(filePath, language)
-                taskList.append(task)
-            tasks = pynja.BuildTasks(taskList)
-            return tasks
-
-    def protoc_cpp_compile(self, filePaths):
-        proto_sources = []
-        with self.protoc(filePaths, 'cpp') as tasks:
-            for task in tasks:
-                proto_sources.append(task.outputPath)
-            self.cpp_compile(proto_sources)
-        return proto_sources
-
-    def set_protoc_options(self, task):
-        pass
-
-
-    # re2c
-
-    def _re2c_one(self, sourcePath, ext=".cpp"):
-        re2cToolChain = self.projectMan.get_toolchain("re2c")
-        task = pynja.Re2cTask(self, sourcePath, self.builtDir, self.projectDir, re2cToolChain, ext)
-        self.set_re2c_options(task)
-        self._forcedDeps.add(task.outputPath)
-        return task
-
-    def re2c(self, filePaths, ext):
-        if isinstance(filePaths, str):
-            return self._re2c_one(filePaths, ext)
-        else:
-            taskList = []
-            for filePath in filePaths:
-                task = self._re2c_one(filePath, ext)
-                taskList.append(task)
-            tasks = pynja.BuildTasks(taskList)
-            return tasks
-
-    def re2c_cpp_compile(self, filePaths, ext=".cpp"):
-        re2c_sources = []
-        with self.re2c(filePaths, ext) as tasks:
-            for task in tasks:
-                re2c_sources.append(task.outputPath)
-                # undo the forced dependency since we no file will #include the outputPath
-                self._forcedDeps.remove(task.outputPath)
-            self.cpp_compile(re2c_sources)
-        return re2c_sources
-
-    def set_re2c_options(self, task):
-        pass
-
-
     # boost
 
     def add_boost_lib_dependency(self, name, linkShared=True):
@@ -449,3 +383,7 @@ class CppProject(pynja.CppProject):
                 libFilePath = os.path.join(self.qtLibDir, libName + '.lib')
                 self.add_input_lib(libFilePath)
             self.add_runtime_dependency(os.path.join(self.qtBinDir, libName + '.dll'))
+
+# add custom tools
+pynja.re2c.add_tool(CppProject)
+pynja.protoc.add_tool(CppProject)

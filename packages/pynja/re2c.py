@@ -1,7 +1,7 @@
 import os
 from .tc import *
 from . import build
-
+from . import monkey
 
 class Re2cTask(build.BuildTask):
     def __init__(self, project, sourcePath, builtDir, workingDir, toolchain, outputExt='.cpp'):
@@ -115,3 +115,38 @@ class Re2cToolChain(build.ToolChain):
         ninjaFile.write("  OPTIONS     = %s\n" % optionsStr)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
+
+def add_tool(cls):
+    def _re2c_one(self, sourcePath, ext=".cpp"):
+        re2cToolChain = self.projectMan.get_toolchain("re2c")
+        task = Re2cTask(self, sourcePath, self.builtDir, self.projectDir, re2cToolChain, ext)
+        self.set_re2c_options(task)
+        self._forcedDeps.add(task.outputPath)
+        return task
+
+    @monkey.new_method(cls)
+    def re2c(self, filePaths, ext):
+        if isinstance(filePaths, str):
+            return _re2c_one(self, filePaths, ext)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = _re2c_one(self, filePath, ext)
+                taskList.append(task)
+            tasks = build.BuildTasks(taskList)
+            return tasks
+
+    @monkey.new_method(cls)
+    def re2c_cpp_compile(self, filePaths, ext=".cpp"):
+        re2c_sources = []
+        with self.re2c(filePaths, ext) as tasks:
+            for task in tasks:
+                re2c_sources.append(task.outputPath)
+                # undo the forced dependency since we no file will #include the outputPath
+                self._forcedDeps.remove(task.outputPath)
+            self.cpp_compile(re2c_sources)
+        return re2c_sources
+
+    @monkey.new_method(cls)
+    def set_re2c_options(self, task):
+        pass
