@@ -1,5 +1,5 @@
-import repo
+import pynja
 
-repo.import_subdir("a0")
-repo.import_subdir("a1")
-repo.import_subdir("a2")
+pynja.import_subdir("a0")
+pynja.import_subdir("a1")
+pynja.import_subdir("a2")

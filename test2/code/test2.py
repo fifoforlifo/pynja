@@ -2,19 +2,19 @@ import os
 import pynja
 import repo
 
-repo.import_subdir('a')
-repo.import_subdir('prog0')
-repo.import_subdir('java1')
-repo.import_subdir('java2')
-repo.import_subdir('qt0')
+pynja.import_subdir('a')
+pynja.import_subdir('prog0')
+pynja.import_subdir('java1')
+pynja.import_subdir('java2')
+pynja.import_subdir('qt0')
 
 # additional build/source paths
-repo.rootPaths.dllexport = os.path.join(repo.rootDir, "code/dllexport")
+pynja.rootPaths.dllexport = os.path.join(pynja.rootDir, "code/dllexport")
 
 @pynja.project
 class test2(repo.DeployProject):
     def emit(self):
-        productDir = os.path.join(repo.rootPaths.bin, str(self.variant))
+        productDir = os.path.join(pynja.rootPaths.bin, str(self.variant))
 
         if self.variant.product == "app32":
             if os.name == 'nt':

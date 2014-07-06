@@ -9,12 +9,12 @@ class prog0(repo.CppProject):
         libA0 = self.add_cpplib_dependency('a0', 'sta')
         libA1 = self.add_cpplib_dependency('a1', 'dyn')
 
-        self.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
-        self.includePaths.append(os.path.join(repo.rootPaths.a1, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a0, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a1, "include"))
 
         # compile one file at a time with per-file settings
         with self.cpp_compile_ex("source/e0_0.cpp") as task:
-            task.includePaths.append(os.path.join(repo.rootPaths.a0, "includeSpecial"))
+            task.includePaths.append(os.path.join(pynja.rootPaths.a0, "includeSpecial"))
         with self.cpp_compile_ex("source/e0_7.cpp") as task:
             # force no optimizations on this file
             task.optimize = 0

@@ -5,7 +5,7 @@ import repo
 @pynja.project
 class a2(repo.CppProject):
     def emit(self):
-        self.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a2, "include"))
 
         sources = [
             "source/a2_0.cpp",
@@ -30,4 +30,4 @@ class a2_client(repo.CppProject):
 
     def set_cpp_compile_options(self, task):
         super().set_cpp_compile_options(task)
-        task.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
+        task.includePaths.append(os.path.join(pynja.rootPaths.a2, "include"))

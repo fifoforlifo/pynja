@@ -5,10 +5,10 @@ import repo
 @pynja.project
 class qt0(repo.CppProject):
     def emit(self):
-        self.includePaths.append(repo.rootPaths.boost150)
+        self.includePaths.append(pynja.rootPaths.boost150)
         self.includePaths.extend(self.qtIncludePaths)
-        self.includePaths.append(os.path.join(repo.rootPaths.qt0, "include"))
-        self.includePaths.append(os.path.join(repo.rootPaths.qt0, "source"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.qt0, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.qt0, "source"))
         self.defines.append("FOO")
 
         # minor optimization: put non-qt code first, so that they're not

@@ -7,9 +7,9 @@ class boost_build(repo.CppProject):
     def emit(self):
         if 'msvc' in self.variant.toolchain:
             projectDir = self.projectDir
-            boostDir = repo.rootPaths.boost150
+            boostDir = pynja.rootPaths.boost150
             vcVer = self.variant.toolchain[4:]
-            vcDir = getattr(repo.rootPaths, 'msvc' + vcVer)
+            vcDir = getattr(pynja.rootPaths, 'msvc' + vcVer)
             arch = self.variant.arch
             if self.variant.crt == 'dcrt':
                 runtimeLink = 'shared'
@@ -20,7 +20,7 @@ class boost_build(repo.CppProject):
             else:
                 config = 'release'
 
-            stageDir = os.path.join(repo.rootPaths.boost150, "stage", arch)
+            stageDir = os.path.join(pynja.rootPaths.boost150, "stage", arch)
             self.stageDir = stageDir
 
             guardFileBase = "%(stageDir)s\\msvc%(vcVer)s-%(config)s-%(arch)s-%(runtimeLink)s" % locals()

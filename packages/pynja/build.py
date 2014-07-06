@@ -1,6 +1,7 @@
 import sys
 import os
 from . import io
+from . import root_paths
 from abc import *
 
 
@@ -418,7 +419,6 @@ class ProjectMan:
 projectFactory = {}
 
 def project(projectType):
-    repo = __import__("repo")
-    repo.root_paths._add_project_entry(projectType.__name__, projectType.__module__)
+    root_paths._add_project_entry(projectType.__name__, projectType.__module__)
     projectFactory[projectType.__name__] = projectType
     return projectType

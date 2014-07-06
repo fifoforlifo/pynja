@@ -7,8 +7,8 @@ class a1(repo.CppProject):
     def emit(self):
         self.add_cpplib_dependency("a2")
 
-        self.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
-        self.includePaths.append(os.path.join(repo.rootPaths.a1, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a2, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a1, "include"))
 
         sources = [
             "source/a1_0.cpp",

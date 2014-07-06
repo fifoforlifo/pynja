@@ -22,40 +22,40 @@ def generate_ninja_build(projectMan):
 
     if os.name == 'nt':
         if build_cpp:
-            if os.path.exists(repo.rootPaths.msvc10):
-                projectMan.add_toolchain(pynja.MsvcToolChain("msvc10-x86", repo.rootPaths.msvc10, "x86"))
+            if os.path.exists(pynja.rootPaths.msvc10):
+                projectMan.add_toolchain(pynja.MsvcToolChain("msvc10-x86", pynja.rootPaths.msvc10, "x86"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc10-x86-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.MsvcToolChain("msvc10-amd64", repo.rootPaths.msvc10, "amd64"))
+                projectMan.add_toolchain(pynja.MsvcToolChain("msvc10-amd64", pynja.rootPaths.msvc10, "amd64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc10-amd64", repo.rootPaths.cuda50, "msvc10", repo.rootPaths.msvc10, "-m64"))
+                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc10-amd64", pynja.rootPaths.cuda50, "msvc10", pynja.rootPaths.msvc10, "-m64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-nvcc_msvc10-amd64-dbg-dcrt"))
 
-            if os.path.exists(repo.rootPaths.msvc11):
-                projectMan.add_toolchain(pynja.MsvcToolChain("msvc11-x86", repo.rootPaths.msvc11, "x86"))
+            if os.path.exists(pynja.rootPaths.msvc11):
+                projectMan.add_toolchain(pynja.MsvcToolChain("msvc11-x86", pynja.rootPaths.msvc11, "x86"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc11-x86-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.MsvcToolChain("msvc11-amd64", repo.rootPaths.msvc11, "amd64"))
+                projectMan.add_toolchain(pynja.MsvcToolChain("msvc11-amd64", pynja.rootPaths.msvc11, "amd64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-rel-dcrt"))
 
-                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc11-amd64", repo.rootPaths.cuda50, "msvc10", repo.rootPaths.msvc10, "-m64"))
+                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc11-amd64", pynja.rootPaths.cuda50, "msvc10", pynja.rootPaths.msvc10, "-m64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-nvcc_msvc11-amd64-dbg-dcrt"))
 
-            if os.path.exists(repo.rootPaths.mingw64):
-                projectMan.add_toolchain(pynja.GccToolChain("mingw64-x86", repo.rootPaths.mingw64))
+            if os.path.exists(pynja.rootPaths.mingw64):
+                projectMan.add_toolchain(pynja.GccToolChain("mingw64-x86", pynja.rootPaths.mingw64))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-x86-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.GccToolChain("mingw64-amd64", repo.rootPaths.mingw64))
+                projectMan.add_toolchain(pynja.GccToolChain("mingw64-amd64", pynja.rootPaths.mingw64))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-rel-dcrt"))
 
-            projectMan.add_toolchain(pynja.qt.QtToolChain('qt5vc11', repo.rootPaths.qt5vc11BinDir))
+            projectMan.add_toolchain(pynja.qt.QtToolChain('qt5vc11', pynja.rootPaths.qt5vc11BinDir))
 
         if build_java:
-            if os.path.exists(repo.rootPaths.jdk15):
-                projectMan.add_toolchain(pynja.JavacToolChain("javac", repo.rootPaths.jdk15))
+            if os.path.exists(pynja.rootPaths.jdk15):
+                projectMan.add_toolchain(pynja.JavacToolChain("javac", pynja.rootPaths.jdk15))
                 java_variants.append(repo.java.JavaVariant("javac"))
 
     elif os.name == 'posix':
@@ -83,9 +83,9 @@ def generate_ninja_build(projectMan):
     deploy_variants.append(repo.DeployVariant("app64-rel"))
 
     # assume protoc is in the path
-    projectMan.add_toolchain(pynja.ProtocToolChain("protoc"))
+    projectMan.add_toolchain(pynja.protoc.ProtocToolChain("protoc"))
     # add re2c
-    projectMan.add_toolchain(pynja.Re2cToolChain(repo.rootPaths.re2c))
+    projectMan.add_toolchain(pynja.re2c.Re2cToolChain(pynja.rootPaths.re2c))
 
     projectMan.emit_rules()
 
@@ -101,7 +101,7 @@ def generate_ninja_build(projectMan):
     for variant in deploy_variants:
         projectMan.get_project("test2", variant)
 
-    currentScriptPath = os.path.join(repo.rootDir, os.path.basename(__file__))
+    currentScriptPath = os.path.join(pynja.rootDir, os.path.basename(__file__))
 
     projectMan.emit_deploy_targets()
     projectMan.emit_phony_targets()
@@ -112,7 +112,7 @@ def generate_ninja_build(projectMan):
 ################################################################################
 #   Main script
 
-print("generating with rootDir=%s" % repo.rootDir)
+print("generating with rootDir=%s" % pynja.rootDir)
 repo.init()
-repo.import_file('code/test2.py')
-pynja.regenerate_build(generate_ninja_build, repo.rootPaths.built, repo.rootPaths.codeBrowsing)
+pynja.import_file('code/test2.py')
+pynja.regenerate_build(generate_ninja_build, pynja.rootPaths.built, pynja.rootPaths.codeBrowsing)

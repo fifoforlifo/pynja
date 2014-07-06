@@ -20,10 +20,10 @@ class DeployProject(pynja.DeployProject):
             raise Exception("variant must be instanceof(DeployVariant)")
 
     def get_project_dir(self):
-        return getattr(rootPaths, type(self).__name__)
+        return getattr(pynja.rootPaths, type(self).__name__)
 
     def get_project_rel_dir(self):
-        return getattr(rootPathsRel, type(self).__name__)
+        return getattr(pynja.rootPathsRel, type(self).__name__)
 
     def get_built_dir(self):
-        return os.path.join(rootPaths.built, self.get_project_rel_dir(), str(self.variant))
+        return os.path.join(pynja.rootPaths.built, self.get_project_rel_dir(), str(self.variant))

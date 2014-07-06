@@ -8,12 +8,12 @@ class a0(repo.CppProject):
         a2 = self.add_cpplib_dependency('a2')
         a2_client = self.get_cpplib_project('a2_client')
 
-        self.includePaths.append(os.path.join(repo.rootPaths.a2, "include"))
-        self.includePaths.append(os.path.join(repo.rootPaths.a0, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a2, "include"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.a0, "include"))
         # add google protobuf directory
         self.includePaths.append(os.path.join(self.builtDir, "source"))
         # add directory for generated headers from proto files
-        self.includePaths.append(os.path.join(repo.rootPaths.protobuf, "src"))
+        self.includePaths.append(os.path.join(pynja.rootPaths.protobuf, "src"))
         if "msvc" in self.variant.toolchain:
             self.defines.append("_CRT_SECURE_NO_WARNINGS")
             self.defines.append("_SCL_SECURE_NO_WARNINGS")

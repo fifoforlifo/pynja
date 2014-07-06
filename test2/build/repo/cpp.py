@@ -1,6 +1,5 @@
 import os
 import pynja
-from .root_paths import *
 
 
 class CppVariant(pynja.Variant):
@@ -80,13 +79,13 @@ class CppProject(pynja.CppProject):
         return toolchain
 
     def get_project_dir(self):
-        return getattr(rootPaths, type(self).__name__)
+        return getattr(pynja.rootPaths, type(self).__name__)
 
     def get_project_rel_dir(self):
-        return getattr(rootPathsRel, type(self).__name__)
+        return getattr(pynja.rootPathsRel, type(self).__name__)
 
     def get_built_dir(self):
-        return os.path.join(rootPaths.built, self.get_project_rel_dir(), str(self.variant), type(self).__name__)
+        return os.path.join(pynja.rootPaths.built, self.get_project_rel_dir(), str(self.variant), type(self).__name__)
 
     def set_gcc_machine_arch(self, task):
         if ("gcc" in self.variant.toolchain) or ("mingw" in self.variant.toolchain):
@@ -133,7 +132,7 @@ class CppProject(pynja.CppProject):
             task.defines.append(type(self).__name__ + "_SHARED=0")
         task.defines.extend(self.defines)
         task.includePaths.extend(self.includePaths)
-        task.includePaths.append(os.path.join(rootPaths.dllexport, "include"))
+        task.includePaths.append(os.path.join(pynja.rootPaths.dllexport, "include"))
 
 
     # library creation
@@ -204,7 +203,7 @@ class CppProject(pynja.CppProject):
 
     def calc_winsdk_dir(self):
         name = 'winsdk' + str(self.winsdkVer)
-        return getattr(rootPaths, name)
+        return getattr(pynja.rootPaths, name)
 
     def calc_winsdk_lib_dir(self):
         winsdkDir = self.calc_winsdk_dir()
