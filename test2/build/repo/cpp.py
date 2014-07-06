@@ -70,14 +70,7 @@ class CppProject(pynja.CppProject):
             self.winsdkVer = 80
 
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
-            self.qtBinDir = rootPaths.qt5vc11BinDir
-            self.qtBuiltDir = os.path.join(self.builtDir, "qt")
-            self.qtIncludePaths = [
-                os.path.normpath(os.path.join(self.qtBinDir, "..", "include")),
-                self.qtBuiltDir,
-            ]
-            self.qtLibDir = os.path.normpath(os.path.join(self.qtBinDir, "..", "lib"))
-            self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
+            self.qt_init('qt5vc11', os.path.join(self.builtDir, "qt"))
 
     def get_toolchain(self):
         toolchainName = "%s-%s" % (self.variant.toolchain, self.variant.arch)
@@ -298,92 +291,22 @@ class CppProject(pynja.CppProject):
 
     # qt
 
-    def _qt_uic_one(self, sourcePath):
-        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
-        outputPath = os.path.join(self.qtBuiltDir, "ui_" + barename + ".h")
-        if not os.path.isabs(sourcePath):
-            sourcePath = os.path.join(self.projectDir, sourcePath)
-        task = pynja.qt.QtUiTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
-        self._forcedDeps.add(outputPath)
-        return task
-
-    def qt_uic(self, filePaths):
-        with self.qt_uic_ex(filePaths) as tasks:
-            pass
-        return tasks
-
-    def qt_uic_ex(self, filePaths):
-        if isinstance(filePaths, str):
-            return self._qt_uic_one(filePaths)
-        else:
-            taskList = []
-            for filePath in filePaths:
-                task = self._qt_uic_one(filePath)
-                taskList.append(task)
-            tasks = pynja.BuildTasks(taskList)
-            return tasks
-
-    def _qt_moc_one(self, sourcePath):
-        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
-        ext = ext.lower()
-        isHeader = (ext == '.h' or ext == '.hpp' or ext == '.hxx')
-        if isHeader:
-            outputPath = os.path.join(self.qtBuiltDir, "moc_" + barename + ".cpp")
-        else:
-            outputPath = os.path.join(self.qtBuiltDir, barename + ".moc")
-        if not os.path.isabs(sourcePath):
-            sourcePath = os.path.join(self.projectDir, sourcePath)
-        task = pynja.qt.QtMocTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
-        if not isHeader:
-            task.emitInclude = False
-        self.set_qt_moc_options(task)
-        if outputPath.endswith(".moc"):
-            self._forcedDeps.add(outputPath)
-        return task
-
-    def qt_moc(self, filePaths):
-        with self.qt_moc_ex(filePaths) as tasks:
-            pass
-        return tasks
-
-    def qt_moc_ex(self, filePaths):
-        if isinstance(filePaths, str):
-            return self._qt_moc_one(filePaths)
-        else:
-            taskList = []
-            for filePath in filePaths:
-                task = self._qt_moc_one(filePath)
-                taskList.append(task)
-            tasks = pynja.BuildTasks(taskList)
-            return tasks
-
-    def qt_moc_cpp_compile(self, filePaths):
-        tasks = self.qt_moc(filePaths)
-        moc_includables = [] # by convention these files are *.moc, which are 'includable' in a cpp but not quite headers :)
-        for task in tasks:
-            basename = os.path.basename(task.outputPath)
-            if basename.startswith("moc_"):
-                self.cpp_compile(task.outputPath)
-            else:
-                moc_includables.append(task.outputPath)
-
-    def set_qt_moc_options(self, task):
-        """Can be overridden to apply common options to QtMocTask created by qt_moc*."""
-        self.set_include_paths_and_defines(task)
-
     # Qt is always distributed as dynamic libraries; the staticLink argument
     # controls whether the calling project should link against the library,
     # as opposed to simply adding a runtime dependency.
     def qt_add_lib_dependency(self, libName, staticLink=True, forceRelease=False):
-        # Note: qt only enabled on this variant because the test machine only has this version of Qt available
-        if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
+        if 'msvc' in self.variant.toolchain:
             if not forceRelease and self.variant.config == 'dbg':
                 libName = libName + 'd'
             if staticLink:
                 libFilePath = os.path.join(self.qtLibDir, libName + '.lib')
                 self.add_input_lib(libFilePath)
-            self.add_runtime_dependency(os.path.join(self.qtBinDir, libName + '.dll'))
+            self.add_runtime_dependency(os.path.join(self.qtToolChain.qtBinDir, libName + '.dll'))
+        else:
+            raise Exception("TODO: gcc Qt dependencies")
+
 
 # add custom tools
 pynja.re2c.add_tool(CppProject)
 pynja.protoc.add_tool(CppProject)
+pynja.qt.add_tool(CppProject)

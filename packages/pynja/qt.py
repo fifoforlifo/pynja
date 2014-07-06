@@ -1,6 +1,7 @@
 import os
 from .tc import *
 from . import build
+from . import monkey
 
 
 class QtUiTask(build.BuildTask):
@@ -138,3 +139,96 @@ class QtToolChain(build.ToolChain):
         ninjaFile.write("  RSP_FILE    = %s.rsp\n" % outputPath)
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
+
+def add_tool(cls):
+    @monkey.new_method(cls)
+    def qt_init(self, qtToolChainName, qtBuiltDir=None):
+        self.qtToolChain = self.projectMan.get_toolchain('qt5vc11')
+        self.qtBuiltDir = qtBuiltDir
+        if not self.qtBuiltDir:
+            self.qtBuiltDir = os.path.join(self.builtDir, "qt")
+        self.qtIncludePaths = [
+            os.path.normpath(os.path.join(self.qtToolChain.qtBinDir, "..", "include")),
+            self.qtBuiltDir,
+        ]
+        self.qtLibDir = os.path.normpath(os.path.join(self.qtToolChain.qtBinDir, "..", "lib"))
+
+    def _qt_uic_one(self, sourcePath):
+        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
+        outputPath = os.path.join(self.qtBuiltDir, "ui_" + barename + ".h")
+        if not os.path.isabs(sourcePath):
+            sourcePath = os.path.join(self.projectDir, sourcePath)
+        task = QtUiTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
+        self._forcedDeps.add(outputPath)
+        return task
+
+    @monkey.new_method(cls)
+    def qt_uic(self, filePaths):
+        with self.qt_uic_ex(filePaths) as tasks:
+            pass
+        return tasks
+
+    @monkey.new_method(cls)
+    def qt_uic_ex(self, filePaths):
+        if isinstance(filePaths, str):
+            return _qt_uic_one(self, filePaths)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = _qt_uic_one(self, filePath)
+                taskList.append(task)
+            tasks = build.BuildTasks(taskList)
+            return tasks
+
+    def _qt_moc_one(self, sourcePath):
+        (barename, ext) = os.path.splitext(os.path.basename(sourcePath))
+        ext = ext.lower()
+        isHeader = (ext == '.h' or ext == '.hpp' or ext == '.hxx')
+        if isHeader:
+            outputPath = os.path.join(self.qtBuiltDir, "moc_" + barename + ".cpp")
+        else:
+            outputPath = os.path.join(self.qtBuiltDir, barename + ".moc")
+        if not os.path.isabs(sourcePath):
+            sourcePath = os.path.join(self.projectDir, sourcePath)
+        task = QtMocTask(self, sourcePath, outputPath, self.projectDir, self.qtToolChain)
+        if not isHeader:
+            task.emitInclude = False
+        self.set_qt_moc_options(task)
+        if outputPath.endswith(".moc"):
+            self._forcedDeps.add(outputPath)
+        return task
+
+    @monkey.new_method(cls)
+    def qt_moc(self, filePaths):
+        with self.qt_moc_ex(filePaths) as tasks:
+            pass
+        return tasks
+
+    @monkey.new_method(cls)
+    def qt_moc_ex(self, filePaths):
+        if isinstance(filePaths, str):
+            return _qt_moc_one(self, filePaths)
+        else:
+            taskList = []
+            for filePath in filePaths:
+                task = _qt_moc_one(self, filePath)
+                taskList.append(task)
+            tasks = build.BuildTasks(taskList)
+            return tasks
+
+    @monkey.new_method(cls)
+    def qt_moc_cpp_compile(self, filePaths):
+        tasks = self.qt_moc(filePaths)
+        moc_includables = [] # by convention these files are *.moc, which are 'includable' in a cpp but not quite headers :)
+        for task in tasks:
+            basename = os.path.basename(task.outputPath)
+            if basename.startswith("moc_"):
+                self.cpp_compile(task.outputPath)
+            else:
+                moc_includables.append(task.outputPath)
+
+    @monkey.new_method(cls)
+    def set_qt_moc_options(self, task):
+        """Can be overridden to apply common options to QtMocTask created by qt_moc*."""
+        self.set_include_paths_and_defines(task)
+
