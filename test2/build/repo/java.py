@@ -27,12 +27,3 @@ class JavaProject(pynja.JavaProject):
         if not toolchain:
             raise Exception("Could not find toolchain " + toolchainName)
         return toolchain
-
-    def get_project_dir(self):
-        return getattr(pynja.rootPaths, type(self).__name__)
-
-    def get_project_rel_dir(self):
-        return getattr(pynja.rootPathsRel, type(self).__name__)
-
-    def get_built_dir(self):
-        return os.path.join(pynja.rootPaths.built, self.get_project_rel_dir(), str(self.variant))

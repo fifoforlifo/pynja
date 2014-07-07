@@ -142,17 +142,14 @@ class Project(metaclass = ABCMeta):
         self._runtimeDeps = {}
         self._cbProjectRefs = set()
 
-    @abstractmethod
     def get_project_dir(self):
-        pass
+        return getattr(root_paths.rootPaths, type(self).__name__)
 
-    @abstractmethod
     def get_project_rel_dir(self):
-        pass
+        return getattr(root_paths.rootPathsRel, type(self).__name__)
 
-    @abstractmethod
     def get_built_dir(self):
-        pass
+        return os.path.join(root_paths.rootPaths.built, self.get_project_rel_dir(), str(self.variant), type(self).__name__)
 
     @abstractmethod
     def emit(self):
