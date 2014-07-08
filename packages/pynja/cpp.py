@@ -103,6 +103,8 @@ class CppProject(build.Project):
         super().__init__(projectMan, variant)
         self.outputPath = None
         self.toolchain = self.get_toolchain()
+        self.defines = []           # project-level defines affect all compilations; tasks that use preprocessor may also consume this
+        self.includePaths = []      # ""
         self.linkLibraries = []
         self._inputs = []
         self._inputLibs = []
