@@ -3,58 +3,42 @@ import pynja
 
 
 class CppVariant(pynja.Variant):
+    if os.name == 'nt':
+        fieldDefs = [
+            "os",           [ "windows", "android" ],
+            "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11", "android_arm_gcc"  ],
+            "arch",         [ "x86", "amd64", "aarch32" ],
+            "config",       [ "dbg", "rel" ],
+            "crt",          [ "scrt", "dcrt" ],
+        ]
+    elif os.name == 'posix':
+        fieldDefs = [
+            "os",           [ "linux" ],
+            "toolchain",    [ "gcc", "clang" ],
+            "arch",         [ "x86", "amd64" ],
+            "config",       [ "dbg", "rel" ],
+            "crt",          [ "scrt", "dcrt" ],
+        ]
+    else:
+        raise Exception("Not implemented")
+
     def __init__(self, string):
         super().__init__(string, self.get_field_defs())
 
     def get_field_defs(self):
-        if os.name == 'nt':
-            fieldDefs = [
-                "os",           [ "windows" ],
-                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11"  ],
-                "arch",         [ "x86", "amd64" ],
-                "config",       [ "dbg", "rel" ],
-                "crt",          [ "scrt", "dcrt" ],
-            ]
-            return fieldDefs
-        elif os.name == 'posix':
-            fieldDefs = [
-                "os",           [ "linux" ],
-                "toolchain",    [ "gcc", "clang" ],
-                "arch",         [ "x86", "amd64" ],
-                "config",       [ "dbg", "rel" ],
-                "crt",          [ "scrt", "dcrt" ],
-            ]
-            return fieldDefs
-        else:
-            raise Exception("Not implemented")
+        return CppVariant.fieldDefs
 
 class CppLibVariant(pynja.Variant):
+    fieldDefs = list(CppVariant.fieldDefs)
+    fieldDefs.extend([
+        "linkage",      [ "sta", "dyn" ],
+    ])
+
     def __init__(self, string):
         super().__init__(string, self.get_field_defs())
 
     def get_field_defs(self):
-        if os.name == 'nt':
-            fieldDefs = [
-                "os",           [ "windows" ],
-                "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11"  ],
-                "arch",         [ "x86", "amd64" ],
-                "config",       [ "dbg", "rel" ],
-                "crt",          [ "scrt", "dcrt" ],
-                "linkage",      [ "sta", "dyn" ],
-            ]
-            return fieldDefs
-        elif os.name == 'posix':
-            fieldDefs = [
-                "os",           [ "linux" ],
-                "toolchain",    [ "gcc", "clang" ],
-                "arch",         [ "x86", "amd64" ],
-                "config",       [ "dbg", "rel" ],
-                "crt",          [ "scrt", "dcrt" ],
-                "linkage",      [ "sta", "dyn" ],
-            ]
-            return fieldDefs
-        else:
-            raise Exception("Not implemented")
+        return CppLibVariant.fieldDefs
 
 
 class CppProject(pynja.CppProject):
@@ -110,6 +94,10 @@ class CppProject(pynja.CppProject):
         if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
 
+        # android-specific
+        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
+            self.toolchain.set_cpp_options_libstdcpp(task)
+
         # define macros to handle DLL import/export
         # And add the dllexport.h header to include paths for every project.
         linkage = getattr(self.variant, "linkage", None)
@@ -119,8 +107,6 @@ class CppProject(pynja.CppProject):
         else:
             task.defines.append(type(self).__name__ + "_EXPORT=0")
             task.defines.append(type(self).__name__ + "_SHARED=0")
-        task.defines.extend(self.defines)
-        task.includePaths.extend(self.includePaths)
         task.includePaths.append(os.path.join(pynja.rootPaths.dllexport, "include"))
 
 
@@ -166,6 +152,10 @@ class CppProject(pynja.CppProject):
                 self.add_input_lib(os.path.join(winsdkLibDir, "user32.lib"))
                 self.add_input_lib(os.path.join(winsdkLibDir, "gdi32.lib"))
                 self.add_input_lib(os.path.join(winsdkLibDir, "uuid.lib"))
+
+        # android-specific
+        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
+            self.toolchain.set_link_options_libstdcpp(task)
 
     def set_shared_lib_options(self, task):
         super().set_shared_lib_options(task)

@@ -24,6 +24,10 @@ if os.name == "nt":
             # MSVC always supports LTO.  (they call it LTCG)
             self.ltoSupport = True
 
+            # default flags
+            self.defaultLinkOptions.append("/nologo")
+
+
         def emit_rules(self, ninjaFile):
             ninjaFile.write("#############################################\n")
             ninjaFile.write("# %s\n" % self.name)
@@ -151,6 +155,7 @@ if os.name == "nt":
                     task.extraDeps.append(task.usePCH)
 
         def translate_cpp_options(self, options, task):
+            options.extend(self.defaultCppOptions)
             # translate simple options first for ease of viewing
             self.translate_opt_level(options, task)
             self.translate_debug_level(options, task)
@@ -238,7 +243,7 @@ if os.name == "nt":
         def emit_link(self, project, task):
             # write response file
             options = []
-            options.append("/nologo")
+            options.extend(self.defaultLinkOptions)
             if not task.makeExecutable:
                 options.append("/DLL")
             options.append("\"/OUT:%s\"" % task.outputPath)

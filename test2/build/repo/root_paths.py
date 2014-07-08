@@ -45,6 +45,8 @@ def init():
 
         pynja.rootPaths.cuda50 = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0"
 
+        pynja.rootPaths.android_ndk_r8d = r"C:\Software\Android\android-ndk-r8d"
+
         pynja.rootPaths.jdk15 = r"C:\Program Files\Java\jdk1.7.0_15"
 
         pynja.rootPaths.qt5vc11BinDir = r"C:\Qt\Qt5.0.2\5.0.2\msvc2012_64\bin"

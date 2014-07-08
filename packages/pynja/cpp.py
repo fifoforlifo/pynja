@@ -98,6 +98,12 @@ class LinkTask(build.BuildTask):
             project.projectMan.add_phony_target(self.phonyTarget, self.outputPath)
 
 
+def _is_toolchain_msvc(toolchain):
+    return  (   isinstance(toolchain, pynja.MsvcToolChain)
+            or (isinstance(toolchain, pynja.NvccToolChain) and 'msvc' in toolchain.hostCompiler)
+            )
+
+
 class CppProject(build.Project):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
@@ -135,8 +141,9 @@ class CppProject(build.Project):
 
     # preprocessor-like tasks
     def set_include_paths_and_defines(self, task):
-        """Can be overridden to apply .includePaths and .defines to any compatible task."""
-        pass
+        """Can be overridden to add more .includePaths and .defines to any compatible task."""
+        task.defines.extend(self.defines)
+        task.includePaths.extend(self.includePaths)
 
 
     # precompiled header
@@ -160,7 +167,7 @@ class CppProject(build.Project):
             task = CppTask(self, sourcePath, outputPath, self.projectDir)
             task.createPCH = True
             self.set_cpp_compile_options(task)
-            if isinstance(self.toolchain, pynja.MsvcToolChain):
+            if _is_toolchain_msvc(self.toolchain):
                 self.add_input(outputPath + self.toolchain.objectFileExt)
             return task
         else:
@@ -221,7 +228,7 @@ class CppProject(build.Project):
 
     def make_static_lib_ex(self, name):
         name = os.path.normpath(name)
-        if isinstance(self.variant.toolchain, pynja.MsvcToolChain):
+        if _is_toolchain_msvc(self.toolchain):
             outputPath = os.path.join(self.builtDir, name + ".lib")
         else:
             outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
@@ -259,9 +266,7 @@ class CppProject(build.Project):
         name = os.path.normpath(name)
         if self.toolchain.targetWindows:
             outputPath = os.path.join(self.builtDir, name + ".dll")
-            if  (   isinstance(self.toolchain, pynja.MsvcToolChain)
-                or (isinstance(self.toolchain, pynja.NvccToolChain) and 'msvc' in self.toolchain.hostCompiler)
-                ):
+            if _is_toolchain_msvc(self.toolchain):
                 libraryPath = os.path.join(self.builtDir, name + ".lib")
             else:
                 libraryPath = outputPath # mingw can link directly against DLLs -- no implib needed

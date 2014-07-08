@@ -53,6 +53,10 @@ def generate_ninja_build(projectMan):
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-rel-dcrt"))
 
+            if os.path.exists(pynja.rootPaths.android_ndk_r8d):
+                projectMan.add_toolchain(pynja.AndroidGccToolChain("android_arm_gcc-aarch32", pynja.rootPaths.android_ndk_r8d, "4.7", 14, "armeabi", prefix="arm-linux-androideabi-"))
+                cpp_variants.append(repo.cpp.CppVariant("android-android_arm_gcc-aarch32-dbg-dcrt"))
+
             projectMan.add_toolchain(pynja.qt.QtToolChain('qt5vc11', pynja.rootPaths.qt5vc11BinDir))
 
         if build_java:

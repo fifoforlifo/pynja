@@ -164,6 +164,7 @@ class GccToolChain(CppToolChain):
 
 
     def translate_cpp_options(self, options, task):
+        options.extend(self.defaultCppOptions)
         # translate simple options first for ease of viewing
         self.translate_dialect(options, task)
         self.translate_opt_level(options, task)
@@ -251,6 +252,7 @@ class GccToolChain(CppToolChain):
     def emit_link(self, project, task):
         # write response file
         options = []
+        options.extend(self.defaultLinkOptions)
         if not task.makeExecutable:
             options.append("-shared")
         outputFileEsc = binutils_esc_path(task.outputPath)

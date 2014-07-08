@@ -107,6 +107,7 @@ class NvccToolChain(CppToolChain):
                 options.append("\"%s\"" % inputEsc)
 
     def translate_cpp_options(self, options, task):
+        options.extend(self.defaultCppOptions)
         # translate simple options first for ease of viewing
         GccToolChain.translate_opt_level(self, options, task)
         self.translate_debug_level(options, task)
@@ -216,6 +217,7 @@ class NvccToolChain(CppToolChain):
 
         # write response file
         options = []
+        options.extend(self.defaultLinkOptions)
         options.append("-link")
         if not task.makeExecutable:
             options.append("-shared")
