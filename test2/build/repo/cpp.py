@@ -60,8 +60,6 @@ class CppLibVariant(pynja.Variant):
 class CppProject(pynja.CppProject):
     def __init__(self, projectMan, variant):
         super().__init__(projectMan, variant)
-        self.defines = []           # defines broadcasted to compilations; appended by e.g. add_cpplib_dependency
-        self.includePaths = []      # same deal
 
         if not (isinstance(variant, CppVariant) or isinstance(variant, CppLibVariant)):
             raise Exception("expecting CppVariant or CppLibVariant")
