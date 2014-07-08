@@ -1,14 +1,14 @@
 import os
-from .tc import *
+from .tc_cpp import *
 from . import build
 
 
 if os.name == "nt":
-    class MsvcToolChain(build.ToolChain):
+    class MsvcToolChain(CppToolChain):
         """A toolchain object capable of driving msvc 8.0 and greater."""
 
         def __init__(self, name, installDir, arch):
-            super().__init__(name)
+            super().__init__(name, targetWindows=True)
             self.installDir = installDir
             self.arch = arch
             self.objectFileExt = ".obj"

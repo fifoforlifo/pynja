@@ -20,6 +20,8 @@ def generate_ninja_build(projectMan):
     java_variants = []
     deploy_variants = []
 
+    targetWindows = (os.name == 'nt')
+
     if os.name == 'nt':
         if build_cpp:
             if os.path.exists(pynja.rootPaths.msvc10):
@@ -29,7 +31,7 @@ def generate_ninja_build(projectMan):
                 projectMan.add_toolchain(pynja.MsvcToolChain("msvc10-amd64", pynja.rootPaths.msvc10, "amd64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc10-amd64-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc10-amd64", pynja.rootPaths.cuda50, "msvc10", pynja.rootPaths.msvc10, "-m64"))
+                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc10-amd64", pynja.rootPaths.cuda50, "msvc10", pynja.rootPaths.msvc10, "-m64", targetWindows))
                 cpp_variants.append(repo.cpp.CppVariant("windows-nvcc_msvc10-amd64-dbg-dcrt"))
 
             if os.path.exists(pynja.rootPaths.msvc11):
@@ -40,14 +42,14 @@ def generate_ninja_build(projectMan):
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc11-amd64-rel-dcrt"))
 
-                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc11-amd64", pynja.rootPaths.cuda50, "msvc10", pynja.rootPaths.msvc10, "-m64"))
+                projectMan.add_toolchain(pynja.NvccToolChain("nvcc_msvc11-amd64", pynja.rootPaths.cuda50, "msvc11", pynja.rootPaths.msvc10, "-m64", targetWindows))
                 cpp_variants.append(repo.cpp.CppVariant("windows-nvcc_msvc11-amd64-dbg-dcrt"))
 
             if os.path.exists(pynja.rootPaths.mingw64):
-                projectMan.add_toolchain(pynja.GccToolChain("mingw64-x86", pynja.rootPaths.mingw64))
+                projectMan.add_toolchain(pynja.GccToolChain("mingw64-x86", pynja.rootPaths.mingw64, targetWindows))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-x86-dbg-dcrt"))
 
-                projectMan.add_toolchain(pynja.GccToolChain("mingw64-amd64", pynja.rootPaths.mingw64))
+                projectMan.add_toolchain(pynja.GccToolChain("mingw64-amd64", pynja.rootPaths.mingw64, targetWindows))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-mingw64-amd64-rel-dcrt"))
 
@@ -60,13 +62,13 @@ def generate_ninja_build(projectMan):
 
     elif os.name == 'posix':
         if build_cpp:
-            projectMan.add_toolchain(pynja.GccToolChain("gcc-x86", "/usr"))
+            projectMan.add_toolchain(pynja.GccToolChain("gcc-x86", "/usr", targetWindows))
             cpp_variants.append(repo.cpp.CppVariant("linux-gcc-x86-dbg-dcrt"))
 
-            projectMan.add_toolchain(pynja.GccToolChain("gcc-amd64", "/usr"))
+            projectMan.add_toolchain(pynja.GccToolChain("gcc-amd64", "/usr", targetWindows))
             cpp_variants.append(repo.cpp.CppVariant("linux-gcc-amd64-dbg-dcrt"))
 
-            projectMan.add_toolchain(pynja.ClangToolChain("clang-amd64", "/home/lolo/Downloads/clang+llvm-3.2-x86_64-linux-ubuntu-12.04"))
+            projectMan.add_toolchain(pynja.ClangToolChain("clang-amd64", "/home/lolo/Downloads/clang+llvm-3.2-x86_64-linux-ubuntu-12.04", targetWindows))
             cpp_variants.append(repo.cpp.CppVariant("linux-clang-amd64-dbg-dcrt"))
 
         if build_java:

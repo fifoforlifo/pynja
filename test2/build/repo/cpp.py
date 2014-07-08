@@ -128,68 +128,15 @@ class CppProject(pynja.CppProject):
 
     # library creation
 
-    def make_static_lib(self, name):
-        with self.make_static_lib_ex(name) as task:
-            return task
-
-    def make_static_lib_ex(self, name):
-        name = os.path.normpath(name)
-        if "msvc" in self.variant.toolchain:
-            outputPath = os.path.join(self.builtDir, name + ".lib")
-        else:
-            outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
-
-        task = self.make_static_lib_abs_ex(outputPath)
-        task.phonyTarget = name
-        return task
-
-    def make_shared_lib(self, name):
-        with self.make_shared_lib_ex(name) as task:
-            return task
-
-    def make_shared_lib_ex(self, name):
-        name = os.path.normpath(name)
-        if self.variant.os == "windows":
-            outputPath = os.path.join(self.builtDir, name + ".dll")
-            if "msvc" in self.variant.toolchain:
-                libraryPath = os.path.join(self.builtDir, name + ".lib")
-            elif "mingw" in self.variant.toolchain:
-                libraryPath = outputPath # mingw can link directly against DLLs -- no implib needed
-        else:
-            outputPath = os.path.join(self.builtDir, "lib" + name + ".so")
-            libraryPath = outputPath
-
-        task = self.make_shared_lib_abs_ex(outputPath, libraryPath)
-        task.phonyTarget = name
-        if self.variant.config == 'rel':
-            task.lto = self.toolchain.ltoSupport
-        return task
-
     def make_library(self, name):
         if self.variant.linkage == "sta":
             return self.make_static_lib(name)
         else:
             return self.make_shared_lib(name)
 
-
-    # executable creation
-
-    def make_executable(self, name):
-        with self.make_executable_ex(name) as task:
-            return task
-
-    def make_executable_ex(self, name):
-        name = os.path.normpath(name)
-        if self.variant.os == "windows":
-            outputPath = os.path.join(self.builtDir, name + ".exe")
-        else:
-            outputPath = os.path.join(self.builtDir, name)
-
-        task = self.make_executable_abs_ex(outputPath)
-        task.phonyTarget = name
+    def set_shared_lib_options(self, task):
         if self.variant.config == 'rel':
             task.lto = self.toolchain.ltoSupport
-        return task
 
 
     def calc_winsdk_dir(self):

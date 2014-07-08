@@ -205,10 +205,6 @@ class CppProject(build.Project):
 
     # static lib creation
 
-    def make_static_lib_abs(self, outputPath):
-        with self.make_static_lib_abs_ex(outputPath) as task:
-            return task
-
     def make_static_lib_abs_ex(self, outputPath):
         if self.outputPath:
             raise Exception("outputPath already selected: " + self.outputPath)
@@ -221,16 +217,27 @@ class CppProject(build.Project):
         self.set_static_lib_options(task)
         return task
 
+    def make_static_lib_ex(self, name):
+        name = os.path.normpath(name)
+        if isinstance(self.variant.toolchain, pynja.MsvcToolChain):
+            outputPath = os.path.join(self.builtDir, name + ".lib")
+        else:
+            outputPath = os.path.join(self.builtDir, "lib" + name + ".a")
+
+        task = self.make_static_lib_abs_ex(outputPath)
+        task.phonyTarget = name
+        return task
+
+    def make_static_lib(self, name):
+        with self.make_static_lib_ex(name) as task:
+            return task
+
     def set_static_lib_options(self, task):
         """Can be overridden to apply options to StaticLibTask created by make_static_lib."""
         pass
 
 
     # shared lib creation
-
-    def make_shared_lib_abs(self, outputPath, libraryPath):
-        with self.make_shared_lib_abs_ex(outputPath, libraryPath) as task:
-            return task
 
     def make_shared_lib_abs_ex(self, outputPath, libraryPath):
         if self.outputPath:
@@ -246,16 +253,34 @@ class CppProject(build.Project):
         self.set_shared_lib_options(task)
         return task
 
+    def make_shared_lib_ex(self, name):
+        name = os.path.normpath(name)
+        if self.toolchain.targetWindows:
+            outputPath = os.path.join(self.builtDir, name + ".dll")
+            if  (   isinstance(self.toolchain, pynja.MsvcToolChain)
+                or (isinstance(self.toolchain, pynja.NvccToolChain) and 'msvc' in self.toolchain.hostCompiler)
+                ):
+                libraryPath = os.path.join(self.builtDir, name + ".lib")
+            else:
+                libraryPath = outputPath # mingw can link directly against DLLs -- no implib needed
+        else:
+            outputPath = os.path.join(self.builtDir, "lib" + name + ".so")
+            libraryPath = outputPath
+
+        task = self.make_shared_lib_abs_ex(outputPath, libraryPath)
+        task.phonyTarget = name
+        return task
+
+    def make_shared_lib(self, name):
+        with self.make_shared_lib_ex(name) as task:
+            return task
+
     def set_shared_lib_options(self, task):
         """Can be overridden to apply options to LinkTask created by make_shared_lib."""
         pass
 
 
     # executable creation
-
-    def make_executable_abs(self, outputPath):
-        with self.make_executable_abs_ex(outputPath) as task:
-            return task
 
     def make_executable_abs_ex(self, outputPath):
         if self.outputPath:
@@ -267,6 +292,23 @@ class CppProject(build.Project):
         task.makeExecutable = True
         self.set_executable_options(task)
         return task
+
+    def make_executable_ex(self, name):
+        name = os.path.normpath(name)
+        if self.toolchain.targetWindows:
+            outputPath = os.path.join(self.builtDir, name + ".exe")
+        else:
+            outputPath = os.path.join(self.builtDir, name)
+
+        task = self.make_executable_abs_ex(outputPath)
+        task.phonyTarget = name
+        if self.variant.config == 'rel':
+            task.lto = self.toolchain.ltoSupport
+        return task
+
+    def make_executable(self, name):
+        with self.make_executable_ex(name) as task:
+            return task
 
     def set_executable_options(self, task):
         """Can be overridden to apply options to LinkTask created by make_executable."""

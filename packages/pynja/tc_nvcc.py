@@ -1,16 +1,16 @@
 import os
 from . import build
-from .tc import *
+from .tc_cpp import *
 from .tc_gcc import *
 from .tc_msvc import *
 
 
-class NvccToolChain(build.ToolChain):
+class NvccToolChain(CppToolChain):
     """A toolchain object capable of driving nvcc (CUDA compiler)."""
 
     # hostCompiler = {gcc, msvc}
-    def __init__(self, name, installDir, hostCompiler, hostInstallDir, addressModel):
-        super().__init__(name)
+    def __init__(self, name, installDir, hostCompiler, hostInstallDir, addressModel, targetWindows):
+        super().__init__(name, targetWindows)
         self.installDir = installDir
         self.hostCompiler = hostCompiler
         self.hostInstallDir = hostInstallDir

@@ -1,5 +1,5 @@
 import os
-from .tc import *
+from .tc_cpp import *
 from . import build
 
 
@@ -14,11 +14,11 @@ def get_lib_name(path):
     return None
 
 
-class GccToolChain(build.ToolChain):
+class GccToolChain(CppToolChain):
     """A toolchain object capable of driving gcc commandlines."""
 
-    def __init__(self, name, installDir, prefix = "", suffix = ""):
-        super().__init__(name)
+    def __init__(self, name, installDir, targetWindows, prefix = "", suffix = ""):
+        super().__init__(name, targetWindows)
         self.installDir = installDir
         self.prefix = prefix
         self.suffix = suffix
