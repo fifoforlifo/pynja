@@ -31,6 +31,7 @@ class CppTask(build.BuildTask):
         # nvcc-specific
         self.relocatableDeviceCode = True
         self.deviceDebugLevel = 1 # {0 = none, 1 = lineinfo, 2 = full [disables optimization]}
+
         # internal state tracking
         self._creatingPDB = False
 
@@ -86,7 +87,6 @@ class LinkTask(build.BuildTask):
         self.addressModel = None
         self.lto = None
         self.noUndefined = True
-        # nvcc-specific
 
     def emit(self):
         project = self.project
@@ -130,6 +130,8 @@ class CppProject(build.Project):
 
     def add_input_lib(self, filePath):
         self._inputLibs.append(filePath)
+        if filePath.endswith('.so'):
+            self.add_runtime_dependency(filePath)
     def add_input_libs(self, filePaths):
         self._inputLibs.extend(filePaths)
 
@@ -256,6 +258,9 @@ class CppProject(build.Project):
         self.linkLibraries.append(self.libraryPath)
         self.add_runtime_dependency(self.outputPath)
 
+        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
+            self._android_link_stl()
+
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.outputLibraryPath = libraryPath
         task.makeExecutable = False
@@ -295,6 +300,9 @@ class CppProject(build.Project):
         self.outputPath = outputPath
         self.add_runtime_dependency(self.outputPath)
 
+        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
+            self._android_link_stl()
+
         task = LinkTask(self, self.outputPath, self.projectDir)
         task.makeExecutable = True
         self.set_executable_options(task)
@@ -326,3 +334,41 @@ class CppProject(build.Project):
 
     def propagate_lib_dependencies(self):
         self.linkLibraries.extend(self._inputLibs)
+
+
+    # android-specific
+
+    def android_select_stl(self, android_stl, linkDynamic=False):
+        """Selects an STL: None, "gnu-libstdc++", "stlport"."""
+        self.android_stl = android_stl
+        self.android_stl_link_dynamic = linkDynamic
+        if self.android_stl == None:
+            pass
+        elif self.android_stl == 'gnu-libstdc++':
+            basedir = '%s/sources/cxx-stl/gnu-libstdc++/%s' % (self.toolchain.ndkDirEsc, self.toolchain.gccVersionStr)
+            self.includePaths.append('%s/include' % (basedir))
+            self.includePaths.append('%s/libs/%s/include' % (basedir, self.toolchain.archStr))
+        elif self.android_stl == 'stlport':
+            basedir = '%s/sources/cxx-stl/stlport' % (self.toolchain.ndkDirEsc)
+            self.includePaths.append('%s/include' % (basedir))
+        else:
+            raise Exception("TODO: unhandled androidSTL=%s" % (task.androidSTL))
+
+    def _android_link_stl(self):
+        if self.android_stl == None:
+            pass
+        elif self.android_stl == 'gnu-libstdc++':
+            basedir = '%s/sources/cxx-stl/gnu-libstdc++/%s' % (self.toolchain.ndkDirEsc, self.toolchain.gccVersionStr)
+            if self.android_stl_link_dynamic:
+                self.add_input_lib('%s/libs/%s/libgnustl_shared.so' % (basedir, self.toolchain.archStr))
+            else:
+                self.add_input_lib('%s/libs/%s/libgnustl_static.a' % (basedir, self.toolchain.archStr))
+                self.add_input_lib('%s/libs/%s/libsupc++.a' % (basedir, self.toolchain.archStr))
+        elif self.android_stl == 'stlport':
+            basedir = '%s/sources/cxx-stl/stlport' % (self.toolchain.ndkDirEsc)
+            if self.android_stl_link_dynamic:
+                self.add_input_lib('%s/libs/%s/libstlport_shared.so' % (basedir, self.toolchain.archStr))
+            else:
+                self.add_input_lib('%s/libs/%s/libstlport_static.a' % (basedir, self.toolchain.archStr))
+        else:
+            raise Exception("TODO: unhandled androidSTL=%s" % (task.androidSTL))

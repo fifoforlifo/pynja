@@ -53,6 +53,11 @@ class CppProject(pynja.CppProject):
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             self.qt_init('qt5vc11', os.path.join(self.builtDir, "qt"))
 
+        # android-specific
+        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
+            self.android_select_stl('gnu-libstdc++', linkDynamic=True)
+
+
     def get_toolchain(self):
         toolchainName = "%s-%s" % (self.variant.toolchain, self.variant.arch)
         toolchain = self.projectMan.get_toolchain(toolchainName)
@@ -93,10 +98,6 @@ class CppProject(pynja.CppProject):
 
         if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
-
-        # android-specific
-        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
-            self.toolchain.set_cpp_options_libstdcpp(task)
 
         # define macros to handle DLL import/export
         # And add the dllexport.h header to include paths for every project.
@@ -152,10 +153,6 @@ class CppProject(pynja.CppProject):
                 self.add_input_lib(os.path.join(winsdkLibDir, "user32.lib"))
                 self.add_input_lib(os.path.join(winsdkLibDir, "gdi32.lib"))
                 self.add_input_lib(os.path.join(winsdkLibDir, "uuid.lib"))
-
-        # android-specific
-        if isinstance(self.toolchain, pynja.AndroidGccToolChain):
-            self.toolchain.set_link_options_libstdcpp(task)
 
     def set_shared_lib_options(self, task):
         super().set_shared_lib_options(task)

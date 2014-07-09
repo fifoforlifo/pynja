@@ -9,8 +9,11 @@ def binutils_esc_path(path):
 def get_lib_name(path):
     if path.endswith(".a"):
         fname = os.path.basename(path)
-        if fname.startswith("lib"):
-            return fname[3:-2]
+        if fname.startswith('lib'):
+            if fname.endswith('.a'):
+                return fname[3:-2]
+            elif fname.endswith('.so'):
+                return fname[3:-3]
     return None
 
 
@@ -164,6 +167,7 @@ class GccToolChain(CppToolChain):
 
 
     def translate_cpp_options(self, options, task):
+        options.append("-c")
         options.extend(self.defaultCppOptions)
         # translate simple options first for ease of viewing
         self.translate_dialect(options, task)
@@ -180,7 +184,6 @@ class GccToolChain(CppToolChain):
     def emit_cpp_compile(self, project, task):
         # write response file
         options = []
-        options.append("-c")
         self.translate_cpp_options(options, task)
         write_rsp_file(project, task, options)
 
@@ -217,6 +220,7 @@ class GccToolChain(CppToolChain):
         ninjaFile.write("  DESC        = %s -> %s\n" % (sourceName, outputName))
         ninjaFile.write("\n")
 
+
     def emit_static_lib(self, project, task):
         # write response file
         options = []
@@ -249,9 +253,8 @@ class GccToolChain(CppToolChain):
         ninjaFile.write("\n")
         ninjaFile.write("\n")
 
-    def emit_link(self, project, task):
-        # write response file
-        options = []
+
+    def translate_link_options(self, options, task):
         options.extend(self.defaultLinkOptions)
         if not task.makeExecutable:
             options.append("-shared")
@@ -267,6 +270,11 @@ class GccToolChain(CppToolChain):
             options.append("-Wl,--no-undefined")
         self.translate_linker_inputs(options, task)
         options.extend(task.extraOptions)
+
+    def emit_link(self, project, task):
+        # write response file
+        options = []
+        self.translate_link_options(options, task)
         write_rsp_file(project, task, options)
 
         # emit ninja file contents
