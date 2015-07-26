@@ -34,6 +34,7 @@ def init():
             pynja.rootPaths.msvc11 = r"C:\Program Files (x86)\Microsoft Visual Studio 11.0"
             pynja.rootPaths.msvc12 = r"C:\Program Files (x86)\Microsoft Visual Studio 12.0"
             pynja.rootPaths.msvc14 = r"C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+            pynja.rootPaths.llvmDir = r"C:\Program Files (x86)\LLVM"
         else:
             raise Exception("32-bit OS, seriously?")
 

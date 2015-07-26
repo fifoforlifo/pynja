@@ -45,6 +45,12 @@ def generate_ninja_build(projectMan):
                 toolchain_assign_winsdk(toolchain, msvcVer)
                 return toolchain
 
+            def make_clang_msvc_tool_chain(msvcVer, installDir, arch, llvmDir):
+                name = "clang{msvcVer}-{arch}".format(**locals())
+                toolchain = pynja.ClangMsvcToolChain(name, installDir, arch, msvcVer, llvmDir)
+                toolchain_assign_winsdk(toolchain, msvcVer)
+                return toolchain
+
             def make_nvcc_tool_chain(nvccVer, nvccInstallDir, msvcVer, msvcInstallDir, arch):
                 name = "nvcc{nvccVer}_msvc{msvcVer}-{arch}".format(**locals())
                 if arch == 'x86':
@@ -85,6 +91,11 @@ def generate_ninja_build(projectMan):
                 projectMan.add_toolchain(make_msvc_tool_chain(12, pynja.rootPaths.msvc12, "amd64"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc12-amd64-dbg-dcrt"))
                 cpp_variants.append(repo.cpp.CppVariant("windows-msvc12-amd64-rel-dcrt"))
+
+                if os.path.exists(pynja.rootPaths.llvmDir):
+                    projectMan.add_toolchain(make_clang_msvc_tool_chain(12, pynja.rootPaths.msvc12, "amd64", pynja.rootPaths.llvmDir))
+                    cpp_variants.append(repo.cpp.CppVariant("windows-clang12-amd64-dbg-dcrt"))
+                    cpp_variants.append(repo.cpp.CppVariant("windows-clang12-amd64-rel-dcrt"))
 
             if os.path.exists(pynja.rootPaths.msvc14):
                 projectMan.add_toolchain(make_msvc_tool_chain(14, pynja.rootPaths.msvc14, "x86"))

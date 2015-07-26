@@ -41,6 +41,7 @@ if os.name == "nt":
             self.supportsPCH = True
             self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
+            self._cxx_script_extra_args = ""
             self._lib_script  = os.path.join(self._scriptDir, "msvc-lib-invoke.py")
             self._link_script = os.path.join(self._scriptDir, "msvc-link-invoke.py")
             # MSVC always supports LTO.  (they call it LTCG)
@@ -63,7 +64,7 @@ if os.name == "nt":
             ninjaFile.write("\n")
             ninjaFile.write("rule %s_cxx\n" % self.name)
             ninjaFile.write("  depfile = $DEP_FILE\n")
-            ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$PDB_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s  \"$RSP_FILE\"\n" % (self._cxx_script, self.installDir, self.arch))
+            ninjaFile.write("  command = python \"%s\"  \"$WORKING_DIR\"  \"$SRC_FILE\"  \"$OBJ_FILE\"  \"$PDB_FILE\"  \"$DEP_FILE\"  \"$LOG_FILE\"  \"%s\"  %s  \"$RSP_FILE\" %s %s\n" % (self._cxx_script, self.installDir, self.arch, self.msvcVer, self._cxx_script_extra_args))
             ninjaFile.write("  description = %s_cxx  $DESC\n" % self.name)
             ninjaFile.write("  restat = 1\n")
             ninjaFile.write("\n")

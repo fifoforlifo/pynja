@@ -5,12 +5,16 @@ import msvc_common
 
 
 if __name__ == '__main__':
-    script, workingDir, srcPath, outputPath, pdbPath, depPath, logPath, installDir, arch, rspPath, msvcVer = sys.argv
+    script, workingDir, srcPath, outputPath, pdbPath, depPath, logPath, installDir, arch, rspPath, msvcVer, llvmDir = sys.argv
 
 
     def shell_escape_path(path):
         return path.replace(" ", "\\ ")
 
+    def set_clang_msvc_environment():
+        oldPathEnv = os.environ.get('PATH') or ""
+        os.environ['PATH'] = "%s\\bin;%s" % (llvmDir, oldPathEnv)
+        os.environ["INCLUDE"] = "%s\\VC\\include" % installDir
 
     def cpp_compile():
         createPCH = outputPath.endswith(".pch")
@@ -21,7 +25,22 @@ if __name__ == '__main__':
             objectPath = outputPath
             extraOptions = ""
 
-        cmd = "cl /showIncludes \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" %s > \"%s\" 2>&1" % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
+        if arch == "x86":
+            extraOptions += " -m32"
+        else:
+            extraOptions += " -m64"
+
+        mscVerMap = {
+             "8" : "1400",
+             "9" : "1500",
+            "10" : "1600",
+            "11" : "1700",
+            "12" : "1800",
+            "14" : "1900",
+        }
+        extraOptions += " -fmsc-version=" + mscVerMap[msvcVer]
+
+        cmd = "clang-cl /showIncludes \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" -D_HAS_EXCEPTIONS=0 %s > \"%s\" 2>&1" % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
         exitcode = os.system(cmd)
 
         with open(logPath, "rt") as logFile:
@@ -61,7 +80,7 @@ if __name__ == '__main__':
 
     os.chdir(workingDir)
 
-    msvc_common.set_msvc_environment(installDir, arch)
+    set_clang_msvc_environment()
 
     cpp_compile()
 

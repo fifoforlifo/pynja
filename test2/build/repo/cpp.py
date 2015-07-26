@@ -6,7 +6,7 @@ class CppVariant(pynja.Variant):
     if os.name == 'nt':
         fieldDefs = [
             "os",           [ "windows", "android" ],
-            "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "msvc12", "msvc14", "mingw", "mingw64", "nvcc50_msvc10", "nvcc50_msvc11", "android_arm_gcc"  ],
+            "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "msvc12", "msvc14", "clang12", "mingw", "mingw64", "nvcc50_msvc10", "nvcc50_msvc11", "android_arm_gcc"  ],
             "arch",         [ "x86", "amd64", "aarch32" ],
             "config",       [ "dbg", "rel" ],
             "crt",          [ "scrt", "dcrt" ],
