@@ -9,8 +9,8 @@ class NvccToolChain(CppToolChain):
     """A toolchain object capable of driving nvcc (CUDA compiler)."""
 
     # hostCompiler = {gcc, msvc}
-    def __init__(self, name, installDir, hostCompiler, hostInstallDir, addressModel, targetWindows):
-        super().__init__(name, targetWindows)
+    def __init__(self, name, installDir, hostCompiler, hostInstallDir, addressModel, isTargetWindows):
+        super().__init__(name, isTargetWindows)
         self.installDir = installDir
         self.hostCompiler = hostCompiler
         self.hostInstallDir = hostInstallDir

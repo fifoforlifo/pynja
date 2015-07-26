@@ -32,7 +32,7 @@ if os.name == "nt":
         """A toolchain object capable of driving msvc 8.0 and greater."""
 
         def __init__(self, name, installDir, arch, msvcVer):
-            super().__init__(name, targetWindows=True)
+            super().__init__(name, isTargetWindows=True)
             self.installDir = installDir
             self.arch = arch
             self.msvcVer = msvcVer

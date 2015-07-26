@@ -20,8 +20,8 @@ def get_lib_name(path):
 class GccToolChain(CppToolChain):
     """A toolchain object capable of driving gcc commandlines."""
 
-    def __init__(self, name, installDir, targetWindows, prefix = "", suffix = ""):
-        super().__init__(name, targetWindows)
+    def __init__(self, name, installDir, isTargetWindows, prefix = "", suffix = ""):
+        super().__init__(name, isTargetWindows)
         self.installDir = installDir
         self.prefix = prefix
         self.suffix = suffix

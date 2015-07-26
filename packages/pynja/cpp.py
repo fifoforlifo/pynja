@@ -269,7 +269,7 @@ class CppProject(build.Project):
 
     def make_shared_lib_ex(self, name):
         name = os.path.normpath(name)
-        if self.toolchain.targetWindows:
+        if self.toolchain.isTargetWindows:
             outputPath = os.path.join(self.builtDir, name + ".dll")
             if _is_toolchain_msvc(self.toolchain):
                 libraryPath = os.path.join(self.builtDir, name + ".lib")
@@ -310,7 +310,7 @@ class CppProject(build.Project):
 
     def make_executable_ex(self, name):
         name = os.path.normpath(name)
-        if self.toolchain.targetWindows:
+        if self.toolchain.isTargetWindows:
             outputPath = os.path.join(self.builtDir, name + ".exe")
         else:
             outputPath = os.path.join(self.builtDir, name)
