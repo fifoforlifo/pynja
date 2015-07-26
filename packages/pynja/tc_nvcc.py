@@ -19,6 +19,12 @@ class NvccToolChain(CppToolChain):
             self.objectFileExt = ".obj"
             self.pchFileExt = ".pch"
             self.ltoSupport = True
+            self.arch = "x86" if addressModel == "-m32" else "amd64"
+            # The Windows SDK / Windows Kit version and path.
+            self.winsdkVer = None
+            self.winsdkDir = None
+            # If True, default include-paths and libraries will be assigned.
+            self.winsdkDefaults = True
         else:
             self.objectFileExt = ".o"
             self.pchFileExt = ".gch"
@@ -27,6 +33,7 @@ class NvccToolChain(CppToolChain):
         self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
         self._cxx_script  = os.path.join(self._scriptDir, "nvcc-cxx-invoke.py")
         self._invoke_script  = os.path.join(self._scriptDir, "nvcc-invoke.py")
+
 
     def emit_rules(self, ninjaFile):
         ninjaFile.write("#############################################\n")
@@ -107,6 +114,13 @@ class NvccToolChain(CppToolChain):
                 options.append("\"%s\"" % inputEsc)
 
     def translate_cpp_options(self, options, task):
+        if "msvc" in self.hostCompiler:
+            if self.winsdkDefaults:
+                if self.winsdkVer < 80:
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include"))
+                else:
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include", "shared"))
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include", "um"))
         options.extend(self.defaultCppOptions)
         # translate simple options first for ease of viewing
         GccToolChain.translate_opt_level(self, options, task)
@@ -127,7 +141,6 @@ class NvccToolChain(CppToolChain):
         write_rsp_file(project, task, options)
 
         # emit ninja file contents
-        ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.xlat_path(project, task.outputPath)
         sourcePath = build.xlat_path(project, task.sourcePath)
@@ -139,6 +152,7 @@ class NvccToolChain(CppToolChain):
         extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
 
         # write build command
+        ninjaFile = project.projectMan.ninjaFile
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_cxx  %(sourcePath)s | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_extra_deps(ninjaFile, project, task, False)
         build.translate_order_only_deps(ninjaFile, project, task, True)
@@ -163,7 +177,6 @@ class NvccToolChain(CppToolChain):
         write_rsp_file(project, task, options)
 
         # emit ninja file contents
-        ninjaFile = project.projectMan.ninjaFile
         name = self.name
         outputPath = build.xlat_path(project, task.outputPath)
         logPath = outputPath + ".log"
@@ -172,6 +185,7 @@ class NvccToolChain(CppToolChain):
 
         extraOutputs = " ".join([build.xlat_path(project, path) for path in task.extraOutputs])
 
+        ninjaFile = project.projectMan.ninjaFile
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         build.translate_path_list(ninjaFile, project, task.inputs)
         build.translate_extra_deps(ninjaFile, project, task, False)
@@ -186,7 +200,14 @@ class NvccToolChain(CppToolChain):
         ninjaFile.write("\n")
 
     def emit_link(self, project, task):
-        ninjaFile = project.projectMan.ninjaFile
+        if "msvc" in self.hostCompiler:
+            if self.winsdkDefaults:
+                winsdkLibDir = calc_winsdk_lib_dir(self)
+                task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "gdi32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "uuid.lib"))
+
         name = self.name
         outputPath = build.xlat_path(project, task.outputPath)
         libraryPath = ""
@@ -198,6 +219,7 @@ class NvccToolChain(CppToolChain):
 
         extraOutputs = " ".join([build.ninja_esc_path(p) for p in task.extraOutputs])
 
+        ninjaFile = project.projectMan.ninjaFile
         ninjaFile.write("build %(outputPath)s %(extraOutputs)s %(libraryPath)s %(logPath)s : %(name)s_invoke | %(outputPath)s.rsp %(scriptPath)s" % locals())
         for input in task.inputs:
             if os.path.isabs(input):

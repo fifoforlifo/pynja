@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
         with open(logPath, "rt") as logFile:
             logContents = logFile.read()
-        needToPrintLog = False
+        needToPrintLog = not not exitcode
         # write out deps file, and determine if an error or warning occurred
         with open(depPath, "wt") as depFile:
             outputPathEsc = shell_escape_path(outputPath)

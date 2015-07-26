@@ -6,7 +6,7 @@ class CppVariant(pynja.Variant):
     if os.name == 'nt':
         fieldDefs = [
             "os",           [ "windows", "android" ],
-            "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "mingw", "mingw64", "nvcc_msvc10", "nvcc_msvc11", "android_arm_gcc"  ],
+            "toolchain",    [ "msvc8", "msvc9", "msvc10", "msvc11", "msvc12", "msvc14", "mingw", "mingw64", "nvcc50_msvc10", "nvcc50_msvc11", "android_arm_gcc"  ],
             "arch",         [ "x86", "amd64", "aarch32" ],
             "config",       [ "dbg", "rel" ],
             "crt",          [ "scrt", "dcrt" ],
@@ -47,8 +47,6 @@ class CppProject(pynja.CppProject):
 
         if not (isinstance(variant, CppVariant) or isinstance(variant, CppLibVariant)):
             raise Exception("expecting CppVariant or CppLibVariant")
-        if self.variant.os == "windows":
-            self.winsdkVer = 80
 
         if self.variant.toolchain == 'msvc11' and self.variant.arch == 'amd64':
             self.qt_init('qt5vc11', os.path.join(self.builtDir, "qt"))
@@ -79,12 +77,6 @@ class CppProject(pynja.CppProject):
         if self.variant.os == "windows":
             if "msvc" in self.variant.toolchain:
                 task.dynamicCRT = (self.variant.crt == 'dcrt')
-                winsdkDir = self.calc_winsdk_dir()
-                if self.winsdkVer < 80:
-                    task.includePaths.append(os.path.join(winsdkDir, "Include"))
-                else:
-                    task.includePaths.append(os.path.join(winsdkDir, "Include", "shared"))
-                    task.includePaths.append(os.path.join(winsdkDir, "Include", "um"))
 
         self.set_gcc_machine_arch(task)
 
@@ -124,47 +116,15 @@ class CppProject(pynja.CppProject):
             task.lto = self.toolchain.ltoSupport
 
 
-    def calc_winsdk_dir(self):
-        name = 'winsdk' + str(self.winsdkVer)
-        return getattr(pynja.rootPaths, name)
-
-    def calc_winsdk_lib_dir(self):
-        winsdkDir = self.calc_winsdk_dir()
-        if self.winsdkVer < 80:
-            if self.variant.arch == "x86":
-                return os.path.join(winsdkDir, "Lib")
-            elif self.variant.arch == "amd64":
-                return os.path.join(winsdkDir, "Lib", "x64")
-            else:
-                raise Exception("unsupported arch: " + self.variant.arch)
-        else:
-            if self.variant.arch == "x86":
-                return os.path.join(winsdkDir, "Lib", "win8", "um", "x86")
-            elif self.variant.arch == "amd64":
-                return os.path.join(winsdkDir, "Lib", "win8", "um", "x64")
-            else:
-                raise Exception("unsupported arch: " + self.variant.arch)
-
-    def add_platform_libs(self, task):
-        if self.variant.os == "windows":
-            if "msvc" in self.variant.toolchain:
-                winsdkLibDir = self.calc_winsdk_lib_dir()
-                self.add_input_lib(os.path.join(winsdkLibDir, "kernel32.lib"))
-                self.add_input_lib(os.path.join(winsdkLibDir, "user32.lib"))
-                self.add_input_lib(os.path.join(winsdkLibDir, "gdi32.lib"))
-                self.add_input_lib(os.path.join(winsdkLibDir, "uuid.lib"))
-
     def set_shared_lib_options(self, task):
         super().set_shared_lib_options(task)
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
-        self.add_platform_libs(task)
 
     def set_executable_options(self, task):
         super().set_executable_options(task)
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
-        self.add_platform_libs(task)
 
 
     # Convenience functions that assumes that the current project

@@ -4,18 +4,40 @@ from . import build
 
 
 if os.name == "nt":
+    def calc_winsdk_lib_dir(self):
+        winsdkDir = self.winsdkDir
+        if self.winsdkVer < 80:
+            if self.arch == "x86":
+                return os.path.join(winsdkDir, "Lib")
+            elif self.arch == "amd64":
+                return os.path.join(winsdkDir, "Lib", "x64")
+            else:
+                raise Exception("unsupported arch: " + self.arch)
+        elif self.winsdkVer == 80:
+            if self.arch == "x86":
+                return os.path.join(winsdkDir, "Lib", "win8", "um", "x86")
+            elif self.arch == "amd64":
+                return os.path.join(winsdkDir, "Lib", "win8", "um", "x64")
+            else:
+                raise Exception("unsupported arch: " + self.arch)
+        elif self.winsdkVer == 81:
+            if self.arch == "x86":
+                return os.path.join(winsdkDir, "Lib", "winv6.3", "um", "x86")
+            elif self.arch == "amd64":
+                return os.path.join(winsdkDir, "Lib", "winv6.3", "um", "x64")
+            else:
+                raise Exception("unsupported arch: " + self.arch)
+
     class MsvcToolChain(CppToolChain):
         """A toolchain object capable of driving msvc 8.0 and greater."""
 
-        def __init__(self, name, installDir, arch):
+        def __init__(self, name, installDir, arch, msvcVer):
             super().__init__(name, targetWindows=True)
             self.installDir = installDir
             self.arch = arch
+            self.msvcVer = msvcVer
             self.objectFileExt = ".obj"
             self.pchFileExt = ".pch"
-            # MSVC does support PCHs, but due to error 2858 it's disabled here for now.
-            # The error is that the PCH must use the same PDB as the compilation units;
-            # this prevents arbitrary re-use of PCH files.
             self.supportsPCH = True
             self._scriptDir = os.path.join(os.path.dirname(__file__), "scripts")
             self._cxx_script  = os.path.join(self._scriptDir, "msvc-cxx-invoke.py")
@@ -23,6 +45,13 @@ if os.name == "nt":
             self._link_script = os.path.join(self._scriptDir, "msvc-link-invoke.py")
             # MSVC always supports LTO.  (they call it LTCG)
             self.ltoSupport = True
+            # The Windows SDK / Windows Kit version and path.
+            self.winsdkVer = None
+            self.winsdkDir = None
+            self.ucrtVer = None
+            self.ucrtDir = None
+            # If True, default include-paths and libraries will be assigned.
+            self.winsdkDefaults = True
 
             # default flags
             self.defaultLinkOptions.append("/nologo")
@@ -155,6 +184,16 @@ if os.name == "nt":
                     task.extraDeps.append(task.usePCH)
 
         def translate_cpp_options(self, options, task):
+            if self.winsdkDefaults:
+                if self.winsdkVer < 80:
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include"))
+                else:
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include", "shared"))
+                    task.includePaths.insert(0, os.path.join(self.winsdkDir, "Include", "um"))
+                if self.ucrtDir:
+                    task.includePaths.insert(0, os.path.join(self.ucrtDir, "Include", self.ucrtVer, "ucrt"))
+                task.includePaths.insert(0, os.path.join(self.installDir, "include"))
+
             options.extend(self.defaultCppOptions)
             # translate simple options first for ease of viewing
             self.translate_opt_level(options, task)
@@ -241,8 +280,19 @@ if os.name == "nt":
             ninjaFile.write("\n")
 
         def emit_link(self, project, task):
-            # write response file
             options = []
+
+            if self.winsdkDefaults:
+                winsdkLibDir = calc_winsdk_lib_dir(self)
+                task.inputs.append(os.path.join(winsdkLibDir, "kernel32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "user32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "gdi32.lib"))
+                task.inputs.append(os.path.join(winsdkLibDir, "uuid.lib"))
+                if self.ucrtDir:
+                    ucrtArch = "x86" if self.arch == "x86" else "x64"
+                    options.append('/LIBPATH:"%s"' % (os.path.join(self.ucrtDir, "Lib", self.ucrtVer, "ucrt", ucrtArch)))
+
+            # write response file
             options.extend(self.defaultLinkOptions)
             if not task.makeExecutable:
                 options.append("/DLL")

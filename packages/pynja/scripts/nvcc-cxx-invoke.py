@@ -22,13 +22,14 @@ if __name__ == '__main__':
         cmd = "nvcc -M %s \"%s\" -optf \"%s\" -o \"%s\" > \"%s\" 2>&1" % (forceCompilerOption, srcPathEsc, rspPathEsc, tempDepPath, logPath)
         exitcode = os.system(cmd)
 
-        with open(tempDepPath, "rt") as tempDepFile:
-            depLines = tempDepFile.readlines()
-        os.unlink(tempDepPath)
-        rhsIndex = depLines[0].find(' : ')
-        depLines[0] = objPath + " : " + depLines[0][rhsIndex:]
-        with open(depPath, "wt") as depFile:
-            depFile.writelines(depLines)
+        if os.path.exists(depPath + ".tmp"):
+            with open(tempDepPath, "rt") as tempDepFile:
+                depLines = tempDepFile.readlines()
+            os.unlink(tempDepPath)
+            rhsIndex = depLines[0].find(' : ')
+            depLines[0] = objPath + " : " + depLines[0][rhsIndex:]
+            with open(depPath, "wt") as depFile:
+                depFile.writelines(depLines)
 
         with open(logPath, "rt") as logFile:
             logContents = logFile.read()

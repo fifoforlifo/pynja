@@ -16,7 +16,7 @@ def set_msvc_environment(installDir, arch):
         os.environ['PATH'] = "%s\\VC\\bin;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
     elif arch == "amd64":
         os.environ['LIB'] = "%s\\VC\\lib\\amd64" % installDir
-        if is_os_64bit() and os.path.exists("%s\\VC\\bin\\amd64" % installDir):
+        if is_os_64bit() and os.path.exists("%s\\VC\\bin\\amd64\\cl.exe" % installDir):
             os.environ['PATH'] = "%s\\VC\\bin\\amd64;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
         else:
             os.environ['PATH'] = "%s\\VC\\bin\\x86_amd64;%s\\Common7\\IDE;%s" % (installDir, installDir, oldPathEnv)
