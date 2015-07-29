@@ -13,3 +13,17 @@ if os.name == "nt":
             super().__init__(name, msvcInstallDir, arch, msvcVer)
             self._cxx_script  = os.path.join(self._scriptDir, "clang_msvc-cxx-invoke.py")
             self._cxx_script_extra_args = '"%s"' % llvmDir
+            self.supportsPCH = False
+
+        def translate_warn_level(self, options, task):
+            if not (0 <= task.warnLevel <= 4):
+                raise Exception("invalid warn level: " + str(task.warnLevel))
+
+            # enable one-line diagnostics
+            options.append("/W" + str(task.warnLevel))
+            if task.warningsAsErrors:
+                options.append("/WX")
+
+        def translate_debug_level(self, options, task):
+            if task.debugLevel > 0:
+                options.append("/Z7")

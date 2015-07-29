@@ -40,7 +40,7 @@ if __name__ == '__main__':
         }
         extraOptions += " -fmsc-version=" + mscVerMap[msvcVer]
 
-        cmd = "clang-cl /showIncludes \"%s\" \"@%s\" \"/Fo%s\" \"/Fd%s\" -D_HAS_EXCEPTIONS=0 %s > \"%s\" 2>&1" % (srcPath, rspPath, objectPath, pdbPath, extraOptions, logPath)
+        cmd = "clang-cl /showIncludes \"%s\" \"@%s\" \"/Fo%s\" -D_HAS_EXCEPTIONS=0 %s > \"%s\" 2>&1" % (srcPath, rspPath, objectPath, extraOptions, logPath)
         exitcode = os.system(cmd)
 
         with open(logPath, "rt") as logFile:

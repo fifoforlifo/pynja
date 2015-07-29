@@ -59,7 +59,7 @@ def _add_project_entry(projName, scriptName):
     if oldAbsPath:
         if oldAbsPath == absPath:
             return
-        raise Exception("Attempting to add duplicate project '%s' from:\n    %s\n    %s" % (name, oldAbsPath, absPath))
+        raise Exception("Attempting to add duplicate project '%s' from:\n    %s\n    %s" % (projName, oldAbsPath, absPath))
     setattr(rootPathsAbs, projName, absPath)
     setattr(rootPathsRel, projName, relPath)
 
